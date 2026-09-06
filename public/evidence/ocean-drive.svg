@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720">
+  <defs>
+    <radialGradient id="sky" cx="50%" cy="0%" r="100%">
+      <stop offset="0%" stop-color="#0a1628"/>
+      <stop offset="100%" stop-color="#050810"/>
+    </radialGradient>
+    <radialGradient id="glow1" cx="30%" cy="60%" r="30%">
+      <stop offset="0%" stop-color="#00d4d4" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#00d4d4" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Sky -->
+  <rect width="1280" height="720" fill="url(#sky)"/>
+  <!-- Street -->
+  <rect y="480" width="1280" height="240" fill="#0d0e10"/>
+  <!-- Reflective wet road -->
+  <rect y="520" width="1280" height="200" fill="#080a0d"/>
+  <!-- Neon glow on road -->
+  <ellipse cx="400" cy="580" rx="300" ry="40" fill="#00d4d4" opacity="0.05"/>
+  <!-- Buildings silhouette -->
+  <rect x="0" y="200" width="120" height="280" fill="#0c1018"/>
+  <rect x="130" y="280" width="80" height="200" fill="#0c1018"/>
+  <rect x="220" y="180" width="60" height="300" fill="#0a0d14"/>
+  <rect x="900" y="220" width="100" height="260" fill="#0c1018"/>
+  <rect x="1010" y="150" width="140" height="330" fill="#0a0d14"/>
+  <rect x="1160" y="250" width="120" height="230" fill="#0c1018"/>
+  <!-- Palm trees -->
+  <line x1="300" y1="480" x2="300" y2="350" stroke="#060c10" stroke-width="8"/>
+  <ellipse cx="300" cy="340" rx="35" ry="20" fill="#071010" transform="rotate(-20,300,340)"/>
+  <ellipse cx="300" cy="345" rx="30" ry="18" fill="#071010" transform="rotate(15,300,345)"/>
+  <line x1="800" y1="480" x2="800" y2="360" stroke="#060c10" stroke-width="7"/>
+  <ellipse cx="800" cy="350" rx="32" ry="18" fill="#071010" transform="rotate(-15,800,350)"/>
+  <!-- Black car -->
+  <rect x="680" y="430" width="220" height="70" rx="8" fill="#090a0c"/>
+  <rect x="700" y="410" width="180" height="50" rx="6" fill="#0b0c0f"/>
+  <rect x="870" y="445" width="12" height="20" rx="2" fill="#1a1a1a"/>
+  <rect x="698" y="445" width="12" height="20" rx="2" fill="#1a1a1a"/>
+  <!-- Tail lights glow -->
+  <rect x="892" y="448" width="6" height="12" rx="1" fill="#e63946" opacity="0.9"/>
+  <ellipse cx="895" cy="454" rx="15" ry="8" fill="#e63946" opacity="0.15"/>
+  <!-- Ocean Drive sign neon -->
+  <rect x="380" y="320" width="160" height="40" rx="3" fill="#060c10"/>
+  <rect x="382" y="322" width="156" height="36" rx="2" fill="none" stroke="#00d4d4" stroke-width="1.5" opacity="0.7"/>
+  <text x="460" y="345" text-anchor="middle" fill="#00d4d4" font-family="monospace" font-size="16" font-weight="bold" opacity="0.9">OCEAN DRIVE</text>
+  <!-- Neon glow overlay -->
+  <rect width="1280" height="720" fill="url(#glow1)"/>
+  <!-- Figure near storefront -->
+  <rect x="560" y="400" width="18" height="60" rx="4" fill="#0d1318"/>
+  <ellipse cx="569" cy="398" rx="10" ry="10" fill="#0d1318"/>
+  <!-- VCI watermark -->
+  <text x="20" y="700" fill="#f5c842" font-family="monospace" font-size="13" opacity="0.8">VCI // EVIDENCE #01 // OCEAN DRIVE // 01:42 AM</text>
+  <!-- Film grain simulation via pattern -->
+  <rect width="1280" height="720" fill="none" opacity="0.04" style="filter: url(#noise)"/>
+</svg>
