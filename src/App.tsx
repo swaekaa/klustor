@@ -7,6 +7,8 @@ import EditorPage from './pages/EditorPage';
 import BoardPage from './pages/BoardPage';
 import DecisionPage from './pages/DecisionPage';
 import ResultsPage from './pages/ResultsPage';
+import MapPage from './pages/MapPage';
+import ContactsPage from './pages/ContactsPage';
 import NavBar from './components/ui/NavBar';
 import { useGameStore } from './store/gameStore';
 
@@ -74,6 +76,36 @@ function AppRoutes() {
               <>
                 <NavBar />
                 <BoardPage />
+              </>
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+
+        {/* Map */}
+        <Route
+          path="/map"
+          element={
+            currentCaseId ? (
+              <>
+                <NavBar />
+                <MapPage />
+              </>
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+
+        {/* Contacts */}
+        <Route
+          path="/contacts"
+          element={
+            currentCaseId ? (
+              <>
+                <NavBar />
+                <ContactsPage />
               </>
             ) : (
               <Navigate to="/" replace />

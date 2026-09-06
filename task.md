@@ -1,0 +1,13 @@
+- [ ] Generate 5 Miami-style evidence images with specific clue details
+- [ ] Move generated images to `public/evidence/`
+- [ ] Update `ClueZone` and related interfaces in `src/types/index.ts`
+- [ ] Determine exact `x, y, width, height` coordinates for clues in the 5 images
+- [ ] Update `case017.ts` with new coordinates and hints
+- [ ] Build `ScannerOverlay` component for Clue Detection (IoU math)
+- [ ] Update `EditorPage.tsx` to include Editor vs Scanner modes
+- [ ] Implement Miami Visual Redesign in `src/index.css` and UI components
+- [ ] Rebrand to KLUSTOR in NavBar, Index, etc.
+- [ ] Update `BoardPage.tsx` for neon detective wall aesthetics
+- [ ] Build `MapPage` (or map component)
+- [ ] Build `ContactsSidebar` (or contacts component)
+- [ ] Test the gameplay loop manually

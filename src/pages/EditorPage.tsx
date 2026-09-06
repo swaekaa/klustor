@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { case017 } from '../data/cases/case017';
 import InvestigationEditor from '../components/editor/InvestigationEditor';
+import ScannerOverlay from '../components/editor/ScannerOverlay';
 import ClueReveal from '../components/clues/ClueReveal';
 import type { Clue } from '../types';
 
@@ -13,7 +14,8 @@ export default function EditorPage() {
   const { saveInvestigation, discoverClue, discoveredClues, getUnlockedEvidence } = useGameStore();
 
   const [activeClue, setActiveClue] = useState<Clue | null>(null);
-  const [showClueSelector, setShowClueSelector] = useState(false);
+  const [scanMode, setScanMode] = useState(false);
+  const [scanMessage, setScanMessage] = useState<string | null>(null);
   const [savedThisSession, setSavedThisSession] = useState(false);
 
   const evidence = case017.evidence.find((e) => e.id === id);
@@ -53,41 +55,70 @@ export default function EditorPage() {
     .map((cId) => case017.clues.find((c) => c.id === cId))
     .filter((c): c is Clue => !!c && !discoveredClues.includes(c.id));
 
-  // Handle save from the Unlayer editor
-  // Receives the dataUrl (base64 encoded edited image) from the editor's onSave callback
   const handleEditorSave = useCallback(
     (dataUrl: string) => {
-      // Save the investigation with the edited dataUrl
       saveInvestigation(evidence.id, dataUrl, {
         annotations: [],
         discoveredClueIds: [],
         savedImage: dataUrl,
         timestamp: new Date().toISOString(),
       });
-
       setSavedThisSession(true);
-
-      // Show clue discovery selector if there are undiscovered clues
-      if (availableClues.length > 0) {
-        setTimeout(() => setShowClueSelector(true), 600);
-      }
     },
-    [evidence.id, saveInvestigation, availableClues.length]
+    [evidence.id, saveInvestigation]
   );
 
-  // User confirms which clue they found
-  const handleClueSelect = (clue: Clue) => {
-    discoverClue(clue.id);
-    setShowClueSelector(false);
-    setActiveClue(clue);
+  const calculateIoU = (rect1: any, rect2: any) => {
+    const xLeft = Math.max(rect1.x, rect2.x);
+    const yTop = Math.max(rect1.y, rect2.y);
+    const xRight = Math.min(rect1.x + rect1.width, rect2.x + rect2.width);
+    const yBottom = Math.min(rect1.y + rect1.height, rect2.y + rect2.height);
+
+    if (xRight < xLeft || yBottom < yTop) return 0;
+
+    const intersectionArea = (xRight - xLeft) * (yBottom - yTop);
+    const rect1Area = rect1.width * rect1.height;
+    const rect2Area = rect2.width * rect2.height;
+    const unionArea = rect1Area + rect2Area - intersectionArea;
+
+    return intersectionArea / unionArea;
+  };
+
+  const handleAnalyzeRegion = (normalizedRect: { x: number; y: number; width: number; height: number }) => {
+    setScanMode(false);
+    
+    let foundClueId: string | null = null;
+    let maxIou = 0;
+
+    for (const zone of evidence.clueZones) {
+      const clueId = evidence.clueIds[evidence.clueZones.indexOf(zone)];
+      if (discoveredClues.includes(clueId)) continue; // Already found
+
+      const iou = calculateIoU(normalizedRect, zone);
+      if (iou > maxIou) {
+        maxIou = iou;
+        foundClueId = clueId;
+      }
+    }
+
+    // Tighter threshold for scanning logic: 0.30 as requested.
+    if (maxIou >= 0.30 && foundClueId) {
+      const clue = case017.clues.find(c => c.id === foundClueId);
+      if (clue) {
+        discoverClue(clue.id);
+        setActiveClue(clue);
+        setScanMessage(null);
+      }
+    } else {
+      setScanMessage("NOTHING CONCLUSIVE");
+      setTimeout(() => setScanMessage(null), 3000);
+    }
   };
 
   const handleClueRevealClose = () => {
     setActiveClue(null);
-    // Check if there are more clues to discover
     const remaining = availableClues.filter((c) => !discoveredClues.includes(c.id));
     if (remaining.length === 0) {
-      // Navigate back to evidence page
       setTimeout(() => navigate(`/evidence/${evidence.id}`), 300);
     }
   };
@@ -99,117 +130,36 @@ export default function EditorPage() {
       exit={{ opacity: 0 }}
       className="page"
       style={{
-        paddingTop: '56px',
+        paddingTop: '40px', // Adjusted for thin NavBar
         display: 'flex',
         flexDirection: 'column',
         height: '100vh',
       }}
     >
-      {/* Editor Header Bar */}
-      <div
-        style={{
-          background: 'var(--bg-surface)',
-          borderBottom: '1px solid var(--border-default)',
-          padding: '0.75rem 1.5rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '1rem',
-          flexShrink: 0,
-        }}
-      >
-        {/* Left: breadcrumb */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <button
-            className="btn btn-ghost btn-sm"
-            onClick={() => navigate(`/evidence/${evidence.id}`)}
-          >
-            ← CASE 017
-          </button>
-          <span
-            className="font-mono"
-            style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}
-          >
-            /
-          </span>
-          <span
-            className="font-mono"
-            style={{
-              fontSize: '0.65rem',
-              color: 'var(--text-secondary)',
-              letterSpacing: '0.1em',
-            }}
-          >
-            EVIDENCE #{String(evidenceIndex + 1).padStart(2, '0')}
-          </span>
-          <span
-            className="font-mono"
-            style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}
-          >
-            /
-          </span>
-          <span
-            className="font-mono"
-            style={{
-              fontSize: '0.65rem',
-              color: 'var(--text-bright)',
-              letterSpacing: '0.1em',
-            }}
-          >
-            {evidence.title}
-          </span>
+      {/* HUD Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem', background: 'rgba(0,0,0,0.8)', borderBottom: '1px solid var(--border-default)' }}>
+        <div>
+          <div className="font-mono" style={{ color: 'var(--neon-cyan)', fontSize: '0.7rem', letterSpacing: '0.15em', marginBottom: '0.2rem' }}>
+            KLUSTOR INVESTIGATION WORKSTATION
+          </div>
+          <h2 className="font-display" style={{ fontSize: '2rem', margin: 0, color: '#fff', lineHeight: 1 }}>
+            EVIDENCE #{String(evidenceIndex + 1).padStart(2, '0')} // {evidence.title}
+          </h2>
         </div>
-
-        {/* Center: mode label */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <div
-            style={{
-              width: '6px',
-              height: '6px',
-              borderRadius: '50%',
-              background: 'var(--neon-red)',
-              boxShadow: '0 0 6px var(--neon-red)',
-              animation: 'pulse 1s ease-in-out infinite',
-            }}
-          />
-          <span
-            className="font-mono"
-            style={{
-              fontSize: '0.65rem',
-              color: 'var(--neon-yellow)',
-              letterSpacing: '0.15em',
-            }}
-          >
-            INVESTIGATION MODE
-          </span>
-        </div>
-
-        {/* Right: clue hints */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span
-            className="font-mono"
-            style={{ fontSize: '0.55rem', color: 'var(--text-muted)', letterSpacing: '0.08em' }}
-          >
-            CLUES POSSIBLY PRESENT:
-          </span>
-          {evidence.clueZones.slice(0, 3).map((zone) => (
-            <span key={zone.id} className="badge badge-yellow" style={{ fontSize: '0.55rem' }}>
-              {zone.label}
-            </span>
-          ))}
-        </div>
+        <button className="btn btn-ghost" onClick={() => navigate('/case')} style={{ fontSize: '1rem' }}>
+          ← ABORT
+        </button>
       </div>
 
-      {/* Main: Editor + Sidebar */}
       <div
         style={{
           flex: 1,
           display: 'grid',
-          gridTemplateColumns: '1fr 280px',
+          gridTemplateColumns: '1fr 320px',
           minHeight: 0,
         }}
       >
-        {/* CENTER: The Official Unlayer React Image Editor */}
+        {/* CENTER: The Official Unlayer React Image Editor or Scanner Overlay */}
         <div
           style={{
             position: 'relative',
@@ -217,365 +167,120 @@ export default function EditorPage() {
             background: 'var(--bg-primary)',
           }}
         >
-          <InvestigationEditor
-            imageSrc={evidence.imageSrc}
-            evidenceId={evidence.id}
-            onSave={handleEditorSave}
-          />
+          {scanMode ? (
+            <ScannerOverlay 
+              imageSrc={evidence.imageSrc}
+              clueZones={evidence.clueZones as any}
+              onAnalyze={handleAnalyzeRegion}
+              onCancel={() => setScanMode(false)}
+            />
+          ) : (
+            <InvestigationEditor
+              imageSrc={evidence.imageSrc}
+              evidenceId={evidence.id}
+              onSave={handleEditorSave}
+            />
+          )}
         </div>
 
-        {/* RIGHT SIDEBAR: Investigation context */}
+        {/* RIGHT SIDEBAR: Game Objectives & Scanning */}
         <div
           style={{
-            background: 'var(--bg-surface)',
-            borderLeft: '1px solid var(--border-default)',
-            padding: '1.25rem',
-            overflowY: 'auto',
+            background: 'rgba(10, 11, 18, 0.9)',
+            borderLeft: '1px solid rgba(255,255,255,0.05)',
             display: 'flex',
             flexDirection: 'column',
-            gap: '1rem',
+            overflowY: 'auto',
           }}
         >
-          {/* Evidence context */}
-          <div>
-            <div
-              className="font-mono"
-              style={{
-                fontSize: '0.55rem',
-                color: 'var(--text-muted)',
-                letterSpacing: '0.12em',
-                marginBottom: '0.5rem',
-              }}
-            >
-              EVIDENCE CONTEXT
-            </div>
-            <div
-              className="font-display"
-              style={{ fontSize: '1.1rem', color: 'var(--text-bright)', marginBottom: '0.25rem' }}
-            >
-              {evidence.title}
-            </div>
-            <div
-              className="font-mono"
-              style={{ fontSize: '0.6rem', color: 'var(--neon-cyan)', marginBottom: '0.75rem' }}
-            >
-              {evidence.location}
-            </div>
-            <p
-              style={{
-                fontSize: '0.75rem',
-                color: 'var(--text-secondary)',
-                lineHeight: 1.6,
-              }}
-            >
-              {evidence.description}
-            </p>
-          </div>
-
-          <div className="divider" />
-
-          {/* Investigator guidance */}
-          <div>
-            <div
-              className="font-mono"
-              style={{
-                fontSize: '0.55rem',
-                color: 'var(--text-muted)',
-                letterSpacing: '0.12em',
-                marginBottom: '0.5rem',
-              }}
-            >
-              INVESTIGATOR NOTES
-            </div>
-            {[
-              'Use CROP to isolate suspicious areas.',
-              'Use DRAW to circle evidence.',
-              'Add TEXT to write your notes.',
-              'Use SHAPES to mark regions.',
-              'Apply FILTERS to reveal detail.',
-            ].map((tip, i) => (
-              <div
-                key={i}
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '0.5rem',
-                  marginBottom: '0.5rem',
-                  padding: '0.4rem',
-                  background: 'rgba(255,255,255,0.02)',
-                  borderRadius: '2px',
-                }}
-              >
-                <span style={{ color: 'var(--neon-cyan)', fontSize: '0.6rem', marginTop: '0.1rem' }}>
-                  ›
-                </span>
-                <span
-                  className="font-mono"
-                  style={{ fontSize: '0.62rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}
-                >
-                  {tip}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <div className="divider" />
-
-          {/* Anomaly hint */}
-          <div
-            style={{
-              padding: '0.75rem',
-              background: 'rgba(245, 200, 66, 0.05)',
-              border: '1px solid rgba(245, 200, 66, 0.15)',
-              borderRadius: '2px',
-            }}
-          >
-            <div
-              className="font-mono"
-              style={{
-                fontSize: '0.55rem',
-                color: 'var(--neon-yellow)',
-                letterSpacing: '0.12em',
-                marginBottom: '0.3rem',
-              }}
-            >
-              ◈ ANOMALY DETECTED
-            </div>
-            <p
-              className="font-mono"
-              style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}
-            >
-              {evidence.anomalyHint}
-            </p>
-          </div>
-
-          <div className="divider" />
-
-          {/* Clue zones */}
-          <div>
-            <div
-              className="font-mono"
-              style={{
-                fontSize: '0.55rem',
-                color: 'var(--text-muted)',
-                letterSpacing: '0.12em',
-                marginBottom: '0.5rem',
-              }}
-            >
-              SEARCH FOR
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-              {evidence.clueZones.map((zone) => {
-                const clueId = evidence.clueIds[evidence.clueZones.indexOf(zone)];
-                const isFound = clueId && discoveredClues.includes(clueId);
+          <div style={{ padding: '2rem' }}>
+            <h3 className="font-display" style={{ fontSize: '1.5rem', color: '#fff', marginBottom: '1rem' }}>
+              OBJECTIVES
+            </h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '3rem' }}>
+              {evidence.clueIds.map((clueId, idx) => {
+                const isDiscovered = discoveredClues.includes(clueId);
+                const clueTitle = case017.clues.find(c => c.id === clueId)?.title || 'Unknown Clue';
+                const hint = evidence.clueZones[idx]?.label || 'Anomaly';
+                
                 return (
-                  <div
-                    key={zone.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      padding: '0.4rem 0.6rem',
-                      background: isFound ? 'rgba(0,212,212,0.05)' : 'transparent',
-                      border: `1px solid ${isFound ? 'rgba(0,212,212,0.15)' : 'var(--border-subtle)'}`,
-                      borderRadius: '2px',
-                    }}
-                  >
-                    <span
-                      style={{
-                        color: isFound ? 'var(--neon-cyan)' : 'var(--text-muted)',
-                        fontSize: '0.8rem',
-                      }}
-                    >
-                      {isFound ? '✓' : '○'}
-                    </span>
-                    <span
-                      className="font-mono"
-                      style={{
-                        fontSize: '0.62rem',
-                        color: isFound ? 'var(--neon-cyan)' : 'var(--text-secondary)',
-                        letterSpacing: '0.05em',
-                      }}
-                    >
-                      {zone.label}
-                    </span>
+                  <div key={clueId} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                    <div style={{ 
+                      width: '16px', height: '16px', border: `1px solid ${isDiscovered ? 'var(--neon-cyan)' : 'var(--text-muted)'}`, 
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '2px', background: isDiscovered ? 'rgba(0, 212, 212, 0.2)' : 'transparent'
+                    }}>
+                      {isDiscovered && <div style={{ width: '8px', height: '8px', background: 'var(--neon-cyan)' }} />}
+                    </div>
+                    <div>
+                      <div className="font-mono" style={{ fontSize: '0.8rem', color: isDiscovered ? '#fff' : 'var(--text-secondary)' }}>
+                        {isDiscovered ? clueTitle : `Find: ${hint}`}
+                      </div>
+                    </div>
                   </div>
                 );
               })}
             </div>
-          </div>
 
-          <div className="divider" />
+            <div className="divider" style={{ margin: '2rem 0', background: 'rgba(255,255,255,0.1)' }} />
 
-          {/* Instructions */}
-          <div
-            className="font-mono"
-            style={{
-              fontSize: '0.6rem',
-              color: 'var(--text-muted)',
-              lineHeight: 1.6,
-              letterSpacing: '0.05em',
-            }}
-          >
-            After investigating, click the{' '}
-            <span style={{ color: 'var(--neon-cyan)' }}>SAVE</span> button in the editor toolbar to
-            log your findings and discover clues.
-          </div>
+            <h3 className="font-display" style={{ fontSize: '1.2rem', color: 'var(--neon-cyan)', marginBottom: '1rem' }}>
+              CLUE DETECTION
+            </h3>
+            
+            <p className="font-mono" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+              {scanMode 
+                ? "SCAN MODE ACTIVE. Drag a bounding box over the suspicious area." 
+                : "Enhance the image using the editor, then scan regions to discover clues."}
+            </p>
 
-          {/* Save status */}
-          {savedThisSession && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              style={{
-                padding: '0.75rem',
-                background: 'rgba(57, 217, 138, 0.05)',
-                border: '1px solid rgba(57, 217, 138, 0.2)',
-                borderRadius: '2px',
-                textAlign: 'center',
-              }}
-            >
-              <div
-                className="font-mono"
-                style={{ fontSize: '0.65rem', color: 'var(--neon-green)' }}
+            {!scanMode && availableClues.length > 0 && (
+              <button 
+                className="btn btn-primary" 
+                style={{ width: '100%', padding: '1rem' }}
+                onClick={() => setScanMode(true)}
               >
-                ✓ EVIDENCE SAVED TO CASE FILE
-              </div>
-            </motion.div>
-          )}
+                SCAN REGION
+              </button>
+            )}
 
-          {/* Back button */}
-          <button
-            className="btn btn-ghost"
-            onClick={() => navigate(`/evidence/${evidence.id}`)}
-            style={{ width: '100%', marginTop: 'auto' }}
-          >
-            ← BACK TO EVIDENCE
-          </button>
+            {scanMode && (
+              <div style={{ padding: '1rem', border: '1px dashed var(--neon-cyan)', background: 'rgba(0,212,212,0.05)', textAlign: 'center' }}>
+                <span className="font-mono animate-flicker" style={{ color: 'var(--neon-cyan)', fontSize: '0.8rem' }}>
+                  AWAITING SELECTION...
+                </span>
+              </div>
+            )}
+
+            {scanMessage && (
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                style={{
+                  padding: '1rem',
+                  background: 'rgba(230, 57, 70, 0.05)',
+                  border: '1px solid rgba(230, 57, 70, 0.2)',
+                  marginTop: '1rem',
+                  textAlign: 'center',
+                }}
+              >
+                <span className="font-mono" style={{ fontSize: '0.75rem', color: 'var(--neon-red)' }}>
+                  {scanMessage}
+                </span>
+              </motion.div>
+            )}
+
+            {availableClues.length === 0 && (
+              <div style={{ padding: '1rem', background: 'rgba(57, 217, 138, 0.05)', border: '1px solid rgba(57, 217, 138, 0.2)', textAlign: 'center' }}>
+                <span className="font-mono" style={{ color: 'var(--neon-green)', fontSize: '0.75rem' }}>
+                  ALL OBJECTIVES COMPLETE
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* CLUE SELECTOR MODAL */}
-      <AnimatePresence>
-        {showClueSelector && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="modal-overlay"
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 30, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="modal-panel"
-              style={{ maxWidth: '520px' }}
-            >
-              <div
-                className="font-display"
-                style={{
-                  fontSize: '1.5rem',
-                  color: 'var(--text-bright)',
-                  marginBottom: '0.25rem',
-                }}
-              >
-                WHAT DID YOU FIND?
-              </div>
-              <p
-                className="font-mono"
-                style={{
-                  fontSize: '0.7rem',
-                  color: 'var(--text-secondary)',
-                  marginBottom: '1.5rem',
-                  lineHeight: 1.5,
-                }}
-              >
-                Your investigation revealed something. Select what you identified in the photograph:
-              </p>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {availableClues.map((clue) => (
-                  <motion.button
-                    key={clue.id}
-                    onClick={() => handleClueSelect(clue)}
-                    whileHover={{ scale: 1.01, backgroundColor: 'rgba(0,212,212,0.08)' }}
-                    whileTap={{ scale: 0.99 }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: '0.75rem',
-                      padding: '0.85rem 1rem',
-                      background: 'rgba(255,255,255,0.02)',
-                      border: '1px solid var(--border-default)',
-                      borderRadius: 'var(--radius-sm)',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    <span style={{ color: 'var(--neon-yellow)', fontSize: '1rem', marginTop: '-2px' }}>
-                      ◉
-                    </span>
-                    <div>
-                      <div
-                        className="font-display"
-                        style={{
-                          fontSize: '1rem',
-                          color: 'var(--text-bright)',
-                          marginBottom: '0.15rem',
-                        }}
-                      >
-                        {clue.title}
-                      </div>
-                      <div
-                        className="font-mono"
-                        style={{
-                          fontSize: '0.62rem',
-                          color: 'var(--text-secondary)',
-                          lineHeight: 1.4,
-                        }}
-                      >
-                        {clue.description}
-                      </div>
-                    </div>
-                    <span
-                      className="font-mono"
-                      style={{
-                        marginLeft: 'auto',
-                        color: 'var(--neon-yellow)',
-                        fontSize: '0.7rem',
-                        whiteSpace: 'nowrap',
-                        paddingLeft: '0.5rem',
-                      }}
-                    >
-                      +{clue.xp} XP
-                    </span>
-                  </motion.button>
-                ))}
-              </div>
-
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  marginTop: '1.25rem',
-                  gap: '0.75rem',
-                }}
-              >
-                <button
-                  className="btn btn-ghost"
-                  onClick={() => setShowClueSelector(false)}
-                  style={{ flex: 1 }}
-                >
-                  NOTHING YET
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* CLUE REVEAL CINEMATIC */}
       <ClueReveal clue={activeClue} onClose={handleClueRevealClose} />
     </motion.div>
   );

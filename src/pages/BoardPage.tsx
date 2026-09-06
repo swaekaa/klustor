@@ -125,7 +125,7 @@ export default function BoardPage() {
                 marginBottom: '0.3rem',
               }}
             >
-              VCI // CASE 017
+              KLUSTOR // CASE 017
             </div>
             <h1
               className="font-display"
@@ -150,8 +150,9 @@ export default function BoardPage() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
           style={{
-            background: 'var(--bg-surface)',
-            border: '1px solid var(--border-default)',
+            background: 'rgba(5, 5, 8, 0.6)',
+            border: '1px solid rgba(0, 212, 212, 0.15)',
+            boxShadow: 'inset 0 0 100px rgba(0,0,0,0.8), 0 0 20px rgba(0, 212, 212, 0.05)',
             borderRadius: 'var(--radius-md)',
             padding: '1.5rem',
             marginBottom: '2rem',
@@ -159,14 +160,14 @@ export default function BoardPage() {
             position: 'relative',
           }}
         >
-          {/* Grid background */}
+          {/* Grid background / Corkboard texture abstraction */}
           <div
             style={{
               position: 'absolute',
               inset: 0,
               backgroundImage:
-                'radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)',
-              backgroundSize: '30px 30px',
+                'radial-gradient(circle, rgba(255,45,107,0.08) 1px, transparent 1px)',
+              backgroundSize: '40px 40px',
               borderRadius: 'inherit',
               pointerEvents: 'none',
             }}
@@ -185,18 +186,18 @@ export default function BoardPage() {
                   const target = visibleNodes.find((n) => n.id === targetId);
                   if (!target) return null;
                   return (
-                    <motion.line
+                      <motion.line
                       key={`${node.id}-${targetId}`}
                       initial={{ opacity: 0, pathLength: 0 }}
-                      animate={{ opacity: 0.4, pathLength: 1 }}
-                      transition={{ duration: 0.8, delay: 0.3 }}
+                      animate={{ opacity: 0.6, pathLength: 1 }}
+                      transition={{ duration: 1, delay: 0.3 }}
                       x1={node.x + 60}
-                      y1={node.y + 30}
+                      y1={node.y + 40}
                       x2={target.x + 60}
-                      y2={target.y + 30}
-                      stroke="rgba(0, 212, 212, 0.35)"
-                      strokeWidth="1"
-                      strokeDasharray="4 4"
+                      y2={target.y + 40}
+                      stroke="var(--neon-pink)"
+                      strokeWidth="2"
+                      style={{ filter: 'drop-shadow(0 0 8px var(--neon-pink))' }}
                     />
                   );
                 })
@@ -216,14 +217,16 @@ export default function BoardPage() {
                   <motion.line
                     key={`ev-${evidenceNode.id}-${clueNode.id}`}
                     initial={{ opacity: 0 }}
-                    animate={{ opacity: 0.2 }}
+                    animate={{ opacity: 0.4 }}
                     transition={{ delay: 0.4 }}
                     x1={evidenceNode.x + 60}
-                    y1={evidenceNode.y + 30}
+                    y1={evidenceNode.y + 60}
                     x2={clueNode.x + 60}
-                    y2={clueNode.y + 30}
-                    stroke="rgba(245, 200, 66, 0.3)"
-                    strokeWidth="1"
+                    y2={clueNode.y + 40}
+                    stroke="var(--neon-cyan)"
+                    strokeWidth="1.5"
+                    strokeDasharray="4 4"
+                    style={{ filter: 'drop-shadow(0 0 5px var(--neon-cyan))' }}
                   />
                 ));
               })}
@@ -232,84 +235,76 @@ export default function BoardPage() {
             {visibleNodes.map((node, i) => {
               const clue = getClue(node.id);
               const isEvidence = node.type === 'evidence';
+              const evidenceData = isEvidence ? case017.evidence.find(e => e.id === node.id) : null;
+              
               const nodeWidth = isEvidence ? 120 : 110;
-              const nodeHeight = isEvidence ? 50 : 44;
+              const nodeHeight = isEvidence ? 140 : 60;
+              
+              // Deterministic rotation based on index
+              const rotation = (i % 5 - 2) * 2;
 
               return (
                 <motion.g
                   key={node.id}
-                  initial={{ opacity: 0, scale: 0 }}
+                  initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: i * 0.05 + 0.1, type: 'spring', stiffness: 200 }}
-                  style={{ cursor: 'pointer' }}
+                  transition={{ delay: i * 0.05 + 0.1, type: 'spring' }}
+                  style={{ cursor: 'pointer', transformOrigin: `${node.x + nodeWidth/2}px ${node.y + nodeHeight/2}px` }}
                   onClick={() => {
                     if (isEvidence) navigate(`/evidence/${node.id}`);
                   }}
                 >
-                  {/* Node background */}
-                  <rect
-                    x={node.x}
-                    y={node.y}
-                    width={nodeWidth}
-                    height={nodeHeight}
-                    rx="3"
-                    fill={isEvidence ? 'rgba(15, 19, 24, 0.95)' : 'rgba(22, 28, 36, 0.9)'}
-                    stroke={node.color}
-                    strokeWidth={isEvidence ? '1.5' : '1'}
-                    strokeOpacity={isEvidence ? '0.6' : '0.3'}
-                  />
-
-                  {/* Top color bar */}
-                  <rect
-                    x={node.x}
-                    y={node.y}
-                    width={nodeWidth}
-                    height="3"
-                    rx="2"
-                    fill={node.color}
-                    opacity="0.6"
-                  />
-
-                  {/* Node label */}
-                  <text
-                    x={node.x + nodeWidth / 2}
-                    y={node.y + 20}
-                    textAnchor="middle"
-                    fill={node.color}
-                    fontSize={isEvidence ? '11' : '10'}
-                    fontFamily="'Bebas Neue', sans-serif"
-                    letterSpacing="1"
-                  >
-                    {node.label.substring(0, 14)}
-                  </text>
-
-                  {/* Sublabel */}
-                  {node.sublabel && (
-                    <text
-                      x={node.x + nodeWidth / 2}
-                      y={node.y + 35}
-                      textAnchor="middle"
-                      fill="rgba(138, 125, 107, 0.8)"
-                      fontSize="8"
-                      fontFamily="'JetBrains Mono', monospace"
-                    >
-                      {node.sublabel}
-                    </text>
-                  )}
-
-                  {/* Clue XP badge */}
-                  {!isEvidence && clue && (
-                    <text
-                      x={node.x + nodeWidth - 6}
-                      y={node.y + 8}
-                      textAnchor="end"
-                      fill="rgba(245, 200, 66, 0.5)"
-                      fontSize="7"
-                      fontFamily="'JetBrains Mono', monospace"
-                    >
-                      +{clue.xp}
-                    </text>
-                  )}
+                  <foreignObject x={node.x} y={node.y} width={nodeWidth} height={nodeHeight} transform={`rotate(${rotation}, ${node.x + nodeWidth/2}, ${node.y + nodeHeight/2})`}>
+                    {isEvidence ? (
+                      <div style={{
+                        background: '#e8dcc8',
+                        padding: '6px',
+                        paddingBottom: '20px',
+                        width: '100%',
+                        height: '100%',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.8)',
+                        border: '1px solid #d4c5b0'
+                      }}>
+                        <div style={{ width: '100%', height: '80px', backgroundColor: '#333', overflow: 'hidden' }}>
+                           {evidenceData && <img src={evidenceData.imageSrc} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                        </div>
+                        <div style={{ color: '#1a1a1a', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 'bold', marginTop: '6px', textAlign: 'center' }}>
+                          {node.label}
+                        </div>
+                        <div style={{ color: '#d32f2f', fontFamily: 'var(--font-mono)', fontSize: '0.45rem', textAlign: 'center', marginTop: '2px' }}>
+                          EVIDENCE
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{
+                        background: node.color,
+                        width: '100%',
+                        height: '100%',
+                        padding: '8px',
+                        boxShadow: `0 0 15px ${node.color}40`,
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        color: '#000',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                      }}>
+                        <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.85rem', textAlign: 'center', lineHeight: 1.1 }}>
+                          {node.label}
+                        </div>
+                        {node.sublabel && (
+                          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5rem', opacity: 0.7, marginTop: '4px' }}>
+                            {node.sublabel}
+                          </div>
+                        )}
+                        {clue && (
+                          <div style={{ position: 'absolute', top: '2px', right: '4px', fontSize: '0.45rem', fontFamily: 'var(--font-mono)', fontWeight: 'bold' }}>
+                            +{clue.xp}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </foreignObject>
                 </motion.g>
               );
             })}

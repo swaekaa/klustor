@@ -11,8 +11,12 @@ export interface ClueZone {
   id: string;
   label: string;
   description: string;
-  // Descriptive region (for UI hints, not computer vision)
-  region: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'center' | 'any';
+  // Normalized 0-100 coordinates for clue detection (IoU)
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  tolerance?: number;
 }
 
 export interface Clue {

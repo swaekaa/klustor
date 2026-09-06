@@ -2,21 +2,20 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '../store/gameStore';
 import { case017 } from '../data/cases/case017';
-import EvidenceCard from '../components/evidence/EvidenceCard';
+import { useState } from 'react';
 
 export default function CasePage() {
   const navigate = useNavigate();
-  const {
-    player,
-    discoveredClues,
-    reviewedEvidence,
-    progress,
-    canMakeDecision,
-    getUnlockedEvidence,
-  } = useGameStore();
+  const { currentCaseId, discoveredClues, player } = useGameStore();
+  const [hoveredEvidence, setHoveredEvidence] = useState<string | null>(null);
 
-  const unlockedIds = getUnlockedEvidence();
-  const totalClues = case017.clues.length;
+  if (!currentCaseId || currentCaseId !== 'case-017') {
+    return <div>No active case.</div>;
+  }
+
+  const caseData = case017;
+  const totalClues = caseData.clues.length;
+  const progress = (discoveredClues.length / totalClues) * 100;
 
   return (
     <motion.div
@@ -24,269 +23,111 @@ export default function CasePage() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="page"
-      style={{ paddingTop: '56px' }}
+      style={{
+        paddingTop: '40px',
+        minHeight: '100vh',
+        display: 'flex',
+        background: 'var(--bg-primary)',
+        backgroundImage: "url('/bg-landing.jpg')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundBlendMode: 'overlay'
+      }}
     >
-      {/* Background glow */}
-      <div
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '300px',
-          background:
-            'radial-gradient(ellipse 60% 100% at 50% 0%, rgba(0,212,212,0.04) 0%, transparent 100%)',
-          pointerEvents: 'none',
-        }}
-      />
+      {/* Dark overlay */}
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 0 }} />
 
-      <div className="container" style={{ paddingTop: '2rem', paddingBottom: '4rem' }}>
-        {/* Case Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          style={{ marginBottom: '2.5rem' }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'flex-end',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '1rem',
-              marginBottom: '1rem',
-            }}
-          >
-            <div>
-              <div
-                className="font-mono"
-                style={{
-                  fontSize: '0.65rem',
-                  color: 'var(--text-secondary)',
-                  letterSpacing: '0.15em',
-                  marginBottom: '0.4rem',
-                }}
-              >
-                VICE CITY INVESTIGATIONS // {case017.subtitle}
-              </div>
-              <h1
-                className="font-display"
-                style={{
-                  fontSize: 'clamp(2rem, 5vw, 3.5rem)',
-                  color: 'var(--text-bright)',
-                  marginBottom: '0.25rem',
-                }}
-              >
-                {case017.title}
-              </h1>
-              <p
-                style={{
-                  color: 'var(--text-secondary)',
-                  fontSize: '0.85rem',
-                  maxWidth: '560px',
-                  lineHeight: 1.6,
-                }}
-              >
-                {case017.briefing.substring(0, 120)}...
-              </p>
+      <div style={{ position: 'relative', zIndex: 10, display: 'flex', width: '100%', padding: '3rem' }}>
+        
+        {/* Left Column: Mission Select Details */}
+        <div style={{ flex: '0 0 400px', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          <div>
+            <h3 className="font-mono" style={{ color: 'var(--neon-cyan)', fontSize: '1rem', letterSpacing: '0.1em', margin: '0 0 0.5rem 0' }}>CASE FILES</h3>
+            <h1 className="font-display" style={{ fontSize: '4rem', lineHeight: 0.9, margin: 0, color: '#fff' }}>
+              CASE {caseData.id.split('-')[1]}<br/>
+              <span style={{ fontSize: '2rem', color: 'rgba(255,255,255,0.7)' }}>{caseData.title}</span>
+            </h1>
+          </div>
+
+          <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '1.5rem', backdropFilter: 'blur(10px)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>
+              <span className="font-mono" style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>STATUS</span>
+              <span className="font-mono" style={{ color: 'var(--neon-cyan)', fontSize: '0.8rem' }}>ACTIVE</span>
             </div>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <span className="badge badge-red">● ACTIVE</span>
-              <span className="badge badge-cyan">CASE 017</span>
-              <span className="badge badge-yellow">02:13 AM</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>
+              <span className="font-mono" style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>EVIDENCE</span>
+              <span className="font-mono" style={{ color: '#fff', fontSize: '0.8rem' }}>{caseData.evidence.length} / {caseData.evidence.length}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>
+              <span className="font-mono" style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>CLUES</span>
+              <span className="font-mono" style={{ color: '#fff', fontSize: '0.8rem' }}>{discoveredClues.length} / {totalClues}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>
+              <span className="font-mono" style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>REPUTATION</span>
+              <span className="font-mono" style={{ color: '#fff', fontSize: '0.8rem' }}>{player.reputation}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span className="font-mono" style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>HEAT</span>
+              <span className="font-mono" style={{ color: 'var(--neon-red)', fontSize: '0.8rem' }}>{player.heat}%</span>
             </div>
           </div>
 
-          {/* Progress Bar */}
-          <div className="progress-bar" style={{ marginBottom: '0.4rem' }}>
-            <div className="progress-bar__fill" style={{ width: `${progress}%` }} />
-          </div>
-          <div
-            className="font-mono"
-            style={{
-              fontSize: '0.6rem',
-              color: 'var(--text-muted)',
-              letterSpacing: '0.1em',
-            }}
-          >
-            INVESTIGATION: {progress}% COMPLETE
-          </div>
-        </motion.div>
-
-        {/* Stats Row */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-            gap: '1rem',
-            marginBottom: '2.5rem',
-          }}
-        >
-          {[
-            {
-              label: 'EVIDENCE REVIEWED',
-              value: `${reviewedEvidence.length} / 5`,
-              color: 'var(--neon-cyan)',
-            },
-            {
-              label: 'CLUES DISCOVERED',
-              value: `${discoveredClues.length} / ${totalClues}`,
-              color: 'var(--neon-yellow)',
-            },
-            {
-              label: 'REPUTATION',
-              value: player.reputation,
-              color: 'var(--neon-cyan)',
-            },
-            {
-              label: 'HEAT LEVEL',
-              value: `${player.heat}%`,
-              color: 'var(--neon-red)',
-            },
-            {
-              label: 'RANK',
-              value: player.rank,
-              color: 'var(--text-secondary)',
-            },
-          ].map((stat) => (
-            <div
-              key={stat.label}
-              className="panel"
-              style={{ padding: '1rem', textAlign: 'center' }}
-            >
-              <div
-                className="font-mono"
-                style={{
-                  fontSize: '0.55rem',
-                  color: 'var(--text-muted)',
-                  letterSpacing: '0.12em',
-                  marginBottom: '0.4rem',
-                }}
-              >
-                {stat.label}
-              </div>
-              <div
-                className="font-display"
-                style={{ fontSize: '1.4rem', color: stat.color }}
-              >
-                {stat.value}
-              </div>
-            </div>
-          ))}
-        </motion.div>
-
-        {/* Section divider */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1rem',
-            marginBottom: '1.5rem',
-          }}
-        >
-          <span
-            className="font-display"
-            style={{ fontSize: '1.2rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}
-          >
-            EVIDENCE FILES
-          </span>
-          <div className="divider" />
-          <span
-            className="font-mono"
-            style={{ fontSize: '0.6rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}
-          >
-            {unlockedIds.length} / {case017.evidence.length} ACCESSIBLE
-          </span>
-        </motion.div>
-
-        {/* Evidence Grid */}
-        <div className="evidence-grid">
-          {case017.evidence.map((ev, index) => (
-            <EvidenceCard
-              key={ev.id}
-              evidence={ev}
-              isUnlocked={unlockedIds.includes(ev.id)}
-              index={index}
-            />
-          ))}
-        </div>
-
-        {/* Decision CTA */}
-        {canMakeDecision() && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            style={{
-              marginTop: '3rem',
-              padding: '2rem',
-              background: 'rgba(0, 212, 212, 0.04)',
-              border: '1px solid rgba(0, 212, 212, 0.2)',
-              borderRadius: 'var(--radius-md)',
-              textAlign: 'center',
-            }}
-          >
-            <div
-              className="font-mono"
-              style={{
-                fontSize: '0.65rem',
-                color: 'var(--neon-cyan)',
-                letterSpacing: '0.15em',
-                marginBottom: '0.75rem',
-              }}
-            >
-              ● YOU HAVE ENOUGH EVIDENCE
-            </div>
-            <h2
-              className="font-display"
-              style={{ fontSize: '1.8rem', marginBottom: '0.5rem', color: 'var(--text-bright)' }}
-            >
-              WHAT WILL YOU DO?
-            </h2>
-            <p
-              style={{
-                color: 'var(--text-secondary)',
-                fontSize: '0.85rem',
-                marginBottom: '1.5rem',
-              }}
-            >
-              You've gathered significant evidence. The time to act is now.
+          <div style={{ flex: 1 }}>
+            <p style={{ color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, fontSize: '0.95rem' }}>
+              {caseData.briefing}
             </p>
-            <motion.button
-              className="btn btn-primary btn-lg"
-              onClick={() => navigate('/decision')}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              MAKE YOUR DECISION →
-            </motion.button>
-          </motion.div>
-        )}
+          </div>
 
-        {/* Evidence Board Link */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          style={{
-            marginTop: '2rem',
-            textAlign: 'center',
-          }}
-        >
-          <button
-            className="btn btn-ghost"
+          <button 
+            className="btn btn-primary"
+            style={{ width: '100%', fontSize: '1.5rem', padding: '1rem' }}
             onClick={() => navigate('/board')}
           >
-            ◈ VIEW EVIDENCE BOARD
+            VIEW EVIDENCE BOARD
           </button>
-        </motion.div>
+        </div>
+
+        {/* Right Column: Cinematic Evidence Thumbnails */}
+        <div style={{ flex: 1, paddingLeft: '4rem', display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'auto', paddingRight: '1rem' }}>
+          {caseData.evidence.map((ev, i) => (
+            <motion.div
+              key={ev.id}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.1 }}
+              onMouseEnter={() => setHoveredEvidence(ev.id)}
+              onMouseLeave={() => setHoveredEvidence(null)}
+              onClick={() => navigate(`/evidence/${ev.id}`)}
+              style={{
+                position: 'relative',
+                height: '160px',
+                background: `url(${ev.imageSrc})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                border: hoveredEvidence === ev.id ? '2px solid #fff' : '1px solid rgba(255,255,255,0.1)',
+                cursor: 'pointer',
+                overflow: 'hidden',
+                transition: 'all 0.2s',
+                transform: hoveredEvidence === ev.id ? 'scale(1.02)' : 'scale(1)'
+              }}
+            >
+              {/* Vignette */}
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.2) 100%)' }} />
+              
+              <div style={{ position: 'absolute', inset: 0, padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <div className="font-mono" style={{ color: 'var(--neon-cyan)', fontSize: '0.7rem', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>
+                  EVIDENCE #{String(i + 1).padStart(2, '0')} // {ev.timestamp}
+                </div>
+                <h3 className="font-display" style={{ fontSize: '2.5rem', color: '#fff', margin: 0, lineHeight: 1 }}>
+                  {ev.title}
+                </h3>
+                <div className="font-mono" style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.7rem', marginTop: '0.2rem' }}>
+                  {ev.location.toUpperCase()}
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </motion.div>
   );

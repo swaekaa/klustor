@@ -10,11 +10,11 @@
    ============================================================ */
 :root {
   /* Backgrounds */
-  --bg-primary: #080b0f;
-  --bg-surface: #0f1318;
-  --bg-elevated: #161c24;
-  --bg-panel: #1a2030;
-  --bg-overlay: rgba(8, 11, 15, 0.85);
+  --bg-primary: #050508;
+  --bg-surface: #0a0b12;
+  --bg-elevated: #11121d;
+  --bg-panel: #161525;
+  --bg-overlay: rgba(5, 5, 8, 0.85);
 
   /* Borders */
   --border-subtle: rgba(255, 255, 255, 0.04);
@@ -41,9 +41,9 @@
   --glow-red: rgba(230, 57, 70, 0.15);
 
   /* Typography */
-  --font-display: 'Bebas Neue', 'Impact', condensed, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
-  --font-body: 'Inter', -apple-system, sans-serif;
+  --font-display: 'Bebas Neue', 'Arial Narrow', sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 
   /* Spacing */
   --radius-sm: 2px;
@@ -75,7 +75,8 @@ html {
 }
 
 body {
-  background-color: var(--bg-primary);
+  background: linear-gradient(135deg, #040508 0%, #090612 50%, #050a11 100%);
+  background-attachment: fixed;
   color: var(--text-primary);
   font-family: var(--font-body);
   font-size: 0.9rem;
@@ -165,11 +166,11 @@ h6 {
 .font-display {
   font-family: var(--font-display);
   letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .font-mono {
   font-family: var(--font-mono);
-  font-size: 0.8em;
 }
 
 .text-neon-cyan {
@@ -203,16 +204,19 @@ h6 {
 .page {
   min-height: 100vh;
   position: relative;
+  animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ============================================================
    Panel / Card Components
    ============================================================ */
 .panel {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
+  background: rgba(10, 11, 18, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   padding: 1.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius-md);
 }
 
 .panel--elevated {
@@ -221,9 +225,37 @@ h6 {
 }
 
 .panel--glass {
-  background: rgba(22, 28, 36, 0.7);
+  background: linear-gradient(180deg, rgba(17, 18, 29, 0.8) 0%, rgba(10, 11, 18, 0.9) 100%);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(12px);
   border: 1px solid var(--border-default);
+}
+
+/* Interactive elements */
+.gta-menu-item {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  transition: all 0.1s ease;
+  position: relative;
+  text-align: left;
+  border: none;
+  background: transparent;
+  width: 100%;
+}
+
+.gta-menu-item:hover, .gta-menu-item.active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.gta-menu-item.active {
+  background: #fff;
+  color: #000;
+  padding-left: 1.5rem;
 }
 
 /* ============================================================
@@ -234,16 +266,16 @@ h6 {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
+  padding: 0.5rem 1.5rem;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
   font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
+  letter-spacing: 0.05em;
+  transition: all 0.15s ease;
   cursor: pointer;
-  transition: all var(--transition-default);
+  border: none;
+  text-transform: uppercase;
+  border-radius: var(--radius-sm);
   white-space: nowrap;
   text-decoration: none;
   outline: none;
@@ -265,16 +297,12 @@ h6 {
 
 /* Primary Button */
 .btn-primary {
-  background: var(--neon-cyan);
-  color: var(--bg-primary);
-  border-color: var(--neon-cyan);
-  font-weight: 700;
+  background: #fff;
+  color: #000;
 }
 
 .btn-primary:hover {
-  background: #00e8e8;
-  box-shadow: 0 0 20px rgba(0, 212, 212, 0.4), 0 0 40px rgba(0, 212, 212, 0.15);
-  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .btn-primary:active {
@@ -283,15 +311,14 @@ h6 {
 
 /* Ghost Button */
 .btn-ghost {
-  background: transparent;
+  background: rgba(0, 0, 0, 0.5);
   color: var(--text-secondary);
-  border-color: var(--border-default);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
   color: var(--text-primary);
-  border-color: var(--border-accent);
-  background: var(--glow-cyan);
 }
 
 /* Danger Button */
