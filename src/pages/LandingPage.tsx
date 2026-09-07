@@ -1,26 +1,42 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { useGameStore } from '../store/gameStore';
 import { useState } from 'react';
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const { startCase } = useGameStore();
   const [selectedItem, setSelectedItem] = useState(0);
 
   const menuItems = [
-    { label: 'STORY MODE', action: () => handleStart() },
-    { label: 'CASE FILES', action: () => navigate('/case') },
-    { label: 'EVIDENCE BOARD', action: () => navigate('/board') },
-    { label: 'CITY MAP', action: () => navigate('/map') },
-    { label: 'CONTACTS', action: () => navigate('/contacts') },
-    { label: 'OPTIONS', action: () => {} }
+    { label: 'STORY MODE', action: () => navigate('/case') },
+    { label: 'FREE PLAY', action: () => {} }, // Placeholder
+    { label: 'OPTIONS', action: () => {} },
+    { label: 'QUIT', action: () => {} }
   ];
 
-  const handleStart = () => {
-    startCase('case-017');
-    navigate('/case');
+  const getMenuContext = (index: number) => {
+    switch (index) {
+      case 0:
+        return {
+          title: 'THE FIXER',
+          subtitle: 'START CAMPAIGN',
+          desc: "You don't ask questions. You deliver. Enter the neon-soaked underworld of Vice City as an independent creative fixer. Turn raw evidence into exactly what your clients need."
+        };
+      case 1:
+        return {
+          title: 'FREE PLAY',
+          subtitle: 'UNRESTRICTED ACCESS',
+          desc: "Access the Fixer Lab without a client brief. Edit any image, master the tools, and save to your portfolio without heat or consequences."
+        };
+      default:
+        return {
+          title: 'SYSTEM',
+          subtitle: 'CONFIGURATION',
+          desc: "Adjust audio, visuals, and game settings."
+        };
+    }
   };
+
+  const context = getMenuContext(selectedItem);
 
   return (
     <motion.div
@@ -44,7 +60,7 @@ export default function LandingPage() {
           backgroundImage: "url('/bg-landing.jpg')",
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          filter: 'brightness(0.6) contrast(1.1)',
+          filter: 'brightness(0.7) contrast(1.2)',
           zIndex: 0,
           transition: 'transform 10s ease-out',
           transform: 'scale(1.05)'
@@ -56,7 +72,7 @@ export default function LandingPage() {
         style={{
           position: 'absolute',
           inset: 0,
-          background: 'radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.8) 100%), linear-gradient(0deg, rgba(0,0,0,0.9) 0%, transparent 40%)',
+          background: 'radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.85) 100%), linear-gradient(0deg, rgba(0,0,0,0.95) 0%, transparent 50%)',
           zIndex: 1
         }}
       />
@@ -74,8 +90,8 @@ export default function LandingPage() {
           <h1 className="font-display" style={{ fontSize: '5rem', margin: 0, lineHeight: 0.9, textShadow: '0 4px 20px rgba(0,0,0,0.8)', color: '#fff' }}>
             KLUSTOR
           </h1>
-          <div className="font-mono" style={{ fontSize: '1rem', color: 'var(--neon-cyan)', letterSpacing: '0.2em', textShadow: '0 2px 10px rgba(0,0,0,0.8)' }}>
-            VICE CITY INVESTIGATIONS
+          <div className="font-mono" style={{ fontSize: '1.2rem', color: 'var(--neon-cyan)', letterSpacing: '0.2em', textShadow: '0 2px 10px rgba(0,0,0,0.8)', marginTop: '0.5rem' }}>
+            // THE FIXER
           </div>
         </motion.div>
 
@@ -87,7 +103,7 @@ export default function LandingPage() {
             {menuItems.map((item, index) => (
               <motion.button
                 key={item.label}
-                className={`gta-menu-item ${selectedItem === index ? 'active' : ''}`}
+                className={'gta-menu-item ' + (selectedItem === index ? 'active' : '')}
                 onMouseEnter={() => setSelectedItem(index)}
                 onClick={item.action}
                 initial={{ opacity: 0, x: -20 }}
@@ -101,33 +117,34 @@ export default function LandingPage() {
 
           {/* Contextual Description Panel */}
           <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1 }}
+            key={selectedItem}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
             style={{ 
               flex: 1, 
-              background: 'rgba(0,0,0,0.6)', 
+              background: 'rgba(10, 11, 15, 0.8)', 
               backdropFilter: 'blur(10px)',
-              padding: '2rem',
+              padding: '2.5rem',
               borderLeft: '4px solid var(--neon-cyan)',
               maxWidth: '600px',
-              marginBottom: '1rem'
+              marginBottom: '1rem',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.5)'
             }}
           >
-            <div className="font-mono" style={{ fontSize: '0.8rem', color: 'var(--neon-cyan)', marginBottom: '0.5rem' }}>
-              CURRENT SELECTION
+            <div className="font-mono" style={{ fontSize: '0.8rem', color: 'var(--neon-cyan)', marginBottom: '0.5rem', letterSpacing: '0.1em' }}>
+              {context.subtitle}
             </div>
-            <h2 className="font-display" style={{ fontSize: '2.5rem', margin: '0 0 1rem 0', color: '#fff' }}>
-              CASE FILE 017<br/>
-              <span style={{ color: 'rgba(255,255,255,0.6)' }}>THE OCEAN DRIVE INCIDENT</span>
+            <h2 className="font-display" style={{ fontSize: '3rem', margin: '0 0 1rem 0', color: '#fff', lineHeight: 1 }}>
+              {context.title}
             </h2>
-            <p style={{ color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, fontSize: '0.95rem' }}>
-              At 2:13 AM, a mysterious incident took place near Ocean Drive. An anonymous witness sends you several photographs. The police have not connected the evidence. You must determine what happened.
+            <p className="font-mono" style={{ color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, fontSize: '0.9rem' }}>
+              {context.desc}
             </p>
           </motion.div>
 
         </div>
       </div>
+      
       {/* Footer Credit */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -145,7 +162,7 @@ export default function LandingPage() {
           zIndex: 10
         }}
       >
-        POWERED BY UNLAYER REACT IMAGE EDITOR // KLUSTOR // 2024
+        POWERED BY UNLAYER REACT IMAGE EDITOR // KLUSTOR FIXER // 2024
       </motion.div>
     </motion.div>
   );

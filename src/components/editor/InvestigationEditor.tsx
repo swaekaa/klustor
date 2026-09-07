@@ -20,15 +20,14 @@ import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 
 // Official Unlayer React Image Editor
-// npm install @unlayer/react-image-editor
 import ImageEditor, { type ImageEditorSaveResult, type ImageEditorInstance } from '@unlayer/react-image-editor';
 
 interface InvestigationEditorProps {
   /** Source image URL or data URL */
   imageSrc: string;
-  /** Evidence ID for context */
+  /** Job ID for context */
   evidenceId: string;
-  /** Called when user saves their investigation — receives the dataUrl */
+  /** Called when user saves their edit — receives the dataUrl */
   onSave: (dataUrl: string) => void;
   /** Called when editor encounters an error */
   onError?: (error: Error) => void;
@@ -69,12 +68,12 @@ export default function InvestigationEditor({
   );
 
   const handleEditorLoad = useCallback((editor: ImageEditorInstance) => {
-    console.log('[VCI] Unlayer Image Editor mounted:', editor);
+    console.log('[FIXER LAB] Unlayer Image Editor mounted:', editor);
   }, []);
 
   const handleEditorError = useCallback(
     (error: Error) => {
-      console.error('[VCI] Editor error:', error);
+      console.error('[FIXER LAB] Editor error:', error);
       onError?.(error);
     },
     [onError]
@@ -107,11 +106,11 @@ export default function InvestigationEditor({
               saveStatus === 'saved'
                 ? 'rgba(57, 217, 138, 0.15)'
                 : 'rgba(0, 212, 212, 0.1)',
-            border: `1px solid ${
+            border: '1px solid ' + (
               saveStatus === 'saved'
                 ? 'rgba(57, 217, 138, 0.4)'
                 : 'rgba(0, 212, 212, 0.3)'
-            }`,
+            ),
             borderRadius: '4px',
             fontFamily: 'var(--font-mono)',
             fontSize: '0.7rem',
@@ -121,30 +120,20 @@ export default function InvestigationEditor({
             pointerEvents: 'none',
           }}
         >
-          {saveStatus === 'saving' && '● PROCESSING EVIDENCE...'}
-          {saveStatus === 'saved' && '✓ EVIDENCE SAVED — CLUE DISCOVERY PENDING'}
+          {saveStatus === 'saving' && '● PROCESSING IMAGE DATA...'}
+          {saveStatus === 'saved' && '✓ EDITS SAVED TO LOCAL WORKSTATION'}
         </motion.div>
       )}
 
       {/* 
         THE OFFICIAL UNLAYER REACT IMAGE EDITOR
-        
-        Props used:
-          image     — the evidence photograph to investigate
-          onSave    — fired when user clicks Save in the editor UI
-          onLoad    — fires when editor is mounted and ready
-          onError   — fires on script load or mount failure
-          onLoadError — fires when image fails to load onto canvas
-          options.theme — dark mode to match the neon-noir UI
-          minHeight — ensures the editor fills the viewport
-          style     — full-height container
       */}
       <ImageEditor
         image={imageSrc}
         onSave={handleSave}
         onLoad={handleEditorLoad}
         onError={handleEditorError}
-        onLoadError={() => console.warn('[VCI] Evidence image failed to load into editor canvas')}
+        onLoadError={() => console.warn('[FIXER LAB] Client asset failed to load into editor canvas')}
         options={{
           theme: 'dark',
           offline: false,
@@ -155,7 +144,7 @@ export default function InvestigationEditor({
           width: '100%',
           height: '100%',
         }}
-        editorId={`vci-editor-${evidenceId}`}
+        editorId={'fixer-editor-' + evidenceId}
       />
     </div>
   );

@@ -5,8 +5,6 @@ import CasePage from './pages/CasePage';
 import EvidencePage from './pages/EvidencePage';
 import EditorPage from './pages/EditorPage';
 import BoardPage from './pages/BoardPage';
-import DecisionPage from './pages/DecisionPage';
-import ResultsPage from './pages/ResultsPage';
 import MapPage from './pages/MapPage';
 import ContactsPage from './pages/ContactsPage';
 import NavBar from './components/ui/NavBar';
@@ -15,7 +13,7 @@ import { useGameStore } from './store/gameStore';
 // Inner component that can access router context
 function AppRoutes() {
   const location = useLocation();
-  const currentCaseId = useGameStore((s) => s.currentCaseId);
+  const activeJobId = useGameStore((s) => s.activeJobId);
 
   return (
     <AnimatePresence mode="wait" initial={false}>
@@ -23,63 +21,47 @@ function AppRoutes() {
         {/* Landing — no nav */}
         <Route path="/" element={<LandingPage />} />
 
-        {/* Case hub */}
+        {/* Case hub / Job Board */}
         <Route
           path="/case"
           element={
-            currentCaseId ? (
-              <>
-                <NavBar />
-                <CasePage />
-              </>
-            ) : (
-              <Navigate to="/" replace />
-            )
+            <>
+              <NavBar />
+              <CasePage />
+            </>
           }
         />
 
-        {/* Evidence viewer */}
+        {/* Evidence viewer / Briefing */}
         <Route
           path="/evidence/:id"
           element={
-            currentCaseId ? (
-              <>
-                <NavBar />
-                <EvidencePage />
-              </>
-            ) : (
-              <Navigate to="/" replace />
-            )
+            <>
+              <NavBar />
+              <EvidencePage />
+            </>
           }
         />
 
-        {/* Editor — the core Unlayer screen */}
+        {/* Editor / Fixer Lab */}
         <Route
           path="/editor/:id"
           element={
-            currentCaseId ? (
-              <>
-                <NavBar />
-                <EditorPage />
-              </>
-            ) : (
-              <Navigate to="/" replace />
-            )
+            <>
+              <NavBar />
+              <EditorPage />
+            </>
           }
         />
 
-        {/* Evidence board */}
+        {/* Evidence board / The Wall */}
         <Route
           path="/board"
           element={
-            currentCaseId ? (
-              <>
-                <NavBar />
-                <BoardPage />
-              </>
-            ) : (
-              <Navigate to="/" replace />
-            )
+            <>
+              <NavBar />
+              <BoardPage />
+            </>
           }
         />
 
@@ -87,14 +69,10 @@ function AppRoutes() {
         <Route
           path="/map"
           element={
-            currentCaseId ? (
-              <>
-                <NavBar />
-                <MapPage />
-              </>
-            ) : (
-              <Navigate to="/" replace />
-            )
+            <>
+              <NavBar />
+              <MapPage />
+            </>
           }
         />
 
@@ -102,46 +80,14 @@ function AppRoutes() {
         <Route
           path="/contacts"
           element={
-            currentCaseId ? (
-              <>
-                <NavBar />
-                <ContactsPage />
-              </>
-            ) : (
-              <Navigate to="/" replace />
-            )
+            <>
+              <NavBar />
+              <ContactsPage />
+            </>
           }
         />
 
-        {/* Decision */}
-        <Route
-          path="/decision"
-          element={
-            currentCaseId ? (
-              <>
-                <NavBar />
-                <DecisionPage />
-              </>
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
 
-        {/* Results */}
-        <Route
-          path="/results"
-          element={
-            currentCaseId ? (
-              <>
-                <NavBar />
-                <ResultsPage />
-              </>
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

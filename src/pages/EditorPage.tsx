@@ -1,127 +1,148 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useState, useCallback } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { case017 } from '../data/cases/case017';
+import { jobs, clients } from '../data/jobs';
 import InvestigationEditor from '../components/editor/InvestigationEditor';
-import ScannerOverlay from '../components/editor/ScannerOverlay';
-import ClueReveal from '../components/clues/ClueReveal';
-import type { Clue } from '../types';
 
 export default function EditorPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { saveInvestigation, discoverClue, discoveredClues, getUnlockedEvidence } = useGameStore();
+  const { submitJob, unlockedJobs } = useGameStore();
 
-  const [activeClue, setActiveClue] = useState<Clue | null>(null);
-  const [scanMode, setScanMode] = useState(false);
-  const [scanMessage, setScanMessage] = useState<string | null>(null);
-  const [savedThisSession, setSavedThisSession] = useState(false);
+  const [finalImage, setFinalImage] = useState<string | null>(null);
+  const [completedTasks, setCompletedTasks] = useState<string[]>([]);
+  const [deliveryStatus, setDeliveryStatus] = useState<'editing' | 'delivered'>('editing');
+  const [finalScore, setFinalScore] = useState(0);
+  const [editorError, setEditorError] = useState(false);
+  
+  const job = jobs.find((j) => j.id === id);
 
-  const evidence = case017.evidence.find((e) => e.id === id);
-  const unlockedIds = getUnlockedEvidence();
-
-  if (!evidence || !unlockedIds.includes(evidence.id)) {
+  if (!job || !unlockedJobs.includes(job.id)) {
     return (
-      <div
-        className="page"
-        style={{
-          paddingTop: '80px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
+      <div className="page" style={{ paddingTop: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
-          <div className="font-display" style={{ fontSize: '2rem', color: 'var(--text-muted)' }}>
-            EVIDENCE LOCKED
-          </div>
-          <button
-            className="btn btn-ghost"
-            style={{ marginTop: '1rem' }}
-            onClick={() => navigate('/case')}
-          >
-            ← BACK TO CASE
-          </button>
+          <div className="font-display" style={{ fontSize: '3rem', color: 'var(--text-muted)' }}>ACCESS DENIED</div>
+          <button className="btn btn-ghost" style={{ marginTop: '1rem' }} onClick={() => navigate('/case')}>← BACK</button>
         </div>
       </div>
     );
   }
 
-  const evidenceIndex = case017.evidence.findIndex((e) => e.id === evidence.id);
-
-  // Get undiscovered clues for this evidence
-  const availableClues = evidence.clueIds
-    .map((cId) => case017.clues.find((c) => c.id === cId))
-    .filter((c): c is Clue => !!c && !discoveredClues.includes(c.id));
+  const client = clients[job.clientId];
 
   const handleEditorSave = useCallback(
     (dataUrl: string) => {
-      saveInvestigation(evidence.id, dataUrl, {
-        annotations: [],
-        discoveredClueIds: [],
-        savedImage: dataUrl,
-        timestamp: new Date().toISOString(),
-      });
-      setSavedThisSession(true);
+      setFinalImage(dataUrl);
     },
-    [evidence.id, saveInvestigation]
+    []
   );
 
-  const calculateIoU = (rect1: any, rect2: any) => {
-    const xLeft = Math.max(rect1.x, rect2.x);
-    const yTop = Math.max(rect1.y, rect2.y);
-    const xRight = Math.min(rect1.x + rect1.width, rect2.x + rect2.width);
-    const yBottom = Math.min(rect1.y + rect1.height, rect2.y + rect2.height);
-
-    if (xRight < xLeft || yBottom < yTop) return 0;
-
-    const intersectionArea = (xRight - xLeft) * (yBottom - yTop);
-    const rect1Area = rect1.width * rect1.height;
-    const rect2Area = rect2.width * rect2.height;
-    const unionArea = rect1Area + rect2Area - intersectionArea;
-
-    return intersectionArea / unionArea;
+  const toggleTask = (reqId: string) => {
+    setCompletedTasks(prev => 
+      prev.includes(reqId) ? prev.filter(id => id !== reqId) : [...prev, reqId]
+    );
   };
 
-  const handleAnalyzeRegion = (normalizedRect: { x: number; y: number; width: number; height: number }) => {
-    setScanMode(false);
-    
-    let foundClueId: string | null = null;
-    let maxIou = 0;
+  const handleSubmit = () => {
+    if (!finalImage) return;
 
-    for (const zone of evidence.clueZones) {
-      const clueId = evidence.clueIds[evidence.clueZones.indexOf(zone)];
-      if (discoveredClues.includes(clueId)) continue; // Already found
+    // Simple deterministic scoring for MVP
+    let score = 50;
+    if (finalImage !== job.image) score += 20; 
+    const taskCompletionRatio = completedTasks.length / job.requirements.length;
+    score += Math.floor(taskCompletionRatio * 30); 
 
-      const iou = calculateIoU(normalizedRect, zone);
-      if (iou > maxIou) {
-        maxIou = iou;
-        foundClueId = clueId;
-      }
-    }
-
-    // Tighter threshold for scanning logic: 0.30 as requested.
-    if (maxIou >= 0.30 && foundClueId) {
-      const clue = case017.clues.find(c => c.id === foundClueId);
-      if (clue) {
-        discoverClue(clue.id);
-        setActiveClue(clue);
-        setScanMessage(null);
-      }
-    } else {
-      setScanMessage("NOTHING CONCLUSIVE");
-      setTimeout(() => setScanMessage(null), 3000);
-    }
+    setFinalScore(score);
+    submitJob(job.id, finalImage, score);
+    setDeliveryStatus('delivered');
   };
 
-  const handleClueRevealClose = () => {
-    setActiveClue(null);
-    const remaining = availableClues.filter((c) => !discoveredClues.includes(c.id));
-    if (remaining.length === 0) {
-      setTimeout(() => navigate(`/evidence/${evidence.id}`), 300);
-    }
-  };
+  if (deliveryStatus === 'delivered' && finalImage) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="page"
+        style={{
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#050508',
+          paddingTop: '50px'
+        }}
+      >
+        <motion.div
+          initial={{ scale: 0.9, y: 20 }}
+          animate={{ scale: 1, y: 0 }}
+          style={{ textAlign: 'center', maxWidth: '1000px', width: '100%' }}
+        >
+          <h1 className="font-display" style={{ color: 'var(--neon-green)', fontSize: '4rem', margin: '0 0 2rem 0', letterSpacing: '0.1em' }}>
+            DELIVERY ACCEPTED
+          </h1>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '3rem' }}>
+            {/* Before */}
+            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '1rem', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <div className="font-mono" style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '0.5rem', letterSpacing: '0.1em' }}>BEFORE</div>
+              <div style={{ aspectRatio: '16/9', background: '#000', overflow: 'hidden' }}>
+                <img src={job.image} alt="Original Asset" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              </div>
+            </div>
+            
+            {/* After */}
+            <div style={{ background: 'rgba(57, 217, 138, 0.05)', padding: '1rem', border: '1px solid var(--neon-green)' }}>
+              <div className="font-mono" style={{ color: 'var(--neon-green)', fontSize: '0.8rem', marginBottom: '0.5rem', letterSpacing: '0.1em' }}>AFTER</div>
+              <div style={{ aspectRatio: '16/9', background: '#000', overflow: 'hidden' }}>
+                <img src={finalImage} alt="Edited Asset" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '4rem', marginBottom: '3rem' }}>
+            <div>
+              <div className="font-mono" style={{ color: 'var(--text-muted)', fontSize: '0.8rem', letterSpacing: '0.1em' }}>CREATIVE SCORE</div>
+              <div className="font-display" style={{ color: '#fff', fontSize: '3rem' }}>{finalScore}</div>
+            </div>
+            <div>
+              <div className="font-mono" style={{ color: 'var(--text-muted)', fontSize: '0.8rem', letterSpacing: '0.1em' }}>PAYMENT</div>
+              <div className="font-display" style={{ color: 'var(--neon-green)', fontSize: '3rem' }}>+${job.payment.toLocaleString()}</div>
+            </div>
+            <div>
+              <div className="font-mono" style={{ color: 'var(--text-muted)', fontSize: '0.8rem', letterSpacing: '0.1em' }}>REP</div>
+              <div className="font-display" style={{ color: job.repReward > 0 ? 'var(--neon-cyan)' : 'var(--neon-red)', fontSize: '3rem' }}>
+                {job.repReward > 0 ? '+' + job.repReward : job.repReward}
+              </div>
+            </div>
+          </div>
+
+          <button 
+            className="btn btn-primary" 
+            onClick={() => navigate('/board')}
+            style={{ fontSize: '1.2rem', padding: '1rem 3rem' }}
+          >
+            VIEW PORTFOLIO
+          </button>
+        </motion.div>
+      </motion.div>
+    );
+  }
+
+  if (editorError) {
+    return (
+      <div className="page" style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#050508' }}>
+        <div style={{ textAlign: 'center', border: '1px solid var(--neon-red)', padding: '3rem', background: 'rgba(230, 57, 70, 0.1)' }}>
+          <h1 className="font-display" style={{ fontSize: '3rem', color: 'var(--neon-red)', margin: 0 }}>FIXER LAB OFFLINE</h1>
+          <div className="font-mono" style={{ color: 'var(--text-muted)', margin: '1rem 0 2rem 0', letterSpacing: '0.1em' }}>
+            CRITICAL WORKSTATION FAILURE. UNLAYER EDITOR COULD NOT INITIALIZE.
+          </div>
+          <button className="btn btn-ghost" onClick={() => window.location.reload()}>REBOOT SYSTEM</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -130,23 +151,24 @@ export default function EditorPage() {
       exit={{ opacity: 0 }}
       className="page"
       style={{
-        paddingTop: '40px', // Adjusted for thin NavBar
+        paddingTop: '50px', // Below the new 50px navbar
         display: 'flex',
         flexDirection: 'column',
         height: '100vh',
+        background: '#050508'
       }}
     >
       {/* HUD Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem', background: 'rgba(0,0,0,0.8)', borderBottom: '1px solid var(--border-default)' }}>
-        <div>
-          <div className="font-mono" style={{ color: 'var(--neon-cyan)', fontSize: '0.7rem', letterSpacing: '0.15em', marginBottom: '0.2rem' }}>
-            KLUSTOR INVESTIGATION WORKSTATION
-          </div>
-          <h2 className="font-display" style={{ fontSize: '2rem', margin: 0, color: '#fff', lineHeight: 1 }}>
-            EVIDENCE #{String(evidenceIndex + 1).padStart(2, '0')} // {evidence.title}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 2rem', background: 'rgba(10,11,15,0.95)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+          <h2 className="font-display" style={{ fontSize: '1.5rem', margin: 0, color: '#fff', lineHeight: 1 }}>
+            KLUSTOR <span style={{ color: 'var(--text-muted)' }}>//</span> FIXER LAB
           </h2>
+          <div className="font-mono" style={{ color: 'var(--neon-cyan)', fontSize: '0.8rem', letterSpacing: '0.1em' }}>
+            JOB: {job.title}
+          </div>
         </div>
-        <button className="btn btn-ghost" onClick={() => navigate('/case')} style={{ fontSize: '1rem' }}>
+        <button className="btn btn-ghost" onClick={() => navigate('/case')} style={{ fontSize: '0.8rem', padding: '0.4rem 1rem' }}>
           ← ABORT
         </button>
       </div>
@@ -155,133 +177,146 @@ export default function EditorPage() {
         style={{
           flex: 1,
           display: 'grid',
-          gridTemplateColumns: '1fr 320px',
+          gridTemplateColumns: '280px 1fr 280px', // Left Sidebar, Center Editor, Right Sidebar
           minHeight: 0,
         }}
       >
-        {/* CENTER: The Official Unlayer React Image Editor or Scanner Overlay */}
-        <div
-          style={{
-            position: 'relative',
-            overflow: 'hidden',
-            background: 'var(--bg-primary)',
-          }}
-        >
-          {scanMode ? (
-            <ScannerOverlay 
-              imageSrc={evidence.imageSrc}
-              clueZones={evidence.clueZones as any}
-              onAnalyze={handleAnalyzeRegion}
-              onCancel={() => setScanMode(false)}
-            />
-          ) : (
-            <InvestigationEditor
-              imageSrc={evidence.imageSrc}
-              evidenceId={evidence.id}
-              onSave={handleEditorSave}
-            />
-          )}
-        </div>
+        {/* LEFT SIDEBAR: Brief & Tasks */}
+        <div style={{ background: 'rgba(10, 11, 15, 0.9)', borderRight: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', padding: '1.5rem', overflowY: 'auto' }}>
+          
+          <div className="font-mono" style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>CLIENT BRIEF</div>
+          <div style={{ borderLeft: '2px solid var(--neon-cyan)', paddingLeft: '1rem', marginBottom: '2rem' }}>
+            <div className="font-display" style={{ color: '#fff', fontSize: '1.1rem', marginBottom: '0.25rem' }}>{client.name}</div>
+            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', fontStyle: 'italic', margin: 0, lineHeight: 1.5 }}>
+              "{job.brief}"
+            </p>
+          </div>
 
-        {/* RIGHT SIDEBAR: Game Objectives & Scanning */}
-        <div
-          style={{
-            background: 'rgba(10, 11, 18, 0.9)',
-            borderLeft: '1px solid rgba(255,255,255,0.05)',
-            display: 'flex',
-            flexDirection: 'column',
-            overflowY: 'auto',
-          }}
-        >
-          <div style={{ padding: '2rem' }}>
-            <h3 className="font-display" style={{ fontSize: '1.5rem', color: '#fff', marginBottom: '1rem' }}>
-              OBJECTIVES
-            </h3>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '3rem' }}>
-              {evidence.clueIds.map((clueId, idx) => {
-                const isDiscovered = discoveredClues.includes(clueId);
-                const clueTitle = case017.clues.find(c => c.id === clueId)?.title || 'Unknown Clue';
-                const hint = evidence.clueZones[idx]?.label || 'Anomaly';
-                
-                return (
-                  <div key={clueId} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-                    <div style={{ 
-                      width: '16px', height: '16px', border: `1px solid ${isDiscovered ? 'var(--neon-cyan)' : 'var(--text-muted)'}`, 
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '2px', background: isDiscovered ? 'rgba(0, 212, 212, 0.2)' : 'transparent'
-                    }}>
-                      {isDiscovered && <div style={{ width: '8px', height: '8px', background: 'var(--neon-cyan)' }} />}
+          <div className="font-mono" style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '1rem' }}>JOB REQUIREMENTS</div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+            {job.requirements.map(req => {
+              const isChecked = completedTasks.includes(req.id);
+              return (
+                <div 
+                  key={req.id} 
+                  style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between',
+                    gap: '0.75rem',
+                    padding: '0.5rem',
+                    background: isChecked ? 'rgba(57, 217, 138, 0.05)' : 'rgba(255,255,255,0.02)',
+                    border: '1px solid ' + (isChecked ? 'rgba(57, 217, 138, 0.3)' : 'rgba(255,255,255,0.05)'),
+                  }}
+                >
+                  <div>
+                    <div className="font-mono" style={{ fontSize: '0.75rem', color: isChecked ? 'var(--neon-green)' : '#fff' }}>
+                      {req.label}
                     </div>
-                    <div>
-                      <div className="font-mono" style={{ fontSize: '0.8rem', color: isDiscovered ? '#fff' : 'var(--text-secondary)' }}>
-                        {isDiscovered ? clueTitle : `Find: ${hint}`}
-                      </div>
+                    <div className="font-mono" style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                      TOOL: {req.type.toUpperCase()}
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                  
+                  <button 
+                    onClick={() => toggleTask(req.id)}
+                    className="font-mono"
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: isChecked ? 'var(--neon-green)' : 'var(--text-muted)',
+                      cursor: 'pointer',
+                      fontSize: '0.65rem',
+                      letterSpacing: '0.1em',
+                      textDecoration: isChecked ? 'none' : 'underline'
+                    }}
+                  >
+                    {isChecked ? '✓ MET' : 'MARK MET'}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
 
-            <div className="divider" style={{ margin: '2rem 0', background: 'rgba(255,255,255,0.1)' }} />
-
-            <h3 className="font-display" style={{ fontSize: '1.2rem', color: 'var(--neon-cyan)', marginBottom: '1rem' }}>
-              CLUE DETECTION
-            </h3>
-            
-            <p className="font-mono" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '1.5rem', lineHeight: 1.6 }}>
-              {scanMode 
-                ? "SCAN MODE ACTIVE. Drag a bounding box over the suspicious area." 
-                : "Enhance the image using the editor, then scan regions to discover clues."}
-            </p>
-
-            {!scanMode && availableClues.length > 0 && (
-              <button 
-                className="btn btn-primary" 
-                style={{ width: '100%', padding: '1rem' }}
-                onClick={() => setScanMode(true)}
-              >
-                SCAN REGION
-              </button>
-            )}
-
-            {scanMode && (
-              <div style={{ padding: '1rem', border: '1px dashed var(--neon-cyan)', background: 'rgba(0,212,212,0.05)', textAlign: 'center' }}>
-                <span className="font-mono animate-flicker" style={{ color: 'var(--neon-cyan)', fontSize: '0.8rem' }}>
-                  AWAITING SELECTION...
-                </span>
-              </div>
-            )}
-
-            {scanMessage && (
-              <motion.div
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                style={{
-                  padding: '1rem',
-                  background: 'rgba(230, 57, 70, 0.05)',
-                  border: '1px solid rgba(230, 57, 70, 0.2)',
-                  marginTop: '1rem',
-                  textAlign: 'center',
-                }}
-              >
-                <span className="font-mono" style={{ fontSize: '0.75rem', color: 'var(--neon-red)' }}>
-                  {scanMessage}
-                </span>
-              </motion.div>
-            )}
-
-            {availableClues.length === 0 && (
-              <div style={{ padding: '1rem', background: 'rgba(57, 217, 138, 0.05)', border: '1px solid rgba(57, 217, 138, 0.2)', textAlign: 'center' }}>
-                <span className="font-mono" style={{ color: 'var(--neon-green)', fontSize: '0.75rem' }}>
-                  ALL OBJECTIVES COMPLETE
-                </span>
-              </div>
-            )}
+          <div style={{ marginTop: 'auto', paddingTop: '2rem' }}>
+             <p className="font-mono" style={{ fontSize: '0.65rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+               * Use Unlayer to fulfill the client's request. Mark the requirements as met when you finish them. You must SAVE the image in the editor before delivery.
+             </p>
           </div>
         </div>
-      </div>
 
-      <ClueReveal clue={activeClue} onClose={handleClueRevealClose} />
+        {/* CENTER: UNLAYER EDITOR (Visually Dominant) */}
+        <div style={{ position: 'relative', overflow: 'hidden', background: '#111' }}>
+          <InvestigationEditor
+            imageSrc={job.image}
+            evidenceId={job.id}
+            onSave={handleEditorSave}
+            onError={() => setEditorError(true)}
+          />
+        </div>
+
+        {/* RIGHT SIDEBAR: Status & Submission */}
+        <div style={{ background: 'rgba(10, 11, 15, 0.9)', borderLeft: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', padding: '1.5rem' }}>
+          
+          <div className="font-mono" style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '1.5rem' }}>JOB STATUS</div>
+          
+          <div style={{ marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <span className="font-mono" style={{ fontSize: '0.75rem', color: '#fff' }}>TASKS</span>
+              <span className="font-mono" style={{ fontSize: '0.75rem', color: 'var(--neon-cyan)' }}>{completedTasks.length} / {job.requirements.length}</span>
+            </div>
+            {/* Progress bar */}
+            <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)' }}>
+              <div style={{ width: ((completedTasks.length / job.requirements.length) * 100) + '%', height: '100%', background: 'var(--neon-cyan)', transition: 'width 0.3s' }} />
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '2rem' }}>
+            <div className="font-mono" style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>PAYMENT</div>
+            <div className="font-mono" style={{ fontSize: '1.5rem', color: 'var(--neon-green)' }}>${job.payment.toLocaleString()}</div>
+          </div>
+
+          <div style={{ marginBottom: '2rem' }}>
+            <div className="font-mono" style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>REP REWARD</div>
+            <div className="font-mono" style={{ fontSize: '1.2rem', color: job.repReward > 0 ? '#fff' : 'var(--neon-red)' }}>
+              {job.repReward > 0 ? '+' + job.repReward : job.repReward}
+            </div>
+          </div>
+
+          <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {!finalImage ? (
+              <div style={{ padding: '1rem', background: 'rgba(230, 57, 70, 0.1)', border: '1px solid rgba(230, 57, 70, 0.3)', textAlign: 'center' }}>
+                <span className="font-mono" style={{ color: 'var(--neon-red)', fontSize: '0.7rem' }}>
+                  AWAITING EDITOR SAVE
+                </span>
+              </div>
+            ) : (
+              <div style={{ padding: '1rem', background: 'rgba(57, 217, 138, 0.1)', border: '1px solid rgba(57, 217, 138, 0.3)', textAlign: 'center' }}>
+                <span className="font-mono" style={{ color: 'var(--neon-green)', fontSize: '0.7rem' }}>
+                  IMAGE DATA CAPTURED
+                </span>
+              </div>
+            )}
+
+            <button 
+              className="btn btn-primary" 
+              disabled={!finalImage}
+              onClick={handleSubmit}
+              style={{ 
+                width: '100%', 
+                padding: '1.25rem', 
+                fontSize: '1.2rem',
+                opacity: finalImage ? 1 : 0.5,
+                cursor: finalImage ? 'pointer' : 'not-allowed'
+              }}
+            >
+              DELIVER JOB
+            </button>
+          </div>
+
+        </div>
+      </div>
     </motion.div>
   );
 }

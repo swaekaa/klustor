@@ -26,6 +26,7 @@ export const case017: Case = {
       description:
         'Wide shot of Ocean Drive at 01:42 AM. A gang of bikers gathered on the sidewalk. A man in a grey suit stands observing them.',
       anomalyHint: 'Look closely at the man in the suit and the group he is observing.',
+      editHint: 'Use the CROP tool to isolate the man in the suit, then increase BRIGHTNESS to reveal details.',
       status: 'unreviewed',
       clueIds: ['clue-suit', 'clue-bikers'],
       clueZones: [
@@ -53,6 +54,7 @@ export const case017: Case = {
       description:
         'An entrance to Simmet Alley. Two figures walking in the distance beneath the welcome sign.',
       anomalyHint: 'Identify the location and the individuals present.',
+      editHint: 'Apply the BLACK & WHITE preset and use SHARPEN under Effects to clarify the figures in the distance.',
       status: 'unreviewed',
       clueIds: ['clue-sign', 'clue-walkers'],
       clueZones: [
@@ -80,6 +82,7 @@ export const case017: Case = {
       description:
         'An open parking lot with several luxury vehicles and supercars parked in formation.',
       anomalyHint: 'The vehicles match profiles from known syndicates.',
+      editHint: 'Use the DRAW tool to circle the license plates, and increase VIBRANCE to confirm the vehicle colors.',
       status: 'locked',
       clueIds: ['clue-supercar-black', 'clue-supercar-white'],
       clueZones: [
@@ -107,6 +110,7 @@ export const case017: Case = {
       description:
         'Inside a nightclub bathed in purple neon. A DJ is performing with their hands raised.',
       anomalyHint: 'The DJ matches a known person of interest.',
+      editHint: 'Apply the INVERT preset to expose the hidden pattern in the neon lights, then CROP around the DJ.',
       status: 'locked',
       clueIds: ['clue-dj', 'clue-lights'],
       clueZones: [
@@ -134,6 +138,7 @@ export const case017: Case = {
       description:
         'A black and white CCTV capture of a shootout in a hallway. One man firing a weapon.',
       anomalyHint: 'Identify the shooter and the victim.',
+      editHint: 'Use the PIXELATE effect to censor the victim, then add TEXT labeling the shooter.',
       status: 'locked',
       clueIds: ['clue-shooter', 'clue-victim'],
       clueZones: [

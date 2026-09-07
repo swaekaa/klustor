@@ -333,17 +333,7 @@ h6 {
   box-shadow: 0 0 15px rgba(230, 57, 70, 0.2);
 }
 
-/* Evidence Button */
-.btn-evidence {
-  background: transparent;
-  color: var(--neon-yellow);
-  border-color: rgba(245, 200, 66, 0.3);
-}
 
-.btn-evidence:hover {
-  background: var(--glow-yellow);
-  box-shadow: 0 0 15px rgba(245, 200, 66, 0.2);
-}
 
 .btn-lg {
   padding: 1rem 2rem;
@@ -403,24 +393,7 @@ h6 {
   background: rgba(57, 217, 138, 0.08);
 }
 
-/* ============================================================
-   Evidence Status Colors
-   ============================================================ */
-.status-locked {
-  color: var(--text-muted);
-}
-.status-unreviewed {
-  color: var(--text-secondary);
-}
-.status-investigating {
-  color: var(--neon-yellow);
-}
-.status-verified {
-  color: var(--neon-cyan);
-}
-.status-complete {
-  color: var(--neon-green);
-}
+
 
 /* ============================================================
    Progress Bar

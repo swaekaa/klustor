@@ -1,164 +1,69 @@
 // ============================================================
-// THE PHOTO NEVER LIES — Core Type Definitions
+// KLUSTOR: THE FIXER — Core Type Definitions
 // ============================================================
 
-export type EvidenceStatus = 'locked' | 'unreviewed' | 'investigating' | 'verified' | 'complete';
-export type ClueType = 'vehicle' | 'person' | 'object' | 'location' | 'text' | 'timestamp';
-export type DecisionId = 'report' | 'publish' | 'sell' | 'investigate';
-export type EndingId = 'good-investigator' | 'the-scoop' | 'the-fixer' | 'dig-deeper';
+export type JobStatus = 'locked' | 'available' | 'active' | 'completed';
+export type JobDifficulty = 'easy' | 'medium' | 'hard';
+export type ToolType = 'crop' | 'filter' | 'text' | 'shape' | 'sticker' | 'frame' | 'resize' | 'draw' | 'any';
 
-export interface ClueZone {
+export interface JobRequirement {
   id: string;
   label: string;
-  description: string;
-  // Normalized 0-100 coordinates for clue detection (IoU)
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  tolerance?: number;
+  type: ToolType;
 }
 
-export interface Clue {
-  id: string;
-  title: string;
-  description: string;
-  detail: string;
-  type: ClueType;
-  evidenceId: string;
-  linkedEntities: string[];
-  xp: number;
-  isDiscovered?: boolean; // runtime state
-}
-
-export interface Evidence {
-  id: string;
-  title: string;
-  caseId: string;
-  location: string;
-  timestamp: string;
-  imageSrc: string; // URL or base64
-  description: string;
-  anomalyHint: string;
-  status: EvidenceStatus;
-  clueZones: ClueZone[];
-  clueIds: string[]; // IDs of clues discoverable in this evidence
-}
-
-export interface Suspect {
-  id: string;
-  alias: string;
-  description: string;
-  linkedClueIds: string[];
-}
-
-export interface Location {
+export interface Client {
   id: string;
   name: string;
-  description: string;
-  linkedClueIds: string[];
+  role: string;
+  portrait?: string;
+  personalityQuotes: string[];
 }
 
-export interface Decision {
-  id: DecisionId;
-  label: string;
-  description: string;
-  consequence: string;
-  reputationDelta: number;
-  heatDelta: number;
-  endingId: EndingId;
-}
-
-export interface Ending {
-  id: EndingId;
-  title: string;
-  headline: string;
-  narrative: string;
-  reputationChange: number;
-  heatChange: number;
-  badge: string;
-}
-
-export interface Case {
+export interface Job {
   id: string;
   title: string;
-  subtitle: string;
-  description: string;
-  briefing: string;
-  timestamp: string;
-  status: 'open' | 'closed' | 'cold';
-  evidence: Evidence[];
-  clues: Clue[];
-  suspects: Suspect[];
-  locations: Location[];
-  decisions: Decision[];
-  endings: Ending[];
+  clientId: string;
+  location: string;
+  brief: string;
+  payment: number;
+  repReward: number;
+  heatChange: number;
+  difficulty: JobDifficulty;
+  image: string; // The original input asset (URL or base64)
+  requirements: JobRequirement[];
+  status: JobStatus;
 }
 
 // ============================================================
 // Player / Game State Types
 // ============================================================
 
-export interface InvestigationMeta {
-  evidenceId: string;
-  annotations: {
-    type: string;
-    note: string;
-  }[];
-  discoveredClueIds: string[];
-  savedImage: string; // base64
+export interface PortfolioItem {
+  jobId: string;
+  finalImage: string; // base64 dataUrl from Unlayer
+  creativeScore: number;
+  paymentReceived: number;
   timestamp: string;
 }
 
 export interface PlayerState {
+  cash: number;
   reputation: number;
   heat: number;
-  casesCompleted: number;
   rank: string;
 }
 
 export interface GameState {
-  currentCaseId: string | null;
   player: PlayerState;
-  discoveredClues: string[];
-  reviewedEvidence: string[];
-  savedImages: Record<string, string>; // evidenceId → base64
-  investigationMeta: Record<string, InvestigationMeta>;
-  decision: DecisionId | null;
-  ending: EndingId | null;
-  progress: number; // 0-100
-}
-
-// ============================================================
-// Board Node Types (Evidence Board)
-// ============================================================
-
-export type NodeType = 'evidence' | 'clue' | 'suspect' | 'location' | 'vehicle' | 'event';
-
-export interface BoardNode {
-  id: string;
-  type: NodeType;
-  label: string;
-  sublabel?: string;
-  isDiscovered: boolean;
-  connections: string[]; // IDs of connected nodes
-  x?: number; // layout position
-  y?: number;
-}
-
-// ============================================================
-// AI Assistant Types
-// ============================================================
-
-export interface AssistantMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-}
-
-export interface AssistantContext {
-  caseId: string;
-  discoveredClues: Clue[];
-  reviewedEvidence: Evidence[];
-  currentEvidenceId?: string;
+  unlockedJobs: string[];
+  completedJobs: string[];
+  activeJobId: string | null;
+  portfolio: Record<string, PortfolioItem>; // jobId → PortfolioItem
+  
+  // Actions
+  acceptJob: (jobId: string) => void;
+  submitJob: (jobId: string, finalImage: string, creativeScore: number) => void;
+  unlockJob: (jobId: string) => void;
+  resetGame: () => void;
 }
