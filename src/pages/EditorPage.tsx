@@ -86,7 +86,7 @@ export default function EditorPage() {
   if (!job || !unlockedJobs.includes(job.id)) {
     return (
       <div className="page" style={{ paddingTop: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center' }}>
+        <div className="panel" style={{ textAlign: 'center', padding: '3rem' }}>
           <div className="font-display" style={{ fontSize: '3rem', color: 'var(--text-muted)' }}>ACCESS DENIED</div>
           <button className="btn btn-ghost" style={{ marginTop: '1rem' }} onClick={() => navigate('/case')}>← BACK</button>
         </div>
@@ -98,9 +98,9 @@ export default function EditorPage() {
   if (completedJobs.includes(job.id) && deliveryStatus !== 'delivered') {
     return (
       <div className="page" style={{ paddingTop: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div className="font-display" style={{ fontSize: '3rem', color: 'var(--neon-cyan)' }}>JOB ALREADY COMPLETED</div>
-          <button className="btn btn-ghost" style={{ marginTop: '1rem' }} onClick={() => navigate('/board')}>VIEW PORTFOLIO</button>
+        <div className="panel" style={{ textAlign: 'center', padding: '3rem' }}>
+          <div className="font-display" style={{ fontSize: '3rem', color: 'var(--gta-blue)' }}>JOB ALREADY COMPLETED</div>
+          <button className="btn btn-primary" style={{ marginTop: '1rem' }} onClick={() => navigate('/board')}>VIEW PORTFOLIO</button>
         </div>
       </div>
     );
@@ -161,49 +161,49 @@ export default function EditorPage() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#050508',
           paddingTop: '50px'
         }}
       >
         <motion.div
           initial={{ scale: 0.9, y: 20 }}
           animate={{ scale: 1, y: 0 }}
-          style={{ textAlign: 'center', maxWidth: '1000px', width: '100%' }}
+          className="panel"
+          style={{ textAlign: 'center', maxWidth: '1000px', width: '100%', padding: '3rem' }}
         >
-          <h1 className="font-display" style={{ color: 'var(--neon-green)', fontSize: '4rem', margin: '0 0 2rem 0', letterSpacing: '0.1em' }}>
+          <h1 className="font-display" style={{ color: 'var(--xbox-green)', fontSize: '4rem', margin: '0 0 2rem 0', letterSpacing: '0.05em', textShadow: '0 2px 5px rgba(0,0,0,0.2)' }}>
             DELIVERY ACCEPTED
           </h1>
           
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '3rem' }}>
             {/* Before */}
-            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '1rem', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <div className="font-mono" style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '0.5rem', letterSpacing: '0.1em' }}>BEFORE</div>
-              <div style={{ aspectRatio: '16/9', background: '#000', overflow: 'hidden' }}>
+            <div style={{ background: 'rgba(255,255,255,0.4)', padding: '1rem', border: '2px solid rgba(0,0,0,0.1)', borderRadius: '16px' }}>
+              <div className="font-display" style={{ color: 'var(--gta-black)', fontSize: '1.2rem', marginBottom: '0.5rem' }}>BEFORE</div>
+              <div style={{ aspectRatio: '16/9', background: '#000', overflow: 'hidden', borderRadius: '8px' }}>
                 <img src={job.image} alt="Original Asset" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               </div>
             </div>
             
             {/* After */}
-            <div style={{ background: 'rgba(57, 217, 138, 0.05)', padding: '1rem', border: '1px solid var(--neon-green)' }}>
-              <div className="font-mono" style={{ color: 'var(--neon-green)', fontSize: '0.8rem', marginBottom: '0.5rem', letterSpacing: '0.1em' }}>AFTER</div>
-              <div style={{ aspectRatio: '16/9', background: '#000', overflow: 'hidden' }}>
+            <div style={{ background: 'rgba(126, 185, 0, 0.1)', padding: '1rem', border: '4px solid var(--xbox-green)', borderRadius: '16px', boxShadow: '0 10px 20px rgba(126, 185, 0, 0.2)' }}>
+              <div className="font-display" style={{ color: 'var(--xbox-green)', fontSize: '1.2rem', marginBottom: '0.5rem' }}>AFTER</div>
+              <div style={{ aspectRatio: '16/9', background: '#000', overflow: 'hidden', borderRadius: '8px' }}>
                 <img src={finalImage} alt="Edited Asset" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               </div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '4rem', marginBottom: '3rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '4rem', marginBottom: '3rem', background: 'rgba(255,255,255,0.5)', padding: '2rem', borderRadius: '16px' }}>
             <div>
-              <div className="font-mono" style={{ color: 'var(--text-muted)', fontSize: '0.8rem', letterSpacing: '0.1em' }}>CREATIVE SCORE</div>
-              <div className="font-display" style={{ color: '#fff', fontSize: '3rem' }}>{finalScore}</div>
+              <div className="font-display" style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>CREATIVE SCORE</div>
+              <div className="font-display" style={{ color: 'var(--gta-black)', fontSize: '3.5rem' }}>{finalScore}</div>
             </div>
             <div>
-              <div className="font-mono" style={{ color: 'var(--text-muted)', fontSize: '0.8rem', letterSpacing: '0.1em' }}>PAYMENT</div>
-              <div className="font-display" style={{ color: 'var(--neon-green)', fontSize: '3rem' }}>+${job.payment.toLocaleString()}</div>
+              <div className="font-display" style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>PAYMENT</div>
+              <div className="font-display" style={{ color: 'var(--xbox-green)', fontSize: '3.5rem' }}>+${job.payment.toLocaleString()}</div>
             </div>
             <div>
-              <div className="font-mono" style={{ color: 'var(--text-muted)', fontSize: '0.8rem', letterSpacing: '0.1em' }}>REP</div>
-              <div className="font-display" style={{ color: job.repReward > 0 ? 'var(--neon-cyan)' : 'var(--neon-red)', fontSize: '3rem' }}>
+              <div className="font-display" style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>REP</div>
+              <div className="font-display" style={{ color: job.repReward > 0 ? 'var(--gta-blue)' : 'var(--gta-red)', fontSize: '3.5rem' }}>
                 {job.repReward > 0 ? '+' + job.repReward : job.repReward}
               </div>
             </div>
@@ -212,7 +212,7 @@ export default function EditorPage() {
           <button 
             className="btn btn-primary" 
             onClick={() => navigate('/board')}
-            style={{ fontSize: '1.2rem', padding: '1rem 3rem' }}
+            style={{ fontSize: '1.2rem', padding: '1rem 4rem' }}
           >
             VIEW PORTFOLIO
           </button>
@@ -242,24 +242,23 @@ export default function EditorPage() {
       exit={{ opacity: 0 }}
       className="page"
       style={{
-        paddingTop: '50px', // Below the new 50px navbar
+        paddingTop: '80px', // Below the new 80px navbar
         display: 'flex',
         flexDirection: 'column',
         height: '100vh',
-        background: '#050508'
       }}
     >
       {/* HUD Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 2rem', background: 'rgba(10,11,15,0.95)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem', background: 'rgba(255,255,255,0.6)', borderBottom: '2px solid rgba(0,0,0,0.1)', backdropFilter: 'blur(10px)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-          <h2 className="font-display" style={{ fontSize: '1.5rem', margin: 0, color: '#fff', lineHeight: 1 }}>
-            KLUSTOR <span style={{ color: 'var(--text-muted)' }}>//</span> FIXER LAB
+          <h2 className="font-display" style={{ fontSize: '1.8rem', margin: 0, color: 'var(--gta-black)', lineHeight: 1 }}>
+            FIXER LAB
           </h2>
-          <div className="font-mono" style={{ color: 'var(--neon-cyan)', fontSize: '0.8rem', letterSpacing: '0.1em' }}>
+          <div className="font-display" style={{ color: 'var(--gta-blue)', fontSize: '1.2rem' }}>
             JOB: {job.title}
           </div>
         </div>
-        <button className="btn btn-ghost" onClick={() => navigate('/case')} style={{ fontSize: '0.8rem', padding: '0.4rem 1rem' }}>
+        <button className="btn btn-ghost" onClick={() => navigate('/case')} style={{ fontSize: '0.9rem', padding: '0.5rem 1.5rem', borderRadius: '50px' }}>
           ← ABORT
         </button>
       </div>
@@ -268,27 +267,27 @@ export default function EditorPage() {
         style={{
           flex: 1,
           display: 'grid',
-          gridTemplateColumns: '280px 1fr 280px', // Left Sidebar, Center Editor, Right Sidebar
+          gridTemplateColumns: '300px 1fr 300px', // Left Sidebar, Center Editor, Right Sidebar
           minHeight: 0,
         }}
       >
         {/* LEFT SIDEBAR: Brief & Tasks */}
-        <div style={{ background: 'rgba(10, 11, 15, 0.9)', borderRight: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', padding: '1.5rem', overflowY: 'auto' }}>
+        <div className="panel" style={{ borderRadius: 0, borderTop: 'none', borderBottom: 'none', borderLeft: 'none', display: 'flex', flexDirection: 'column', padding: '2rem', overflowY: 'auto' }}>
           
-          <div className="font-mono" style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>CLIENT BRIEF</div>
-          <div style={{ borderLeft: '2px solid var(--neon-cyan)', paddingLeft: '1rem', marginBottom: '2rem' }}>
-            <div className="font-display" style={{ color: '#fff', fontSize: '1.1rem', marginBottom: '0.25rem' }}>{client.name}</div>
-            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', fontStyle: 'italic', margin: 0, lineHeight: 1.5, marginBottom: '1rem' }}>
+          <div className="font-display" style={{ fontSize: '1.2rem', color: 'var(--gta-black)', marginBottom: '0.5rem' }}>CLIENT BRIEF</div>
+          <div style={{ borderLeft: '4px solid var(--gta-blue)', paddingLeft: '1rem', marginBottom: '2rem', background: 'rgba(255,255,255,0.3)', padding: '1rem', borderRadius: '0 8px 8px 0' }}>
+            <div className="font-display" style={{ color: 'var(--gta-black)', fontSize: '1.4rem', marginBottom: '0.5rem' }}>{client.name}</div>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', fontStyle: 'italic', margin: 0, lineHeight: 1.5, marginBottom: '1rem', fontWeight: 500 }}>
               "{job.brief}"
             </p>
-            <ul style={{ margin: 0, paddingLeft: '1.2rem', color: 'var(--text-muted)', fontSize: '0.75rem', lineHeight: 1.6 }}>
+            <ul style={{ margin: 0, paddingLeft: '1.2rem', color: 'var(--gta-black)', fontSize: '0.9rem', lineHeight: 1.6, fontWeight: 500 }}>
               {job.clientBriefTasks.map((task, i) => (
                 <li key={i}>{task}</li>
               ))}
             </ul>
           </div>
 
-          <div className="font-mono" style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '1rem' }}>SYSTEM VALIDATION</div>
+          <div className="font-display" style={{ fontSize: '1.2rem', color: 'var(--gta-black)', marginBottom: '1rem' }}>SYSTEM VALIDATION</div>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
             {job.requirements.map(req => {
@@ -301,21 +300,21 @@ export default function EditorPage() {
                     alignItems: 'center', 
                     justifyContent: 'space-between',
                     gap: '0.75rem',
-                    padding: '0.5rem',
-                    background: isVerified ? 'rgba(57, 217, 138, 0.05)' : 'rgba(255,255,255,0.02)',
-                    border: '1px solid ' + (isVerified ? 'rgba(57, 217, 138, 0.3)' : 'rgba(255,255,255,0.05)'),
+                    padding: '0.75rem',
+                    borderRadius: '8px',
+                    background: isVerified ? 'rgba(126, 185, 0, 0.1)' : 'rgba(255,255,255,0.5)',
+                    border: '2px solid ' + (isVerified ? 'var(--xbox-green)' : 'rgba(0,0,0,0.1)'),
                   }}
                 >
-                  <div className="font-mono" style={{ fontSize: '0.75rem', color: isVerified ? 'var(--neon-green)' : '#fff' }}>
+                  <div className="font-body" style={{ fontSize: '0.85rem', fontWeight: 700, color: isVerified ? 'var(--xbox-green)' : 'var(--gta-black)' }}>
                     {req.label}
                   </div>
                   
                   <div 
-                    className="font-mono"
+                    className="font-display"
                     style={{
-                      color: isVerified ? 'var(--neon-green)' : 'var(--text-muted)',
-                      fontSize: '0.65rem',
-                      letterSpacing: '0.1em',
+                      color: isVerified ? 'var(--xbox-green)' : 'var(--text-muted)',
+                      fontSize: '0.9rem',
                     }}
                   >
                     {isVerified ? '✓ VERIFIED' : '○ PENDING'}
@@ -326,14 +325,14 @@ export default function EditorPage() {
           </div>
 
           <div style={{ marginTop: 'auto', paddingTop: '2rem' }}>
-             <p className="font-mono" style={{ fontSize: '0.65rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+             <p className="font-body" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5, fontWeight: 500 }}>
                * Use Unlayer to fulfill the client's request. System will automatically verify requirements upon SAVE.
              </p>
           </div>
         </div>
 
         {/* CENTER: UNLAYER EDITOR (Visually Dominant) */}
-        <div style={{ position: 'relative', overflow: 'hidden', background: '#111' }}>
+        <div style={{ position: 'relative', overflow: 'hidden', padding: '1rem', display: 'flex' }}>
           <InvestigationEditor
             imageSrc={job.image}
             evidenceId={job.id}
@@ -343,43 +342,43 @@ export default function EditorPage() {
         </div>
 
         {/* RIGHT SIDEBAR: Status & Submission */}
-        <div style={{ background: 'rgba(10, 11, 15, 0.9)', borderLeft: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', padding: '1.5rem 1.5rem 6rem 1.5rem', overflowY: 'auto' }}>
+        <div className="panel" style={{ borderRadius: 0, borderTop: 'none', borderBottom: 'none', borderRight: 'none', display: 'flex', flexDirection: 'column', padding: '2rem 2rem 8rem 2rem', overflowY: 'auto' }}>
           
-          <div className="font-mono" style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '1.5rem' }}>JOB STATUS</div>
+          <div className="font-display" style={{ fontSize: '1.2rem', color: 'var(--gta-black)', marginBottom: '1.5rem' }}>JOB STATUS</div>
           
           <div style={{ marginBottom: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-              <span className="font-mono" style={{ fontSize: '0.75rem', color: '#fff' }}>TASKS</span>
-              <span className="font-mono" style={{ fontSize: '0.75rem', color: 'var(--neon-cyan)' }}>{verifiedReqs.length} / {job.requirements.length}</span>
+              <span className="font-body" style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--gta-black)' }}>TASKS</span>
+              <span className="font-display" style={{ fontSize: '1.1rem', color: 'var(--gta-blue)' }}>{verifiedReqs.length} / {job.requirements.length}</span>
             </div>
             {/* Progress bar */}
-            <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)' }}>
-              <div style={{ width: ((verifiedReqs.length / job.requirements.length) * 100) + '%', height: '100%', background: 'var(--neon-cyan)', transition: 'width 0.3s' }} />
+            <div style={{ width: '100%', height: '8px', background: 'rgba(0,0,0,0.1)', borderRadius: '4px' }}>
+              <div style={{ width: ((verifiedReqs.length / job.requirements.length) * 100) + '%', height: '100%', background: 'var(--gta-blue)', transition: 'width 0.3s', borderRadius: '4px' }} />
             </div>
           </div>
 
-          <div style={{ marginBottom: '2rem' }}>
-            <div className="font-mono" style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>PAYMENT</div>
-            <div className="font-mono" style={{ fontSize: '1.5rem', color: 'var(--neon-green)' }}>${job.payment.toLocaleString()}</div>
+          <div style={{ marginBottom: '2rem', background: 'rgba(255,255,255,0.4)', padding: '1rem', borderRadius: '12px' }}>
+            <div className="font-display" style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>PAYMENT</div>
+            <div className="font-display" style={{ fontSize: '2rem', color: 'var(--xbox-green)' }}>${job.payment.toLocaleString()}</div>
           </div>
 
-          <div style={{ marginBottom: '2rem' }}>
-            <div className="font-mono" style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>REP REWARD</div>
-            <div className="font-mono" style={{ fontSize: '1.2rem', color: job.repReward > 0 ? '#fff' : 'var(--neon-red)' }}>
+          <div style={{ marginBottom: '2rem', background: 'rgba(255,255,255,0.4)', padding: '1rem', borderRadius: '12px' }}>
+            <div className="font-display" style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>REP REWARD</div>
+            <div className="font-display" style={{ fontSize: '1.5rem', color: job.repReward > 0 ? 'var(--gta-blue)' : 'var(--gta-red)' }}>
               {job.repReward > 0 ? '+' + job.repReward : job.repReward}
             </div>
           </div>
 
           <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {!finalImage ? (
-              <div style={{ padding: '1rem', background: 'rgba(230, 57, 70, 0.1)', border: '1px solid rgba(230, 57, 70, 0.3)', textAlign: 'center' }}>
-                <span className="font-mono" style={{ color: 'var(--neon-red)', fontSize: '0.7rem' }}>
+              <div style={{ padding: '1rem', background: 'rgba(204, 41, 43, 0.1)', border: '2px solid rgba(204, 41, 43, 0.3)', textAlign: 'center', borderRadius: '8px' }}>
+                <span className="font-body" style={{ color: 'var(--gta-red)', fontSize: '0.8rem', fontWeight: 700 }}>
                   AWAITING EDITOR SAVE
                 </span>
               </div>
             ) : (
-              <div style={{ padding: '1rem', background: 'rgba(57, 217, 138, 0.1)', border: '1px solid rgba(57, 217, 138, 0.3)', textAlign: 'center' }}>
-                <span className="font-mono" style={{ color: 'var(--neon-green)', fontSize: '0.7rem' }}>
+              <div style={{ padding: '1rem', background: 'rgba(126, 185, 0, 0.1)', border: '2px solid rgba(126, 185, 0, 0.3)', textAlign: 'center', borderRadius: '8px' }}>
+                <span className="font-body" style={{ color: 'var(--xbox-green)', fontSize: '0.8rem', fontWeight: 700 }}>
                   IMAGE DATA CAPTURED
                 </span>
               </div>

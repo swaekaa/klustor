@@ -1,46 +1,38 @@
-# KLUSTOR: Miami Vice City Overhaul & Mechanics Upgrade
+# Goal Description
 
-This plan details the massive visual redesign to the "Miami/GTA VI-inspired" aesthetic, the rebranding to "KLUSTOR", and the major gameplay fix for accurate clue detection using a custom Investigation Scanner over the Unlayer Image Editor.
-
-## Proposed Changes
-
-### 1. Rebranding & Global Styling
-- **Rebranding:** Update all titles, metadata, and navbar headers to use "KLUSTOR" and "VICE CITY INVESTIGATIONS".
-- **Color Palette & Visuals:** Update `src/index.css` to feature a Miami sunset/neon-noir palette (electric cyan, hot pink, sunset orange, deep navy). We will add palm silhouettes, neon glow effects, and a more polished, cinematic gradient background instead of a flat dark theme.
-- **Typography:** Ensure `Bebas Neue` and other display fonts are used prominently for case files and headers.
-
-### 2. Gameplay Fix: Accurate Clue Detection
-- **Data Model:** Update `ClueZone` in `src/types/index.ts` to include precise `x, y, width, height` percentage values for coordinates (0-100%).
-- **Case Data (`case017.ts`):** Map out precise percentage bounding boxes for all clues across the 5 evidence images. 
-- **Investigation Scanner (`EditorPage.tsx`):** Since Unlayer's API doesn't expose semantic crop coordinates on save, we will build a "Game-Side Investigation Scanner". 
-  - The player will use the Unlayer editor to enhance the image (e.g., brightness, contrast, crop to zoom).
-  - When they are ready to identify a clue, they will click an "Analyze Region" button which places a transparent overlay over the image container. 
-  - They drag a bounding box over the anomaly.
-  - The application calculates the **Intersection over Union (IoU)** of their selection against the predefined `ClueZone` coordinates.
-  - If IoU > threshold (e.g., 0.30), the clue is discovered. Otherwise, they get a "Nothing conclusive" message.
-
-### 3. Miami Evidence Images
-- **AI Generated Assets:** I will use my AI image generation tool to create 5 stunning, original, non-copyrighted Miami-inspired evidence images:
-  1. Ocean Drive at night (with black sedan)
-  2. Neon parking garage (with black SUV, duffel bag, blurry figure)
-  3. Nightclub Entrance (The Velvet Pier, with red jacket suspect)
-  4. Santeria Lane Alley (Cracked phone, muddy footprints, graffiti)
-  5. Security Camera still (Grainy CCTV with suspect face and plate)
-
-### 4. New Components & Pages
-- **Map Page (`src/pages/MapPage.tsx`):** A stylized fictional coastal city map showing Ocean Drive, Little Havana, Nightclub Row, etc.
-- **Contacts Panel (`src/components/ui/ContactsSidebar.tsx`):** A slide-out or simple page showing contacts like Maya Rivera and Dante Cross.
-- **Evidence Board (`src/pages/BoardPage.tsx`):** Redesigned to look like a physical/neon detective wall with strings connecting polaroids and notes.
-
-### 5. AI Assistant integration
-- **AI Panel:** Add a contextual hints panel in the editor sidebar that gives pre-defined hints without explicitly giving away the coordinates.
-
----
+The objective is to completely overhaul the existing "Cyberpunk / Neon-Noir" UI to match the 2008-era **GTA IV / Xbox 360 Dashboard** aesthetic. This means transitioning from dark, scanline-heavy, neon-glowing layouts to a bright, sleek, translucent "blade" menu system with warm colors, glossy gradients, and character-driven background art.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> 1. **Scanner UI Approach:** Because Unlayer doesn't expose the actual crop bounds in its callback, I am implementing the "Scanner Overlay" approach you suggested. The player edits in Unlayer, then activates the Scanner to draw a box and submit it. Does this flow work for you?
-> 2. **Generated Assets:** I will automatically generate 5 new Miami-style evidence images using my built-in image generator to replace the current placeholders. Are you okay with me generating and replacing these images?
+> **Major Design Pivot**: This change will strip away the current neon colors (cyan, pink, green) and the CRT scanline effects. The new aesthetic will heavily utilize white, grey, amber, and deep orange tones. 
 
-Please approve this plan to begin execution!
+> [!WARNING]
+> **Background Artwork**: The reference image features Grand Theft Auto character artwork as the background. Since I cannot pull copyrighted images, I will generate an original GTA-style character artwork to use as the global game background using my image generation tool. Do you approve of this?
+
+## Proposed Changes
+
+### CSS Architecture (`src/index.css`)
+I will rewrite the global design tokens:
+- **Colors**: Remove all `--neon-*` variables. Introduce `--xbox-white`, `--xbox-grey`, `--gta-amber`, `--gta-dark`.
+- **Background**: Remove the CRT scanlines and film grain. Replace with a full-screen, fixed, high-quality GTA-style background image with a soft gradient overlay.
+- **Panels**: Update `.panel` to use bright, translucent glassmorphism (e.g., `rgba(255, 255, 255, 0.4)` with heavy blur and rounded corners).
+- **Typography**: 
+  - Switch UI text from `JetBrains Mono` to a clean, rounded sans-serif (e.g., `Segoe UI`, `Arial`, or `Trebuchet MS` to mimic the Xbox 360 dash).
+  - Keep a bold display font for headers.
+- **Buttons / Menus**: Style buttons as pill-shaped, glossy elements. For list menus, I will replicate the segmented horizontal line separators seen in the reference image.
+
+### [MODIFY] NavBar (`src/components/ui/NavBar.tsx`)
+- Change the top navigation from a dark bar into the Xbox 360 "Blades" style (large, rounded tabs overlapping the top edge).
+- Update the bottom HUD to look like the contextual button prompts at the bottom of the Xbox screen (e.g., `[A] Select`, `[B] Back`, though mapped to our game actions).
+
+### [MODIFY] Landing, Board, Editor Pages
+- Update the layout containers to use the new translucent, rounded panel styling.
+- Convert hard-edged grids into smooth, padded lists.
+
+## Verification Plan
+
+### Manual Verification
+1. Visually inspect the Landing Page, Job Board, and Editor Page to ensure the new CSS tokens are applied consistently.
+2. Confirm the transparency effects look authentic over the new background artwork.
+3. Ensure no text is unreadable due to contrast issues with the lighter aesthetic.

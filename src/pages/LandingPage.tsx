@@ -52,20 +52,7 @@ export default function LandingPage() {
         flexDirection: 'column'
       }}
     >
-      {/* Cinematic Full Screen Background */}
-      <div 
-        style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundImage: "url('/bg-landing.jpg')",
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          filter: 'brightness(0.7) contrast(1.2)',
-          zIndex: 0,
-          transition: 'transform 10s ease-out',
-          transform: 'scale(1.05)'
-        }}
-      />
+      {/* Cinematic Full Screen Background is now handled globally in index.css */}
 
       {/* Vignette / Dark Gradient Overlay */}
       <div 
@@ -87,10 +74,10 @@ export default function LandingPage() {
           transition={{ delay: 0.2, duration: 0.8 }}
           style={{ marginBottom: 'auto' }}
         >
-          <h1 className="font-display" style={{ fontSize: '5rem', margin: 0, lineHeight: 0.9, textShadow: '0 4px 20px rgba(0,0,0,0.8)', color: '#fff' }}>
+          <h1 className="font-display" style={{ fontSize: '6rem', margin: 0, lineHeight: 0.9, textShadow: '0 4px 20px rgba(0,0,0,0.8)', color: '#fff' }}>
             KLUSTOR
           </h1>
-          <div className="font-mono" style={{ fontSize: '1.2rem', color: 'var(--neon-cyan)', letterSpacing: '0.2em', textShadow: '0 2px 10px rgba(0,0,0,0.8)', marginTop: '0.5rem' }}>
+          <div className="font-display" style={{ fontSize: '1.8rem', color: 'var(--xbox-green)', letterSpacing: '0.1em', textShadow: '0 2px 10px rgba(0,0,0,0.8)', marginTop: '0.5rem' }}>
             // THE FIXER
           </div>
         </motion.div>
@@ -120,24 +107,26 @@ export default function LandingPage() {
             key={selectedItem}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
+            className="panel"
             style={{ 
               flex: 1, 
-              background: 'rgba(10, 11, 15, 0.8)', 
+              background: 'rgba(255, 255, 255, 0.7)', 
               backdropFilter: 'blur(10px)',
               padding: '2.5rem',
-              borderLeft: '4px solid var(--neon-cyan)',
+              borderLeft: '8px solid var(--xbox-green)',
               maxWidth: '600px',
               marginBottom: '1rem',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.5)'
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+              borderRadius: '0 16px 16px 0'
             }}
           >
-            <div className="font-mono" style={{ fontSize: '0.8rem', color: 'var(--neon-cyan)', marginBottom: '0.5rem', letterSpacing: '0.1em' }}>
+            <div className="font-body" style={{ fontSize: '1rem', color: 'var(--gta-blue)', marginBottom: '0.5rem', fontWeight: 700 }}>
               {context.subtitle}
             </div>
-            <h2 className="font-display" style={{ fontSize: '3rem', margin: '0 0 1rem 0', color: '#fff', lineHeight: 1 }}>
+            <h2 className="font-display" style={{ fontSize: '3.5rem', margin: '0 0 1rem 0', color: 'var(--gta-black)', lineHeight: 1 }}>
               {context.title}
             </h2>
-            <p className="font-mono" style={{ color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, fontSize: '0.9rem' }}>
+            <p className="font-body" style={{ color: 'var(--text-secondary)', lineHeight: 1.6, fontSize: '1.1rem', fontWeight: 500 }}>
               {context.desc}
             </p>
           </motion.div>
