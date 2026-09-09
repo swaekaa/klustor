@@ -52,8 +52,20 @@ export default function LandingPage() {
         flexDirection: 'column'
       }}
     >
-      {/* Cinematic Full Screen Background is now handled globally in index.css */}
-
+      {/* Cinematic Full Screen Background override for Landing Page */}
+      <div 
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: "url('/bg-landing.jpg')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          filter: 'brightness(0.8) contrast(1.2)',
+          zIndex: 0,
+          transition: 'transform 10s ease-out',
+          transform: 'scale(1.05)'
+        }}
+      />
       {/* Vignette / Dark Gradient Overlay */}
       <div 
         style={{

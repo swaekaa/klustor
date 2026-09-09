@@ -83,7 +83,8 @@ body::before {
   inset: 0;
   z-index: -1;
   background: url('/bg-landing.jpg') center/cover no-repeat;
-  opacity: 0.85;
+  opacity: 0.95;
+  filter: brightness(0.25) contrast(1.1);
 }
 
 /* Glossy reflection overlay for the entire screen */
