@@ -43,17 +43,22 @@ export const jobs: Job[] = [
     clientId: 'maya',
     location: 'NIGHTCLUB ROW',
     brief: "Friday is dead unless we make people believe it isn't. Take this shot from the floor, slap some energy into it. Add the event details. No one asks questions if the flyer looks good.",
+    clientBriefTasks: [
+      'Improve the visual mood',
+      'Crop the image for the campaign',
+      'Add the event title',
+      'Add a visual accent',
+      'Add a frame'
+    ],
     payment: 4500,
     repReward: 12,
     heatChange: 0,
     difficulty: 'easy',
     image: '/evidence/evidence-04.webp', // Nightclub image
     requirements: [
-      { id: 'req-1', label: 'Apply a Filter', type: 'filter' },
-      { id: 'req-2', label: 'Crop to the subject', type: 'crop' },
-      { id: 'req-3', label: 'Add Event Title (Text)', type: 'text' },
-      { id: 'req-4', label: 'Add a Shape or Accent', type: 'shape' },
-      { id: 'req-5', label: 'Add a Frame', type: 'frame' },
+      { id: 'req-visual', label: 'IMAGE MODIFIED', type: 'visual' },
+      { id: 'req-dim', label: 'CAMPAIGN FORMAT', type: 'dimension' },
+      { id: 'req-save', label: 'FINAL EDIT SAVED', type: 'save' },
     ],
     status: 'available',
   },
@@ -63,16 +68,21 @@ export const jobs: Job[] = [
     clientId: 'dante',
     location: 'MARINA DISTRICT',
     brief: "Make this car look like it belongs to someone who doesn't check prices. I need it cropped tight, framed, and looking pristine. Put our dealership name on it.",
+    clientBriefTasks: [
+      'Crop the subject',
+      'Apply a Filter to enhance color',
+      'Add Dealership Text',
+      'Add a Frame'
+    ],
     payment: 6500,
     repReward: 18,
     heatChange: 2,
     difficulty: 'medium',
     image: '/evidence/evidence-03.webp', // Supercars
     requirements: [
-      { id: 'req-1', label: 'Crop the subject', type: 'crop' },
-      { id: 'req-2', label: 'Apply a Filter to enhance color', type: 'filter' },
-      { id: 'req-3', label: 'Add Dealership Text', type: 'text' },
-      { id: 'req-4', label: 'Add a Frame', type: 'frame' },
+      { id: 'req-dim', label: 'CAMPAIGN FORMAT', type: 'dimension' },
+      { id: 'req-visual', label: 'IMAGE MODIFIED', type: 'visual' },
+      { id: 'req-save', label: 'FINAL EDIT SAVED', type: 'save' },
     ],
     status: 'locked',
   },
@@ -82,15 +92,20 @@ export const jobs: Job[] = [
     clientId: 'elena',
     location: 'TEXTILE CITY',
     brief: "We're dropping this tonight. Make it look expensive. Crop it, brand it, add some sticker flair.",
+    clientBriefTasks: [
+      'Crop the product',
+      'Add brand Text',
+      'Add a Sticker or Shape'
+    ],
     payment: 8000,
     repReward: 25,
     heatChange: 5,
     difficulty: 'medium',
     image: '/evidence/evidence-02.webp', // Alleyway
     requirements: [
-      { id: 'req-1', label: 'Crop the product', type: 'crop' },
-      { id: 'req-2', label: 'Add brand Text', type: 'text' },
-      { id: 'req-3', label: 'Add a Sticker or Shape', type: 'sticker' },
+      { id: 'req-dim', label: 'CAMPAIGN FORMAT', type: 'dimension' },
+      { id: 'req-visual', label: 'IMAGE MODIFIED', type: 'visual' },
+      { id: 'req-save', label: 'FINAL EDIT SAVED', type: 'save' },
     ],
     status: 'locked',
   },
@@ -100,16 +115,20 @@ export const jobs: Job[] = [
     clientId: 'elena',
     location: 'SOUTH BEACH',
     brief: "The artist has no vision. We need an album cover by morning. Make it moody, make it pop.",
+    clientBriefTasks: [
+      'Heavy Filter',
+      'Album Title (Text)',
+      'Shapes / Composition',
+      'Add a Frame'
+    ],
     payment: 12000,
     repReward: 40,
     heatChange: 10,
     difficulty: 'hard',
     image: '/evidence/evidence-01.jpg', // Ocean drive bikers
     requirements: [
-      { id: 'req-1', label: 'Heavy Filter', type: 'filter' },
-      { id: 'req-2', label: 'Album Title (Text)', type: 'text' },
-      { id: 'req-3', label: 'Shapes / Composition', type: 'shape' },
-      { id: 'req-4', label: 'Add a Frame', type: 'frame' },
+      { id: 'req-visual', label: 'IMAGE MODIFIED', type: 'visual' },
+      { id: 'req-save', label: 'FINAL EDIT SAVED', type: 'save' },
     ],
     status: 'locked',
   },
@@ -119,15 +138,19 @@ export const jobs: Job[] = [
     clientId: 'marcus',
     location: 'VICE HARBOR',
     brief: "Maya Rivera thinks she runs this city's nightlife. Make her new campaign look weak. Sabotage this image.",
+    clientBriefTasks: [
+      'Distort or Pixelate',
+      'Add derogatory Text',
+      'Draw over it'
+    ],
     payment: 20000,
     repReward: -10, // Lose rep but gain cash
     heatChange: 30, // High heat
     difficulty: 'hard',
     image: '/evidence/evidence-05.jpg', // CCTV
     requirements: [
-      { id: 'req-1', label: 'Distort or Pixelate', type: 'filter' },
-      { id: 'req-2', label: 'Add derogatory Text', type: 'text' },
-      { id: 'req-3', label: 'Draw over it', type: 'draw' },
+      { id: 'req-visual', label: 'IMAGE MODIFIED', type: 'visual' },
+      { id: 'req-save', label: 'FINAL EDIT SAVED', type: 'save' },
     ],
     status: 'locked',
   },

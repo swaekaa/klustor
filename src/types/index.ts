@@ -4,12 +4,12 @@
 
 export type JobStatus = 'locked' | 'available' | 'active' | 'completed';
 export type JobDifficulty = 'easy' | 'medium' | 'hard';
-export type ToolType = 'crop' | 'filter' | 'text' | 'shape' | 'sticker' | 'frame' | 'resize' | 'draw' | 'any';
+export type ValidationType = 'dimension' | 'visual' | 'save';
 
-export interface JobRequirement {
+export interface ValidationRequirement {
   id: string;
   label: string;
-  type: ToolType;
+  type: ValidationType;
 }
 
 export interface Client {
@@ -26,12 +26,13 @@ export interface Job {
   clientId: string;
   location: string;
   brief: string;
+  clientBriefTasks: string[]; // E.g., "Add a frame", "Add text"
   payment: number;
   repReward: number;
   heatChange: number;
   difficulty: JobDifficulty;
   image: string; // The original input asset (URL or base64)
-  requirements: JobRequirement[];
+  requirements: ValidationRequirement[];
   status: JobStatus;
 }
 

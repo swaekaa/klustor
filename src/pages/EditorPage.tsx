@@ -5,16 +5,81 @@ import { useGameStore } from '../store/gameStore';
 import { jobs, clients } from '../data/jobs';
 import InvestigationEditor from '../components/editor/InvestigationEditor';
 
+// Helper function to analyze image differences
+function analyzeImageDiff(originalSrc: string, editedSrc: string): Promise<{ isResized: boolean, isVisuallyModified: boolean }> {
+  return new Promise((resolve) => {
+    const img1 = new Image();
+    const img2 = new Image();
+    let loaded = 0;
+
+    const onLoad = () => {
+      loaded++;
+      if (loaded === 2) {
+        if (img1.width !== img2.width || img1.height !== img2.height) {
+          resolve({ isResized: true, isVisuallyModified: true });
+          return;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = img1.width;
+        canvas.height = img1.height;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        if (!ctx) {
+          resolve({ isResized: false, isVisuallyModified: true });
+          return;
+        }
+
+        ctx.drawImage(img1, 0, 0);
+        const data1 = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img2, 0, 0);
+        const data2 = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+        let diffPixels = 0;
+        const totalPixels = canvas.width * canvas.height;
+        const step = 4 * 10; // Check every 10th pixel for performance
+
+        for (let i = 0; i < data1.length; i += step) {
+          if (Math.abs(data1[i] - data2[i]) > 5 || 
+              Math.abs(data1[i+1] - data2[i+1]) > 5 || 
+              Math.abs(data1[i+2] - data2[i+2]) > 5) {
+            diffPixels++;
+          }
+        }
+
+        const diffRatio = diffPixels / (totalPixels / 10);
+        resolve({
+          isResized: false,
+          isVisuallyModified: diffRatio > 0.01 // At least 1% of sampled pixels changed
+        });
+      }
+    };
+
+    img1.crossOrigin = "Anonymous";
+    img2.crossOrigin = "Anonymous";
+    img1.onload = onLoad;
+    img2.onload = onLoad;
+    
+    // Fallback if images fail to load
+    img1.onerror = () => resolve({ isResized: false, isVisuallyModified: true });
+    img2.onerror = () => resolve({ isResized: false, isVisuallyModified: true });
+
+    img1.src = originalSrc;
+    img2.src = editedSrc;
+  });
+}
+
 export default function EditorPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { submitJob, unlockedJobs } = useGameStore();
+  const { submitJob, unlockedJobs, completedJobs } = useGameStore();
 
   const [finalImage, setFinalImage] = useState<string | null>(null);
-  const [completedTasks, setCompletedTasks] = useState<string[]>([]);
+  const [verifiedReqs, setVerifiedReqs] = useState<string[]>([]);
   const [deliveryStatus, setDeliveryStatus] = useState<'editing' | 'delivered'>('editing');
   const [finalScore, setFinalScore] = useState(0);
   const [editorError, setEditorError] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const job = jobs.find((j) => j.id === id);
 
@@ -29,29 +94,55 @@ export default function EditorPage() {
     );
   }
 
+  // Preemptively check if already completed
+  if (completedJobs.includes(job.id) && deliveryStatus !== 'delivered') {
+    return (
+      <div className="page" style={{ paddingTop: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div className="font-display" style={{ fontSize: '3rem', color: 'var(--neon-cyan)' }}>JOB ALREADY COMPLETED</div>
+          <button className="btn btn-ghost" style={{ marginTop: '1rem' }} onClick={() => navigate('/board')}>VIEW PORTFOLIO</button>
+        </div>
+      </div>
+    );
+  }
+
   const client = clients[job.clientId];
 
   const handleEditorSave = useCallback(
-    (dataUrl: string) => {
+    async (dataUrl: string) => {
       setFinalImage(dataUrl);
+
+      // Perform validation
+      const analysis = await analyzeImageDiff(job.image, dataUrl);
+      const newVerified: string[] = [];
+
+      job.requirements.forEach(req => {
+        if (req.type === 'save') {
+          newVerified.push(req.id);
+        } else if (req.type === 'dimension' && analysis.isResized) {
+          newVerified.push(req.id);
+        } else if (req.type === 'visual' && analysis.isVisuallyModified) {
+          newVerified.push(req.id);
+        }
+      });
+
+      setVerifiedReqs(newVerified);
     },
-    []
+    [job.image, job.requirements]
   );
 
-  const toggleTask = (reqId: string) => {
-    setCompletedTasks(prev => 
-      prev.includes(reqId) ? prev.filter(id => id !== reqId) : [...prev, reqId]
-    );
-  };
-
   const handleSubmit = () => {
-    if (!finalImage) return;
+    if (!finalImage || isSubmitting) return;
+
+    // Guard requirement completion
+    if (verifiedReqs.length < job.requirements.length) return;
+
+    setIsSubmitting(true);
 
     // Simple deterministic scoring for MVP
     let score = 50;
-    if (finalImage !== job.image) score += 20; 
-    const taskCompletionRatio = completedTasks.length / job.requirements.length;
-    score += Math.floor(taskCompletionRatio * 30); 
+    if (verifiedReqs.includes(job.requirements.find(r => r.type === 'visual')?.id || '')) score += 20; 
+    score += 30; 
 
     setFinalScore(score);
     submitJob(job.id, finalImage, score);
@@ -187,16 +278,21 @@ export default function EditorPage() {
           <div className="font-mono" style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>CLIENT BRIEF</div>
           <div style={{ borderLeft: '2px solid var(--neon-cyan)', paddingLeft: '1rem', marginBottom: '2rem' }}>
             <div className="font-display" style={{ color: '#fff', fontSize: '1.1rem', marginBottom: '0.25rem' }}>{client.name}</div>
-            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', fontStyle: 'italic', margin: 0, lineHeight: 1.5 }}>
+            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', fontStyle: 'italic', margin: 0, lineHeight: 1.5, marginBottom: '1rem' }}>
               "{job.brief}"
             </p>
+            <ul style={{ margin: 0, paddingLeft: '1.2rem', color: 'var(--text-muted)', fontSize: '0.75rem', lineHeight: 1.6 }}>
+              {job.clientBriefTasks.map((task, i) => (
+                <li key={i}>{task}</li>
+              ))}
+            </ul>
           </div>
 
-          <div className="font-mono" style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '1rem' }}>JOB REQUIREMENTS</div>
+          <div className="font-mono" style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '1rem' }}>SYSTEM VALIDATION</div>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
             {job.requirements.map(req => {
-              const isChecked = completedTasks.includes(req.id);
+              const isVerified = verifiedReqs.includes(req.id);
               return (
                 <div 
                   key={req.id} 
@@ -206,34 +302,24 @@ export default function EditorPage() {
                     justifyContent: 'space-between',
                     gap: '0.75rem',
                     padding: '0.5rem',
-                    background: isChecked ? 'rgba(57, 217, 138, 0.05)' : 'rgba(255,255,255,0.02)',
-                    border: '1px solid ' + (isChecked ? 'rgba(57, 217, 138, 0.3)' : 'rgba(255,255,255,0.05)'),
+                    background: isVerified ? 'rgba(57, 217, 138, 0.05)' : 'rgba(255,255,255,0.02)',
+                    border: '1px solid ' + (isVerified ? 'rgba(57, 217, 138, 0.3)' : 'rgba(255,255,255,0.05)'),
                   }}
                 >
-                  <div>
-                    <div className="font-mono" style={{ fontSize: '0.75rem', color: isChecked ? 'var(--neon-green)' : '#fff' }}>
-                      {req.label}
-                    </div>
-                    <div className="font-mono" style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                      TOOL: {req.type.toUpperCase()}
-                    </div>
+                  <div className="font-mono" style={{ fontSize: '0.75rem', color: isVerified ? 'var(--neon-green)' : '#fff' }}>
+                    {req.label}
                   </div>
                   
-                  <button 
-                    onClick={() => toggleTask(req.id)}
+                  <div 
                     className="font-mono"
                     style={{
-                      background: 'transparent',
-                      border: 'none',
-                      color: isChecked ? 'var(--neon-green)' : 'var(--text-muted)',
-                      cursor: 'pointer',
+                      color: isVerified ? 'var(--neon-green)' : 'var(--text-muted)',
                       fontSize: '0.65rem',
                       letterSpacing: '0.1em',
-                      textDecoration: isChecked ? 'none' : 'underline'
                     }}
                   >
-                    {isChecked ? '✓ MET' : 'MARK MET'}
-                  </button>
+                    {isVerified ? '✓ VERIFIED' : '○ PENDING'}
+                  </div>
                 </div>
               );
             })}
@@ -241,7 +327,7 @@ export default function EditorPage() {
 
           <div style={{ marginTop: 'auto', paddingTop: '2rem' }}>
              <p className="font-mono" style={{ fontSize: '0.65rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-               * Use Unlayer to fulfill the client's request. Mark the requirements as met when you finish them. You must SAVE the image in the editor before delivery.
+               * Use Unlayer to fulfill the client's request. System will automatically verify requirements upon SAVE.
              </p>
           </div>
         </div>
@@ -257,18 +343,18 @@ export default function EditorPage() {
         </div>
 
         {/* RIGHT SIDEBAR: Status & Submission */}
-        <div style={{ background: 'rgba(10, 11, 15, 0.9)', borderLeft: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', padding: '1.5rem' }}>
+        <div style={{ background: 'rgba(10, 11, 15, 0.9)', borderLeft: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', padding: '1.5rem 1.5rem 6rem 1.5rem', overflowY: 'auto' }}>
           
           <div className="font-mono" style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '1.5rem' }}>JOB STATUS</div>
           
           <div style={{ marginBottom: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
               <span className="font-mono" style={{ fontSize: '0.75rem', color: '#fff' }}>TASKS</span>
-              <span className="font-mono" style={{ fontSize: '0.75rem', color: 'var(--neon-cyan)' }}>{completedTasks.length} / {job.requirements.length}</span>
+              <span className="font-mono" style={{ fontSize: '0.75rem', color: 'var(--neon-cyan)' }}>{verifiedReqs.length} / {job.requirements.length}</span>
             </div>
             {/* Progress bar */}
             <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)' }}>
-              <div style={{ width: ((completedTasks.length / job.requirements.length) * 100) + '%', height: '100%', background: 'var(--neon-cyan)', transition: 'width 0.3s' }} />
+              <div style={{ width: ((verifiedReqs.length / job.requirements.length) * 100) + '%', height: '100%', background: 'var(--neon-cyan)', transition: 'width 0.3s' }} />
             </div>
           </div>
 
@@ -301,17 +387,17 @@ export default function EditorPage() {
 
             <button 
               className="btn btn-primary" 
-              disabled={!finalImage}
+              disabled={!finalImage || isSubmitting || verifiedReqs.length < job.requirements.length}
               onClick={handleSubmit}
               style={{ 
                 width: '100%', 
                 padding: '1.25rem', 
                 fontSize: '1.2rem',
-                opacity: finalImage ? 1 : 0.5,
-                cursor: finalImage ? 'pointer' : 'not-allowed'
+                opacity: (!finalImage || verifiedReqs.length < job.requirements.length) ? 0.5 : 1,
+                cursor: (!finalImage || verifiedReqs.length < job.requirements.length) ? 'not-allowed' : 'pointer'
               }}
             >
-              DELIVER JOB
+              {isSubmitting ? 'PROCESSING...' : (verifiedReqs.length < job.requirements.length ? 'REQUIREMENTS PENDING' : 'DELIVER JOB')}
             </button>
           </div>
 

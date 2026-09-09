@@ -36,27 +36,22 @@ export const useGameStore = create<GameState>()(
         if (!job) return;
 
         set((state) => {
-          const isFirstCompletion = !state.completedJobs.includes(jobId);
-          
-          // Only reward cash/rep if this is the first time completing the job, or handle it differently
-          const cashReward = isFirstCompletion ? job.payment : Math.floor(job.payment * 0.1);
-          const repReward = isFirstCompletion ? job.repReward : 0;
-          const heatReward = isFirstCompletion ? job.heatChange : 0;
+          if (state.completedJobs.includes(jobId)) {
+            return state; // Guard against duplicate submissions
+          }
 
-          const newRep = Math.max(0, Math.min(100, state.player.reputation + repReward));
-          const newHeat = Math.max(0, Math.min(100, state.player.heat + heatReward));
+          const newRep = Math.max(0, Math.min(100, state.player.reputation + job.repReward));
+          const newHeat = Math.max(0, Math.min(100, state.player.heat + job.heatChange));
 
           const newPortfolioItem: PortfolioItem = {
             jobId,
             finalImage,
             creativeScore,
-            paymentReceived: cashReward,
+            paymentReceived: job.payment,
             timestamp: new Date().toISOString(),
           };
 
-          const newCompletedJobs = isFirstCompletion 
-            ? [...state.completedJobs, jobId] 
-            : state.completedJobs;
+          const newCompletedJobs = [...state.completedJobs, jobId];
 
           // Unlock logic (hardcoded simple progression for now)
           const newUnlockedJobs = [...state.unlockedJobs];
@@ -74,7 +69,7 @@ export const useGameStore = create<GameState>()(
             },
             player: {
               ...state.player,
-              cash: state.player.cash + cashReward,
+              cash: state.player.cash + job.payment,
               reputation: newRep,
               heat: newHeat,
               rank: computeRank(newRep),
@@ -103,6 +98,39 @@ export const useGameStore = create<GameState>()(
     }),
     {
       name: 'klustor-fixer-v1',
+      storage: {
+        getItem: (name) => {
+          const str = localStorage.getItem(name);
+          return str ? JSON.parse(str) : null;
+        },
+        setItem: (name, value) => {
+          try {
+            localStorage.setItem(name, JSON.stringify(value));
+          } catch (e: any) {
+            if (e.name === 'QuotaExceededError' || e.message.includes('quota')) {
+              console.warn('LocalStorage quota exceeded. Stripping finalImages from portfolio.');
+              // Fallback: strip dataUrls to save progress
+              const fallbackValue = { ...value };
+              if (fallbackValue.state && fallbackValue.state.portfolio) {
+                const strippedPortfolio = { ...fallbackValue.state.portfolio };
+                for (const key in strippedPortfolio) {
+                  strippedPortfolio[key] = {
+                    ...strippedPortfolio[key],
+                    finalImage: '' // Clear massive dataUrl
+                  };
+                }
+                fallbackValue.state.portfolio = strippedPortfolio;
+              }
+              try {
+                localStorage.setItem(name, JSON.stringify(fallbackValue));
+              } catch (fallbackErr) {
+                console.error('Fallback save also failed', fallbackErr);
+              }
+            }
+          }
+        },
+        removeItem: (name) => localStorage.removeItem(name),
+      },
     }
   )
 );
