@@ -14,33 +14,35 @@ export default function BoardPage() {
       exit={{ opacity: 0 }}
       className="page"
       style={{
-        paddingTop: '80px',
-        minHeight: '100vh',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        height: '100%',
+        padding: '0 2rem'
       }}
     >
-      <div className="container" style={{ paddingTop: '2rem', paddingBottom: '4rem', maxWidth: '1400px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '3rem', background: 'rgba(255,255,255,0.6)', padding: '2rem', borderRadius: '16px', backdropFilter: 'blur(10px)', border: '2px solid rgba(0,0,0,0.1)' }}>
+      <div style={{ paddingBottom: '4rem', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem', borderBottom: '2px solid var(--border-light)', paddingBottom: '1rem' }}>
           <div>
-            <h3 className="font-display" style={{ color: 'var(--gta-blue)', fontSize: '1.2rem', margin: '0 0 0.5rem 0' }}>PORTFOLIO</h3>
-            <h1 className="font-display" style={{ fontSize: '4.5rem', lineHeight: 0.9, margin: 0, color: 'var(--gta-black)' }}>
+            <h1 className="font-display" style={{ fontSize: '2.5rem', margin: 0, color: 'var(--text-primary)' }}>
               THE WALL
             </h1>
+            <h3 className="font-mono" style={{ color: 'var(--text-muted)', fontSize: '1rem', margin: '0.5rem 0 0 0', letterSpacing: '0.1em' }}>FINISHED CONTRACTS</h3>
           </div>
-          <button className="btn btn-ghost" onClick={() => navigate('/case')} style={{ borderRadius: '50px' }}>← BACK TO HUB</button>
         </div>
 
         {completedJobs.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '5rem', background: 'rgba(255,255,255,0.4)', border: '2px dashed rgba(0,0,0,0.2)', borderRadius: '16px' }}>
-            <div className="font-body" style={{ color: 'var(--text-secondary)', fontSize: '1.2rem', fontWeight: 700 }}>
-              NO JOBS COMPLETED. THE WALL IS EMPTY.
+          <div style={{ textAlign: 'center', padding: '6rem 2rem', background: 'var(--bg-secondary)', border: '2px dashed var(--border-light)', borderRadius: '8px' }}>
+            <div className="font-mono" style={{ color: 'var(--text-muted)', fontSize: '1.2rem', fontWeight: 'bold', letterSpacing: '0.1em' }}>
+              NO CONTRACTS COMPLETED
+            </div>
+            <div className="font-body" style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>
+              Accept a job from the board to start building your portfolio.
             </div>
           </div>
         ) : (
           <div style={{ 
             display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', 
+            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
             gap: '2rem' 
           }}>
             {completedJobs.map(jobId => {
@@ -49,52 +51,41 @@ export default function BoardPage() {
               if (!job || !portItem) return null;
               
               const client = clients[job.clientId];
-
               return (
                 <motion.div
                   key={jobId}
-                  initial={{ opacity: 0, scale: 0.9, rotate: Math.random() * 4 - 2 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  whileHover={{ y: -10, scale: 1.05, zIndex: 10, boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  whileHover={{ y: -4 }}
+                  className="panel"
                   style={{
-                    background: '#e8dcc8', // Polaroid/Print paper color
-                    padding: '0.75rem 0.75rem 2rem 0.75rem',
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+                    padding: 0,
+                    overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column',
-                    position: 'relative',
-                    transition: 'all 0.3s ease',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
                   }}
                 >
-                  {/* Pin or tape effect */}
-                  <div style={{ position: 'absolute', top: '-10px', left: '50%', transform: 'translateX(-50%)', width: '30px', height: '10px', background: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(4px)', boxShadow: '0 2px 5px rgba(0,0,0,0.2)' }} />
-
-                  <div style={{ aspectRatio: '4/5', background: '#000', position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', borderBottom: '2px solid var(--border-light)' }}>
                     <img 
                       src={portItem.finalImage} 
                       alt={job.title} 
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
-                    <div style={{ position: 'absolute', bottom: '0.5rem', right: '0.5rem', background: 'rgba(255,255,255,0.9)', padding: '0.25rem 0.5rem', border: '2px solid var(--xbox-green)', borderRadius: '4px' }}>
-                      <span className="font-body" style={{ color: 'var(--xbox-green)', fontSize: '0.8rem', fontWeight: 700 }}>SCORE: {portItem.creativeScore}</span>
-                    </div>
                   </div>
-                  
-                  <div style={{ paddingTop: '1rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <div className="font-body" style={{ fontSize: '0.8rem', color: '#8a7d6b', fontWeight: 700, marginBottom: '0.2rem' }}>
-                      CLIENT: {client.name}
+
+                  <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', background: 'var(--bg-secondary)' }}>
+                    <div className="font-display" style={{ fontSize: '1.4rem', color: 'var(--text-primary)', lineHeight: 1.1 }}>
+                      {job.title.toUpperCase()}
                     </div>
-                    <h3 className="font-display" style={{ fontSize: '1.8rem', color: '#111', margin: '0 0 0.5rem 0', lineHeight: 1 }}>
-                      {job.title}
-                    </h3>
                     
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'auto', paddingTop: '0.5rem', borderTop: '2px solid rgba(0,0,0,0.1)' }}>
-                      <div className="font-display" style={{ color: 'var(--xbox-green)', fontSize: '1.2rem' }}>
-                        +${portItem.paymentReceived.toLocaleString()}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div className="font-mono" style={{ color: 'var(--color-success)', fontWeight: 'bold', fontSize: '1.1rem' }}>
+                        ${portItem.paymentReceived.toLocaleString()}
                       </div>
-                      <div className="font-body" style={{ color: '#8a7d6b', fontSize: '0.8rem', fontWeight: 500 }}>
-                        {new Date(portItem.timestamp).toLocaleDateString()}
+                      <div className="font-mono" style={{ color: 'var(--color-nav)', fontWeight: 'bold', fontSize: '1.1rem' }}>
+                        SCORE {portItem.creativeScore}
                       </div>
                     </div>
                   </div>

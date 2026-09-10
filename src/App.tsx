@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
 import LandingPage from './pages/LandingPage';
 import CasePage from './pages/CasePage';
 import EvidencePage from './pages/EvidencePage';
@@ -7,7 +6,7 @@ import EditorPage from './pages/EditorPage';
 import BoardPage from './pages/BoardPage';
 import MapPage from './pages/MapPage';
 import ContactsPage from './pages/ContactsPage';
-import NavBar from './components/ui/NavBar';
+import Layout from './components/ui/Layout';
 import { useGameStore } from './store/gameStore';
 
 // Inner component that can access router context
@@ -16,83 +15,33 @@ function AppRoutes() {
   const activeJobId = useGameStore((s) => s.activeJobId);
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
+    <Layout>
       <Routes location={location} key={location.pathname}>
         {/* Landing — no nav */}
         <Route path="/" element={<LandingPage />} />
 
         {/* Case hub / Job Board */}
-        <Route
-          path="/case"
-          element={
-            <>
-              <NavBar />
-              <CasePage />
-            </>
-          }
-        />
+        <Route path="/case" element={<CasePage />} />
 
         {/* Evidence viewer / Briefing */}
-        <Route
-          path="/evidence/:id"
-          element={
-            <>
-              <NavBar />
-              <EvidencePage />
-            </>
-          }
-        />
+        <Route path="/evidence/:id" element={<EvidencePage />} />
 
         {/* Editor / Fixer Lab */}
-        <Route
-          path="/editor/:id"
-          element={
-            <>
-              <NavBar />
-              <EditorPage />
-            </>
-          }
-        />
+        <Route path="/editor/:id" element={<EditorPage />} />
 
         {/* Evidence board / The Wall */}
-        <Route
-          path="/board"
-          element={
-            <>
-              <NavBar />
-              <BoardPage />
-            </>
-          }
-        />
+        <Route path="/board" element={<BoardPage />} />
 
         {/* Map */}
-        <Route
-          path="/map"
-          element={
-            <>
-              <NavBar />
-              <MapPage />
-            </>
-          }
-        />
+        <Route path="/map" element={<MapPage />} />
 
         {/* Contacts */}
-        <Route
-          path="/contacts"
-          element={
-            <>
-              <NavBar />
-              <ContactsPage />
-            </>
-          }
-        />
-
-
+        <Route path="/contacts" element={<ContactsPage />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </AnimatePresence>
+    </Layout>
   );
 }
 

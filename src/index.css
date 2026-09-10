@@ -8,42 +8,63 @@
    CSS Custom Properties (Design Tokens)
    ============================================================ */
 :root {
-  /* Backgrounds & Blades */
-  --bg-primary: #dcdcdc; /* Light Xbox grey base */
-  --bg-blade: linear-gradient(180deg, #f8f8f8 0%, #e0e0e0 100%);
-  --bg-panel: rgba(255, 255, 255, 0.6);
-  --bg-dark: rgba(0, 0, 0, 0.7);
+  /* Backgrounds */
+  --bg-primary: #F2EFE4; /* BACKGROUND CREAM */
+  --bg-secondary: #FAF9F3; /* WARM WHITE */
+  --bg-panel: rgba(250, 249, 243, 0.95); /* Semi-transparent warm white */
+  --bg-panel-solid: #FAF9F3;
 
-  /* Borders */
-  --border-light: rgba(255, 255, 255, 0.8);
-  --border-dark: rgba(0, 0, 0, 0.2);
+  /* Console Borders */
+  --border-light: rgba(30, 41, 51, 0.12);
+  --border-dark: rgba(30, 41, 51, 0.3);
 
-  /* Text */
-  --text-primary: #333333;
-  --text-secondary: #555555;
-  --text-muted: #888888;
-  --text-light: #f0f0f0;
+  /* Typography Colors */
+  --text-primary: #1E2933; /* DARK NAVY TEXT */
+  --text-secondary: #344F68; /* DARK BLUE */
+  --text-muted: #68717A; /* MUTED TEXT */
+  --text-light: #FAF9F3;
 
-  /* Accent Colors (GTA / Xbox style) */
-  --xbox-green: #7eb900;
-  --gta-amber: #f7a800;
-  --gta-orange: #d95c14;
-  --gta-red: #cc292b;
-  --gta-blue: #2b5797;
-  --gta-black: #111111;
+  /* Pastel Accent Palette */
+  --klustor-blue: #A8C7D8;
+  --klustor-cyan: #8FD5D1;
+  --klustor-green: #A8C99B;
+  --klustor-peach: #E9B58D;
+  --klustor-pink: #DCA8B8;
+  --klustor-yellow: #E7D48B;
+  
+  /* Status Colors */
+  --success: #78A85B;
+  --warning: #D38C54;
+
+  /* Semantic Mappings (overriding previous GTA/Xbox vars) */
+  --accent-cyan: var(--klustor-cyan);
+  --xbox-green: var(--klustor-green);
+  --gta-amber: var(--klustor-yellow);
+  --gta-orange: var(--klustor-peach);
+  --gta-red: var(--klustor-pink);
+  --gta-blue: var(--klustor-blue);
+  --gta-black: var(--text-primary);
 
   /* Typography */
-  /* Using Racing Sans One for the "GTA" style headers */
-  --font-display: 'Racing Sans One', 'Trebuchet MS', sans-serif;
-  /* Using standard sans-serif for UI (Xbox style) */
+  --font-display: 'Trebuchet MS', 'Arial Black', sans-serif; /* Clean, bold console font */
   --font-body: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   --font-mono: 'Consolas', 'Courier New', monospace;
 
-  /* Spacing */
-  --radius-sm: 8px;
-  --radius-md: 16px;
-  --radius-lg: 32px;
-  --radius-pill: 50px;
+  /* Spacing & Layout */
+  --radius-small: 8px;
+  --radius-medium: 14px;
+  --radius-large: 20px;
+  --radius-pill: 999px;
+  --radius-circle: 50%;
+
+  /* Semantic Color Roles */
+  --color-nav: var(--klustor-cyan);      /* navigation / selection */
+  --color-success: var(--klustor-green); /* completed / money */
+  --color-warning: var(--klustor-peach); /* warning / attention */
+  --color-social: var(--klustor-pink);   /* contacts / social */
+  --color-special: #B5ADD5;              /* special / premium */
+  --color-neutral: var(--bg-secondary);  /* neutral / cream */
+  --color-text: var(--text-primary);     /* text / navy */
 
   /* Transitions */
   --transition-fast: 150ms ease-out;
@@ -65,36 +86,99 @@ html {
 }
 
 body {
-  /* Soft warm amber gradient replicating the Xbox 360 background */
-  background: radial-gradient(circle at top right, #fcf6ba, #bf5a0f);
-  background-attachment: fixed;
+  background: var(--bg-primary);
   color: var(--text-primary);
   font-family: var(--font-body);
   font-size: 1rem;
   line-height: 1.5;
   min-height: 100vh;
   overflow-x: hidden;
+  /* Subtle console environment background */
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(169, 201, 218, 0.15) 0%, transparent 70%),
+    linear-gradient(180deg, rgba(250, 249, 243, 0) 0%, rgba(200, 195, 185, 0.2) 100%);
 }
 
-/* Global Background Artwork */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background: url('/bg-landing.jpg') center/cover no-repeat;
-  opacity: 0.95;
-  filter: brightness(0.25) contrast(1.1);
+/* ============================================================
+   Retro Buttons & Modules
+   ============================================================ */
+
+.btn-retro {
+  display: inline-flex;
+  align-items: center;
+  justifyContent: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  letter-spacing: 0.05em;
+  font-weight: bold;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.4);
+  box-shadow: 0 4px 12px rgba(30,40,50,0.1), inset 0 2px 4px rgba(255,255,255,0.5);
+  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+  text-transform: uppercase;
 }
 
-/* Glossy reflection overlay for the entire screen */
+.btn-retro:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(30,40,50,0.15), inset 0 2px 6px rgba(255,255,255,0.7);
+  filter: brightness(1.05);
+}
+
+.btn-retro:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 2px 6px rgba(30,40,50,0.1), inset 0 1px 2px rgba(255,255,255,0.4);
+}
+
+.btn-retro:disabled {
+  background: var(--bg-secondary) !important;
+  color: var(--text-muted) !important;
+  border: 1px solid var(--border-light) !important;
+  box-shadow: none !important;
+  cursor: not-allowed;
+}
+
+.btn-retro-primary {
+  background: var(--klustor-cyan);
+  color: var(--text-primary);
+}
+
+.btn-retro-success {
+  background: var(--klustor-green);
+  color: var(--text-primary);
+}
+
+.btn-retro-ghost {
+  background: transparent;
+  color: var(--text-primary);
+  box-shadow: none;
+  border: 1px solid transparent;
+}
+.btn-retro-ghost:hover:not(:disabled) {
+  background: var(--bg-secondary);
+  border-color: var(--border-light);
+}
+
+/* Base Panel / Module styles */
+.panel {
+  background: var(--bg-panel);
+  border-radius: var(--radius-large);
+  border: 1px solid var(--border-light);
+  box-shadow: 0 4px 12px rgba(30,40,50,0.1), inset 0 2px 4px rgba(255,255,255,0.5);
+  padding: 1.5rem;
+}
+
+/* Subtle scanlines overlay */
 body::after {
   content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 9998;
-  background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 30%);
+  z-index: 9999;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.02) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.01), rgba(0, 255, 0, 0.005), rgba(0, 0, 255, 0.01));
+  background-size: 100% 4px, 3px 100%;
 }
 
 /* ============================================================
@@ -142,28 +226,43 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ============================================================
    Panel / Card Components (Xbox Blades / Glass Style)
+/* ============================================================
+   Console Panels & Modules
    ============================================================ */
 .panel {
   background: var(--bg-panel);
-  border: 2px solid var(--border-light);
+  border: 1px solid var(--border-light);
   padding: 1.5rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), inset 0 2px 10px rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 6px 20px rgba(30, 40, 50, 0.10);
   border-radius: var(--radius-md);
-  color: var(--gta-black);
+  color: var(--text-primary);
+  position: relative;
+}
+
+.panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 -2px 10px rgba(0,0,0,0.03);
+  pointer-events: none;
 }
 
 .panel--elevated {
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+  background: var(--bg-secondary);
+  box-shadow: 
+    inset 0 1px 0 #fff,
+    0 12px 30px rgba(30, 40, 50, 0.15);
 }
 
 .panel--glass {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.2) 100%);
+  background: linear-gradient(135deg, rgba(250, 249, 243, 0.8) 0%, rgba(250, 249, 243, 0.4) 100%);
   border-top: 2px solid rgba(255, 255, 255, 0.9);
   border-left: 2px solid rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 /* Interactive elements */
@@ -190,15 +289,16 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .gta-menu-item.active {
-  background: var(--gta-amber);
+  background: var(--text-primary);
   color: #fff;
-  padding-left: 2.5rem;
+  border-left: 4px solid var(--accent-cyan);
+  padding-left: 2rem;
   font-weight: 700;
   box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
 }
 
 /* ============================================================
-   Button System
+   Console Button System
    ============================================================ */
 .btn {
   display: inline-flex;
@@ -211,51 +311,88 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
   transition: all var(--transition-fast);
   cursor: pointer;
-  border: none;
+  border: 1px solid var(--border-light);
   border-radius: var(--radius-pill);
   text-decoration: none;
   outline: none;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  /* Console physical button feel: slight bevel and drop shadow */
+  box-shadow: 
+    0 4px 6px rgba(30,41,51,0.1),
+    inset 0 1px 0 rgba(255,255,255,0.8),
+    inset 0 -2px 0 rgba(0,0,0,0.05);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 6px 12px rgba(30,41,51,0.15),
+    inset 0 1px 0 rgba(255,255,255,0.9),
+    inset 0 -2px 0 rgba(0,0,0,0.05);
 }
 
 .btn:active {
-  transform: scale(0.97);
+  transform: translateY(1px);
+  box-shadow: 
+    0 2px 3px rgba(30,41,51,0.1),
+    inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--klustor-cyan);
+  outline-offset: 2px;
 }
 
 .btn-primary {
-  background: linear-gradient(180deg, var(--xbox-green) 0%, #5c8700 100%);
-  color: #fff;
-  border: 2px solid #8be300;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  background: var(--klustor-cyan);
+  color: var(--text-primary);
+  border-color: rgba(30,41,51,0.2);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(180deg, #8ce800 0%, var(--xbox-green) 100%);
-  box-shadow: 0 6px 15px rgba(126, 185, 0, 0.4);
+  background: #9EE0DD; /* Lighter cyan */
 }
 
-.btn-primary:disabled {
-  background: #ccc;
-  border-color: #aaa;
-  color: #888;
-  cursor: not-allowed;
-  box-shadow: none;
+.btn-success {
+  background: var(--klustor-green);
+  color: var(--text-primary);
 }
 
 .btn-ghost {
-  background: rgba(255, 255, 255, 0.5);
-  color: var(--gta-black);
-  border: 1px solid rgba(0,0,0,0.1);
+  background: transparent;
+  box-shadow: none;
+  border-color: transparent;
 }
 
 .btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(30,41,51,0.05);
+  box-shadow: none;
+  transform: none;
 }
 
-.btn-danger {
-  background: linear-gradient(180deg, var(--gta-red) 0%, #991f21 100%);
-  color: #fff;
-  border: 2px solid #ff4d4f;
+.btn:disabled, .btn-primary:disabled {
+  background: #E5E7EB;
+  color: #9CA3AF;
+  border-color: #D1D5DB;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Circular console button */
+.btn-circle {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.9rem;
+  background: var(--klustor-blue);
+  color: var(--text-primary);
 }
 
 /* ============================================================
@@ -441,11 +578,11 @@ h1, h2, h3, h4, h5, h6 {
   width: 100%;
   height: 100%;
   position: relative;
-  background: #fff;
-  border: 4px solid var(--bg-primary);
-  border-radius: var(--radius-md);
+  background: var(--bg-panel-solid);
+  border: 1px solid var(--text-primary);
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  box-shadow: 0 10px 35px rgba(30, 40, 50, 0.12);
 }
 
 /* ============================================================

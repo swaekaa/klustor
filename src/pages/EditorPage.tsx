@@ -168,43 +168,48 @@ export default function EditorPage() {
           initial={{ scale: 0.9, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           className="panel"
-          style={{ textAlign: 'center', maxWidth: '1000px', width: '100%', padding: '3rem' }}
+          style={{ textAlign: 'center', maxWidth: '1000px', width: '100%', padding: '4rem', background: 'var(--bg-panel)', border: '2px solid var(--border-light)', borderRadius: '16px' }}
         >
-          <h1 className="font-display" style={{ color: 'var(--xbox-green)', fontSize: '4rem', margin: '0 0 2rem 0', letterSpacing: '0.05em', textShadow: '0 2px 5px rgba(0,0,0,0.2)' }}>
-            DELIVERY ACCEPTED
+          <div className="font-mono" style={{ color: 'var(--klustor-pink)', letterSpacing: '0.3em', fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '1rem' }}>
+            TRANSMISSION COMPLETE
+          </div>
+          <h1 className="font-display" style={{ color: 'var(--klustor-green)', fontSize: '5rem', margin: '0 0 3rem 0', letterSpacing: '0.05em', textShadow: '0 4px 20px rgba(120,168,91,0.4)' }}>
+            MISSION ACCOMPLISHED
           </h1>
           
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '3rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', marginBottom: '4rem' }}>
             {/* Before */}
-            <div style={{ background: 'rgba(255,255,255,0.4)', padding: '1rem', border: '2px solid rgba(0,0,0,0.1)', borderRadius: '16px' }}>
-              <div className="font-display" style={{ color: 'var(--gta-black)', fontSize: '1.2rem', marginBottom: '0.5rem' }}>BEFORE</div>
-              <div style={{ aspectRatio: '16/9', background: '#000', overflow: 'hidden', borderRadius: '8px' }}>
+            <div style={{ background: 'var(--bg-secondary)', padding: '1rem', border: '1px solid var(--border-light)', borderRadius: '8px' }}>
+              <div className="font-mono" style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem', fontWeight: 'bold' }}>ORIGINAL FILE</div>
+              <div style={{ aspectRatio: '16/9', background: '#000', overflow: 'hidden', borderRadius: '4px' }}>
                 <img src={job.image} alt="Original Asset" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               </div>
             </div>
             
             {/* After */}
-            <div style={{ background: 'rgba(126, 185, 0, 0.1)', padding: '1rem', border: '4px solid var(--xbox-green)', borderRadius: '16px', boxShadow: '0 10px 20px rgba(126, 185, 0, 0.2)' }}>
-              <div className="font-display" style={{ color: 'var(--xbox-green)', fontSize: '1.2rem', marginBottom: '0.5rem' }}>AFTER</div>
-              <div style={{ aspectRatio: '16/9', background: '#000', overflow: 'hidden', borderRadius: '8px' }}>
+            <div style={{ background: 'rgba(120, 168, 91, 0.1)', padding: '1rem', border: '2px solid var(--klustor-green)', borderRadius: '8px', boxShadow: '0 10px 30px rgba(120, 168, 91, 0.2)' }}>
+              <div className="font-mono" style={{ color: 'var(--klustor-green)', fontSize: '0.9rem', marginBottom: '1rem', fontWeight: 'bold' }}>EDITED ASSET</div>
+              <div style={{ aspectRatio: '16/9', background: '#000', overflow: 'hidden', borderRadius: '4px' }}>
                 <img src={finalImage} alt="Edited Asset" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               </div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '4rem', marginBottom: '3rem', background: 'rgba(255,255,255,0.5)', padding: '2rem', borderRadius: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '4rem', marginBottom: '4rem', background: 'var(--bg-secondary)', padding: '3rem', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
             <div>
-              <div className="font-display" style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>CREATIVE SCORE</div>
-              <div className="font-display" style={{ color: 'var(--gta-black)', fontSize: '3.5rem' }}>{finalScore}</div>
+              <div className="font-mono" style={{ color: 'var(--text-muted)', fontSize: '1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>CREATIVE SCORE</div>
+              <div className="font-display" style={{ color: 'var(--text-primary)', fontSize: '4rem', lineHeight: 1 }}>{finalScore}</div>
             </div>
+            <div style={{ width: '2px', background: 'var(--border-light)' }} />
             <div>
-              <div className="font-display" style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>PAYMENT</div>
-              <div className="font-display" style={{ color: 'var(--xbox-green)', fontSize: '3.5rem' }}>+${job.payment.toLocaleString()}</div>
+              <div className="font-mono" style={{ color: 'var(--text-muted)', fontSize: '1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>PAYOUT</div>
+              <div className="font-display" style={{ color: 'var(--klustor-green)', fontSize: '4rem', lineHeight: 1 }}>+${job.payment.toLocaleString()}</div>
             </div>
+            <div style={{ width: '2px', background: 'var(--border-light)' }} />
             <div>
-              <div className="font-display" style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>REP</div>
-              <div className="font-display" style={{ color: job.repReward > 0 ? 'var(--gta-blue)' : 'var(--gta-red)', fontSize: '3.5rem' }}>
-                {job.repReward > 0 ? '+' + job.repReward : job.repReward}
+              <div className="font-mono" style={{ color: 'var(--text-muted)', fontSize: '1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>REP EARNED</div>
+              <div className="font-display" style={{ color: 'var(--text-primary)', fontSize: '4rem', lineHeight: 1 }}>
+                +{job.repReward}
               </div>
             </div>
           </div>
@@ -212,9 +217,10 @@ export default function EditorPage() {
           <button 
             className="btn btn-primary" 
             onClick={() => navigate('/board')}
-            style={{ fontSize: '1.2rem', padding: '1rem 4rem' }}
+            style={{ fontSize: '1.5rem', padding: '1rem 4rem', display: 'inline-flex', alignItems: 'center', gap: '1rem' }}
           >
-            VIEW PORTFOLIO
+            <span style={{ fontSize: '1rem' }}>●</span>
+            CONTINUE
           </button>
         </motion.div>
       </motion.div>
@@ -242,54 +248,72 @@ export default function EditorPage() {
       exit={{ opacity: 0 }}
       className="page"
       style={{
-        paddingTop: '80px', // Below the new 80px navbar
         display: 'flex',
         flexDirection: 'column',
-        height: '100vh',
+        height: '100%',
+        minHeight: 0
       }}
     >
       {/* HUD Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem', background: 'rgba(255,255,255,0.6)', borderBottom: '2px solid rgba(0,0,0,0.1)', backdropFilter: 'blur(10px)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 0', borderBottom: '2px solid var(--border-light)', marginBottom: '1.5rem', margin: '0 2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-          <h2 className="font-display" style={{ fontSize: '1.8rem', margin: 0, color: 'var(--gta-black)', lineHeight: 1 }}>
+          <h2 className="font-display" style={{ fontSize: '1.5rem', margin: 0, color: 'var(--text-primary)', letterSpacing: '0.1em' }}>
             FIXER LAB
           </h2>
-          <div className="font-display" style={{ color: 'var(--gta-blue)', fontSize: '1.2rem' }}>
-            JOB: {job.title}
+          <div style={{ width: '2px', height: '20px', background: 'var(--border-light)' }} />
+          <div className="font-mono" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 'bold' }}>
+            JOB {job.id.replace('job-', '').toUpperCase()} // {job.title.toUpperCase()}
           </div>
         </div>
-        <button className="btn btn-ghost" onClick={() => navigate('/case')} style={{ fontSize: '0.9rem', padding: '0.5rem 1.5rem', borderRadius: '50px' }}>
-          ← ABORT
-        </button>
       </div>
 
       <div
         style={{
           flex: 1,
           display: 'grid',
-          gridTemplateColumns: '300px 1fr 300px', // Left Sidebar, Center Editor, Right Sidebar
+          gridTemplateColumns: '420px 1fr 420px', // Left Sidebar, Center Editor, Right Sidebar
           minHeight: 0,
+          gap: '1.5rem',
+          padding: '0 2rem 2rem 2rem'
         }}
       >
-        {/* LEFT SIDEBAR: Brief & Tasks */}
-        <div className="panel" style={{ borderRadius: 0, borderTop: 'none', borderBottom: 'none', borderLeft: 'none', display: 'flex', flexDirection: 'column', padding: '2rem', overflowY: 'auto' }}>
+        {/* LEFT SIDEBAR: Retro Instruction Panel */}
+        <div className="panel" style={{ display: 'flex', flexDirection: 'column', overflowY: 'auto', minHeight: 0 }}>
           
-          <div className="font-display" style={{ fontSize: '1.2rem', color: 'var(--gta-black)', marginBottom: '0.5rem' }}>CLIENT BRIEF</div>
-          <div style={{ borderLeft: '4px solid var(--gta-blue)', paddingLeft: '1rem', marginBottom: '2rem', background: 'rgba(255,255,255,0.3)', padding: '1rem', borderRadius: '0 8px 8px 0' }}>
-            <div className="font-display" style={{ color: 'var(--gta-black)', fontSize: '1.4rem', marginBottom: '0.5rem' }}>{client.name}</div>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', fontStyle: 'italic', margin: 0, lineHeight: 1.5, marginBottom: '1rem', fontWeight: 500 }}>
-              "{job.brief}"
-            </p>
-            <ul style={{ margin: 0, paddingLeft: '1.2rem', color: 'var(--gta-black)', fontSize: '0.9rem', lineHeight: 1.6, fontWeight: 500 }}>
-              {job.clientBriefTasks.map((task, i) => (
-                <li key={i}>{task}</li>
-              ))}
-            </ul>
+          <div className="font-display" style={{ fontSize: '1.2rem', color: 'var(--text-primary)', marginBottom: '1.5rem', letterSpacing: '0.05em' }}>CLIENT BRIEF</div>
+          
+          <div style={{ marginBottom: '2rem', paddingBottom: '1.5rem', borderBottom: '2px solid var(--border-light)' }}>
+            <div className="font-display" style={{ color: 'var(--text-primary)', fontSize: '1.5rem', margin: 0 }}>{client.name}</div>
+            <div className="font-mono" style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '1rem', fontWeight: 'bold' }}>{client.role.toUpperCase()}</div>
+            
+            <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-medium)', border: '1px solid var(--border-light)' }}>
+              <p className="font-body" style={{ color: 'var(--text-primary)', fontSize: '1rem', margin: 0, lineHeight: 1.5 }}>
+                "{job.brief}"
+              </p>
+            </div>
           </div>
 
-          <div className="font-display" style={{ fontSize: '1.2rem', color: 'var(--gta-black)', marginBottom: '1rem' }}>SYSTEM VALIDATION</div>
+          <div className="font-display" style={{ fontSize: '1.2rem', color: 'var(--text-primary)', marginBottom: '1rem', letterSpacing: '0.05em' }}>CLIENT REQUESTS</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '2rem' }}>
+            {job.clientBriefTasks.map((task, i) => (
+              <div key={i} style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '1rem', 
+                background: 'var(--bg-secondary)', 
+                padding: '1rem', 
+                borderRadius: 'var(--radius-medium)',
+                border: '1px solid var(--border-light)'
+              }}>
+                <span className="font-mono" style={{ color: 'var(--text-primary)', fontSize: '0.8rem' }}>●</span>
+                <span className="font-body" style={{ color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: 500 }}>{task.toUpperCase()}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="font-display" style={{ fontSize: '1.2rem', color: 'var(--text-primary)', marginBottom: '1rem', letterSpacing: '0.05em' }}>SYSTEM CHECKS</div>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {job.requirements.map(req => {
               const isVerified = verifiedReqs.includes(req.id);
               return (
@@ -299,40 +323,32 @@ export default function EditorPage() {
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'space-between',
-                    gap: '0.75rem',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    background: isVerified ? 'rgba(126, 185, 0, 0.1)' : 'rgba(255,255,255,0.5)',
-                    border: '2px solid ' + (isVerified ? 'var(--xbox-green)' : 'rgba(0,0,0,0.1)'),
+                    padding: '1rem',
+                    borderRadius: 'var(--radius-medium)',
+                    background: isVerified ? 'var(--color-success)' : 'var(--bg-secondary)',
+                    border: '1px solid var(--border-light)'
                   }}
                 >
-                  <div className="font-body" style={{ fontSize: '0.85rem', fontWeight: 700, color: isVerified ? 'var(--xbox-green)' : 'var(--gta-black)' }}>
-                    {req.label}
+                  <div className="font-mono" style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+                    {req.label.toUpperCase()}
                   </div>
                   
-                  <div 
-                    className="font-display"
-                    style={{
-                      color: isVerified ? 'var(--xbox-green)' : 'var(--text-muted)',
-                      fontSize: '0.9rem',
-                    }}
-                  >
-                    {isVerified ? '✓ VERIFIED' : '○ PENDING'}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span className="font-mono" style={{ color: 'var(--text-primary)', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                      {isVerified ? 'OK' : 'WAIT'}
+                    </span>
+                    <span style={{ color: 'var(--text-primary)', fontSize: '0.8rem' }}>
+                      {isVerified ? '●' : '○'}
+                    </span>
                   </div>
                 </div>
               );
             })}
           </div>
-
-          <div style={{ marginTop: 'auto', paddingTop: '2rem' }}>
-             <p className="font-body" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5, fontWeight: 500 }}>
-               * Use Unlayer to fulfill the client's request. System will automatically verify requirements upon SAVE.
-             </p>
-          </div>
         </div>
 
         {/* CENTER: UNLAYER EDITOR (Visually Dominant) */}
-        <div style={{ position: 'relative', overflow: 'hidden', padding: '1rem', display: 'flex' }}>
+        <div className="panel" style={{ position: 'relative', overflow: 'hidden', padding: '1rem', display: 'flex', minHeight: 0 }}>
           <InvestigationEditor
             imageSrc={job.image}
             evidenceId={job.id}
@@ -341,62 +357,52 @@ export default function EditorPage() {
           />
         </div>
 
-        {/* RIGHT SIDEBAR: Status & Submission */}
-        <div className="panel" style={{ borderRadius: 0, borderTop: 'none', borderBottom: 'none', borderRight: 'none', display: 'flex', flexDirection: 'column', padding: '2rem 2rem 8rem 2rem', overflowY: 'auto' }}>
+        {/* RIGHT SIDEBAR: Retro Status Screen */}
+        <div className="panel" style={{ display: 'flex', flexDirection: 'column', overflowY: 'auto', minHeight: 0 }}>
           
-          <div className="font-display" style={{ fontSize: '1.2rem', color: 'var(--gta-black)', marginBottom: '1.5rem' }}>JOB STATUS</div>
+          <div className="font-display" style={{ fontSize: '1.2rem', color: 'var(--text-primary)', marginBottom: '1.5rem', letterSpacing: '0.05em' }}>JOB STATUS</div>
           
-          <div style={{ marginBottom: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-              <span className="font-body" style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--gta-black)' }}>TASKS</span>
-              <span className="font-display" style={{ fontSize: '1.1rem', color: 'var(--gta-blue)' }}>{verifiedReqs.length} / {job.requirements.length}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
+            <div style={{ 
+              background: 'var(--color-success)', 
+              padding: '1.5rem', 
+              borderRadius: 'var(--radius-medium)', 
+              border: '1px solid var(--border-light)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.5rem'
+            }}>
+              <div className="font-mono" style={{ fontSize: '0.8rem', color: 'var(--text-primary)', fontWeight: 'bold' }}>PAYMENT</div>
+              <div className="font-mono" style={{ fontSize: '2rem', color: 'var(--text-primary)', fontWeight: 'bold', lineHeight: 1 }}>${job.payment.toLocaleString()}</div>
             </div>
-            {/* Progress bar */}
-            <div style={{ width: '100%', height: '8px', background: 'rgba(0,0,0,0.1)', borderRadius: '4px' }}>
-              <div style={{ width: ((verifiedReqs.length / job.requirements.length) * 100) + '%', height: '100%', background: 'var(--gta-blue)', transition: 'width 0.3s', borderRadius: '4px' }} />
-            </div>
-          </div>
 
-          <div style={{ marginBottom: '2rem', background: 'rgba(255,255,255,0.4)', padding: '1rem', borderRadius: '12px' }}>
-            <div className="font-display" style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>PAYMENT</div>
-            <div className="font-display" style={{ fontSize: '2rem', color: 'var(--xbox-green)' }}>${job.payment.toLocaleString()}</div>
-          </div>
-
-          <div style={{ marginBottom: '2rem', background: 'rgba(255,255,255,0.4)', padding: '1rem', borderRadius: '12px' }}>
-            <div className="font-display" style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>REP REWARD</div>
-            <div className="font-display" style={{ fontSize: '1.5rem', color: job.repReward > 0 ? 'var(--gta-blue)' : 'var(--gta-red)' }}>
-              {job.repReward > 0 ? '+' + job.repReward : job.repReward}
+            <div style={{ 
+              background: 'var(--color-nav)', 
+              padding: '1.5rem', 
+              borderRadius: 'var(--radius-medium)', 
+              border: '1px solid var(--border-light)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.5rem'
+            }}>
+              <div className="font-mono" style={{ fontSize: '0.8rem', color: 'var(--text-primary)', fontWeight: 'bold' }}>REP REWARD</div>
+              <div className="font-mono" style={{ fontSize: '2rem', color: 'var(--text-primary)', fontWeight: 'bold', lineHeight: 1 }}>
+                +{job.reputation_reward}
+              </div>
             </div>
           </div>
 
           <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {!finalImage ? (
-              <div style={{ padding: '1rem', background: 'rgba(204, 41, 43, 0.1)', border: '2px solid rgba(204, 41, 43, 0.3)', textAlign: 'center', borderRadius: '8px' }}>
-                <span className="font-body" style={{ color: 'var(--gta-red)', fontSize: '0.8rem', fontWeight: 700 }}>
-                  AWAITING EDITOR SAVE
-                </span>
-              </div>
-            ) : (
-              <div style={{ padding: '1rem', background: 'rgba(126, 185, 0, 0.1)', border: '2px solid rgba(126, 185, 0, 0.3)', textAlign: 'center', borderRadius: '8px' }}>
-                <span className="font-body" style={{ color: 'var(--xbox-green)', fontSize: '0.8rem', fontWeight: 700 }}>
-                  IMAGE DATA CAPTURED
-                </span>
-              </div>
-            )}
-
+            <div className="font-display" style={{ fontSize: '1.2rem', color: 'var(--text-primary)', letterSpacing: '0.05em' }}>DELIVERY</div>
+            
             <button 
-              className="btn btn-primary" 
+              className={`btn-retro ${verifiedReqs.length >= job.requirements.length && finalImage ? 'btn-retro-success' : ''}`}
               disabled={!finalImage || isSubmitting || verifiedReqs.length < job.requirements.length}
               onClick={handleSubmit}
-              style={{ 
-                width: '100%', 
-                padding: '1.25rem', 
-                fontSize: '1.2rem',
-                opacity: (!finalImage || verifiedReqs.length < job.requirements.length) ? 0.5 : 1,
-                cursor: (!finalImage || verifiedReqs.length < job.requirements.length) ? 'not-allowed' : 'pointer'
-              }}
+              style={{ width: '100%' }}
             >
-              {isSubmitting ? 'PROCESSING...' : (verifiedReqs.length < job.requirements.length ? 'REQUIREMENTS PENDING' : 'DELIVER JOB')}
+              <span style={{ fontSize: '1rem' }}>●</span>
+              {isSubmitting ? 'PROCESSING...' : 'DELIVER JOB'}
             </button>
           </div>
 
