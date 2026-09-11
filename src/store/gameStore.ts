@@ -1,103 +1,97 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { GameState, PortfolioItem } from '../types';
-import { jobs } from '../data/jobs';
+import type { GameState, LiveryData, CarStats, TemplateView } from '../types';
 
-const INITIAL_PLAYER = {
-  cash: 0,
-  reputation: 10,
-  heat: 0,
-  rank: 'STREET FIXER',
+// ============================================================
+// KLUSTOR // VICE COAST RACING — Zustand Game Store
+// ============================================================
+
+const DEFAULT_PLAYER = {
+  cash: 1000,
+  rep: 0,
+  racesWon: 0,
+  bestTime: null,
+  driverName: 'KLUSTOR_07',
 };
 
-function computeRank(reputation: number): string {
-  if (reputation < 20) return 'STREET FIXER';
-  if (reputation < 50) return 'ASSOCIATE';
-  if (reputation < 80) return 'CONNECTED';
-  if (reputation < 100) return 'THE PLUG';
-  return 'CITY BOSS';
+function computeOverallRating(stats: CarStats): number {
+  return parseFloat(
+    ((stats.topSpeed / 140 * 10 * 0.3) +
+     (stats.acceleration * 0.25) +
+     (stats.handling * 0.25) +
+     (stats.designScore * 0.2)).toFixed(1)
+  );
 }
 
 export const useGameStore = create<GameState>()(
   persist(
     (set, get) => ({
-      player: { ...INITIAL_PLAYER },
-      unlockedJobs: ['job-01'], // First job unlocked by default
-      completedJobs: [],
-      activeJobId: null,
-      portfolio: {},
+      player: { ...DEFAULT_PLAYER },
+      currentLivery: null,
+      bestLivery: null,
+      raceRecords: [],
 
-      acceptJob: (jobId) => {
-        set({ activeJobId: jobId });
+      // ── Save a new livery from Unlayer ────────────────────
+      saveLivery: (dataUrl: string, name: string, view: TemplateView, stats: CarStats) => {
+        const livery: LiveryData = {
+          name,
+          dataUrl,
+          templateView: view,
+          stats: {
+            ...stats,
+            overallRating: computeOverallRating(stats),
+          },
+          createdAt: new Date().toISOString(),
+        };
+        set({ currentLivery: livery });
       },
 
-      submitJob: (jobId, finalImage, creativeScore) => {
-        const job = jobs.find((j) => j.id === jobId);
-        if (!job) return;
+      // ── Record a completed race ───────────────────────────
+      recordRaceResult: (time: number, topSpeed: number) => {
+        const state = get();
+        const livery = state.currentLivery;
 
-        set((state) => {
-          if (state.completedJobs.includes(jobId)) {
-            return state; // Guard against duplicate submissions
-          }
+        const record = {
+          id: `vice-coast-${Date.now()}`,
+          trackId: 'vice-coast',
+          time,
+          topSpeed,
+          designScore: livery?.stats.designScore ?? 0,
+          liveryDataUrl: livery?.dataUrl ?? '',
+          liveryName: livery?.name ?? 'DEFAULT',
+          driverName: state.player.driverName,
+          isNPC: false,
+          createdAt: new Date().toISOString(),
+        };
 
-          const newRep = Math.max(0, Math.min(100, state.player.reputation + job.repReward));
-          const newHeat = Math.max(0, Math.min(100, state.player.heat + job.heatChange));
+        const isNewBest =
+          state.player.bestTime === null || time < state.player.bestTime;
 
-          const newPortfolioItem: PortfolioItem = {
-            jobId,
-            finalImage,
-            creativeScore,
-            paymentReceived: job.payment,
-            timestamp: new Date().toISOString(),
-          };
-
-          const newCompletedJobs = [...state.completedJobs, jobId];
-
-          // Unlock logic (hardcoded simple progression for now)
-          const newUnlockedJobs = [...state.unlockedJobs];
-          if (newCompletedJobs.length === 1 && !newUnlockedJobs.includes('job-02')) newUnlockedJobs.push('job-02', 'job-03');
-          if (newCompletedJobs.length === 3 && !newUnlockedJobs.includes('job-04')) newUnlockedJobs.push('job-04');
-          if (newCompletedJobs.length === 4 && !newUnlockedJobs.includes('job-05')) newUnlockedJobs.push('job-05');
-
-          return {
-            activeJobId: null, // clear active job
-            completedJobs: newCompletedJobs,
-            unlockedJobs: newUnlockedJobs,
-            portfolio: {
-              ...state.portfolio,
-              [jobId]: newPortfolioItem,
-            },
-            player: {
-              ...state.player,
-              cash: state.player.cash + job.payment,
-              reputation: newRep,
-              heat: newHeat,
-              rank: computeRank(newRep),
-            },
-          };
-        });
-      },
-
-      unlockJob: (jobId) => {
-        set((state) => ({
-          unlockedJobs: state.unlockedJobs.includes(jobId) 
-            ? state.unlockedJobs 
-            : [...state.unlockedJobs, jobId]
+        set((s) => ({
+          raceRecords: [...s.raceRecords, record],
+          bestLivery: isNewBest ? (livery ?? s.bestLivery) : s.bestLivery,
+          player: {
+            ...s.player,
+            cash: s.player.cash + 500 + (isNewBest ? 250 : 0),
+            rep: s.player.rep + 10 + (isNewBest ? 5 : 0),
+            racesWon: s.player.racesWon + 1,
+            bestTime: isNewBest ? time : s.player.bestTime,
+          },
         }));
       },
 
+      // ── Reset ─────────────────────────────────────────────
       resetGame: () => {
         set({
-          player: { ...INITIAL_PLAYER },
-          unlockedJobs: ['job-01'],
-          completedJobs: [],
-          activeJobId: null,
-          portfolio: {},
+          player: { ...DEFAULT_PLAYER },
+          currentLivery: null,
+          bestLivery: null,
+          raceRecords: [],
         });
       },
     }),
     {
-      name: 'klustor-fixer-v1',
+      name: 'klustor-racing-v1',
       storage: {
         getItem: (name) => {
           const str = localStorage.getItem(name);
@@ -107,24 +101,33 @@ export const useGameStore = create<GameState>()(
           try {
             localStorage.setItem(name, JSON.stringify(value));
           } catch (e: any) {
-            if (e.name === 'QuotaExceededError' || e.message.includes('quota')) {
-              console.warn('LocalStorage quota exceeded. Stripping finalImages from portfolio.');
-              // Fallback: strip dataUrls to save progress
-              const fallbackValue = { ...value };
-              if (fallbackValue.state && fallbackValue.state.portfolio) {
-                const strippedPortfolio = { ...fallbackValue.state.portfolio };
-                for (const key in strippedPortfolio) {
-                  strippedPortfolio[key] = {
-                    ...strippedPortfolio[key],
-                    finalImage: '' // Clear massive dataUrl
+            if (e.name === 'QuotaExceededError' || (e.message ?? '').includes('quota')) {
+              console.warn('[KLUSTOR] LocalStorage quota — stripping livery dataUrls');
+              const fallback = { ...value };
+              if (fallback.state) {
+                // Strip large dataUrls from raceRecords to save space
+                if (fallback.state.raceRecords) {
+                  fallback.state.raceRecords = fallback.state.raceRecords.map(
+                    (r: any) => ({ ...r, liveryDataUrl: '' })
+                  );
+                }
+                if (fallback.state.currentLivery) {
+                  fallback.state.currentLivery = {
+                    ...fallback.state.currentLivery,
+                    dataUrl: '',
                   };
                 }
-                fallbackValue.state.portfolio = strippedPortfolio;
+                if (fallback.state.bestLivery) {
+                  fallback.state.bestLivery = {
+                    ...fallback.state.bestLivery,
+                    dataUrl: '',
+                  };
+                }
               }
               try {
-                localStorage.setItem(name, JSON.stringify(fallbackValue));
-              } catch (fallbackErr) {
-                console.error('Fallback save also failed', fallbackErr);
+                localStorage.setItem(name, JSON.stringify(fallback));
+              } catch {
+                console.error('[KLUSTOR] Fallback save also failed');
               }
             }
           }

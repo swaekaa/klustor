@@ -1,70 +1,59 @@
 // ============================================================
-// KLUSTOR: THE FIXER — Core Type Definitions
+// KLUSTOR // VICE COAST RACING — Core Type Definitions
 // ============================================================
 
-export type JobStatus = 'locked' | 'available' | 'active' | 'completed';
-export type JobDifficulty = 'easy' | 'medium' | 'hard';
-export type ValidationType = 'dimension' | 'visual' | 'save';
-
-export interface ValidationRequirement {
-  id: string;
-  label: string;
-  type: ValidationType;
+// ── Car Performance Stats ───────────────────────────────────
+export interface CarStats {
+  topSpeed: number;       // 100–140 (km/h scale)
+  acceleration: number;  // 1–10
+  handling: number;      // 1–10
+  designScore: number;   // 0–10
+  overallRating: number; // computed weighted average
 }
 
-export interface Client {
-  id: string;
+// ── Livery / Design ─────────────────────────────────────────
+export interface LiveryData {
   name: string;
-  role: string;
-  portrait?: string;
-  personalityQuotes: string[];
+  dataUrl: string;        // base64 from Unlayer onSave
+  templateView: TemplateView;
+  stats: CarStats;
+  createdAt: string;      // ISO string
 }
 
-export interface Job {
-  id: string;
-  title: string;
-  clientId: string;
-  location: string;
-  brief: string;
-  clientBriefTasks: string[]; // E.g., "Add a frame", "Add text"
-  payment: number;
-  repReward: number;
-  heatChange: number;
-  difficulty: JobDifficulty;
-  image: string; // The original input asset (URL or base64)
-  requirements: ValidationRequirement[];
-  status: JobStatus;
+export type TemplateView = 'left' | 'right' | 'front' | 'rear' | 'top';
+
+// ── Race Records ─────────────────────────────────────────────
+export interface RaceRecord {
+  id: string;             // uuid-ish, trackId + timestamp
+  trackId: string;        // e.g. 'vice-coast'
+  time: number;           // lap time in ms
+  topSpeed: number;       // km/h achieved during race
+  designScore: number;
+  liveryDataUrl: string;
+  liveryName: string;
+  driverName: string;     // player name or NPC name
+  isNPC: boolean;
+  createdAt: string;
 }
 
-// ============================================================
-// Player / Game State Types
-// ============================================================
-
-export interface PortfolioItem {
-  jobId: string;
-  finalImage: string; // base64 dataUrl from Unlayer
-  creativeScore: number;
-  paymentReceived: number;
-  timestamp: string;
-}
-
+// ── Player ───────────────────────────────────────────────────
 export interface PlayerState {
   cash: number;
-  reputation: number;
-  heat: number;
-  rank: string;
+  rep: number;
+  racesWon: number;
+  bestTime: number | null;  // ms
+  driverName: string;
 }
 
+// ── Game State ───────────────────────────────────────────────
 export interface GameState {
   player: PlayerState;
-  unlockedJobs: string[];
-  completedJobs: string[];
-  activeJobId: string | null;
-  portfolio: Record<string, PortfolioItem>; // jobId → PortfolioItem
-  
+  currentLivery: LiveryData | null;
+  bestLivery: LiveryData | null;    // livery that set the best time
+  raceRecords: RaceRecord[];        // all race records (player + NPCs)
+
   // Actions
-  acceptJob: (jobId: string) => void;
-  submitJob: (jobId: string, finalImage: string, creativeScore: number) => void;
-  unlockJob: (jobId: string) => void;
+  saveLivery: (dataUrl: string, name: string, view: TemplateView, stats: CarStats) => void;
+  recordRaceResult: (time: number, topSpeed: number) => void;
   resetGame: () => void;
 }
