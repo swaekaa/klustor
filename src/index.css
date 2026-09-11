@@ -5,17 +5,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap');
 
 :root {
-  /* Playful Pastel Palette */
-  --bg-primary: #EAF2B6;
-  --bg-secondary: #FAFAEE;
-  --bg-panel: rgba(250, 250, 238, 0.95);
+  /* Clean Playful Palette */
+  --bg-primary: #F7F7F2;
+  --bg-secondary: #FFFFFF;
+  --bg-panel: #FFFFFF;
   
   --text-primary: #121619;
   --text-secondary: #2C3539;
-  --text-muted: #556B72;
+  --text-muted: #8E9A9D;
 
-  --border-light: rgba(18, 22, 25, 0.1);
-  --border-dark: rgba(18, 22, 25, 0.8);
+  --border-light: rgba(18, 22, 25, 0.08);
+  --border-dark: rgba(18, 22, 25, 1);
 
   /* Accents */
   --klustor-green: #9CE066;

@@ -110,8 +110,8 @@ function ResultsScreen({
         background: 'rgba(234, 242, 182, 0.85)', backdropFilter: 'blur(8px)', zIndex: 100
       }}
     >
-      <div className="panel" style={{ textAlign: 'center', minWidth: '400px' }}>
-        <h1 className="font-display" style={{ fontSize: '4rem', marginBottom: '1rem', lineHeight: 1 }}>
+      <div style={{ textAlign: 'center', minWidth: '400px', background: 'var(--bg-secondary)', padding: '3rem', borderRadius: '24px', boxShadow: '0 8px 32px rgba(0,0,0,0.05)', border: '1px solid var(--border-light)' }}>
+        <h1 className="font-display" style={{ fontSize: '3rem', marginBottom: '1rem', lineHeight: 1 }}>
           FINISHED!
         </h1>
         <div className="font-mono" style={{ fontSize: '3.5rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
@@ -119,12 +119,12 @@ function ResultsScreen({
         </div>
         
         {isPersonalBest && (
-          <div className="font-display" style={{ fontSize: '1.5rem', color: 'var(--klustor-pink)', marginBottom: '1rem', fontWeight: 900 }}>
+          <div className="font-display" style={{ fontSize: '1.2rem', color: 'var(--klustor-pink)', marginBottom: '1rem', fontWeight: 900 }}>
             ★ NEW BEST TIME! ★
           </div>
         )}
 
-        <div style={{ display: 'flex', justifyContent: 'space-around', margin: '2rem 0', padding: '1rem', background: 'white', border: '2px solid var(--text-primary)', borderRadius: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-around', margin: '2rem 0', padding: '1rem 0' }}>
           <div>
             <div className="font-mono" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>DESIGN SCORE</div>
             <div className="font-display" style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{designScore.toFixed(1)}</div>
@@ -142,10 +142,10 @@ function ResultsScreen({
         </div>
 
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '1rem' }}>
-          <button className="btn-retro" onClick={onRedesign}>
+          <button className="btn" onClick={onRedesign} style={{ padding: '1rem 2rem', background: 'transparent', border: '1px solid var(--border-light)', boxShadow: 'none' }}>
             REDESIGN
           </button>
-          <button className="btn-retro btn-retro-primary" onClick={onRaceAgain}>
+          <button className="btn" onClick={onRaceAgain} style={{ padding: '1rem 2rem', background: 'var(--klustor-pink)', border: 'none', boxShadow: 'none' }}>
             RACE AGAIN →
           </button>
         </div>
