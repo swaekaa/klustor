@@ -115,15 +115,36 @@ export default function GaragePage() {
   const topRecords = [...raceRecords].sort((a, b) => a.time - b.time).slice(0, 3);
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 1fr', height: '100%', gap: '1rem', minHeight: 0 }}>
+    <div className="page" style={{ display: 'flex', flexDirection: 'column', height: '100vh', padding: '1rem', background: 'var(--bg-primary)', overflow: 'hidden' }}>
+      
+      {/* Top Header Floating Bar */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', padding: '1rem 2rem', background: 'var(--bg-secondary)', border: '3px solid var(--text-primary)', borderRadius: '16px', boxShadow: '4px 4px 0px rgba(0,0,0,0.05)', flexShrink: 0 }}>
+        <div>
+          <div className="font-display" style={{ fontSize: '1rem', letterSpacing: '0.1em', color: 'var(--klustor-pink)' }}>KLUSTOR</div>
+          <h1 style={{ fontSize: '2rem', lineHeight: 1, margin: 0 }}>GARAGE</h1>
+        </div>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <button className="btn-retro" onClick={() => navigate('/design')} style={{ padding: '0.5rem 1rem' }}>
+            LIVERY STUDIO
+          </button>
+          <button className="btn-retro" onClick={() => navigate('/leaderboard')} style={{ padding: '0.5rem 1rem' }}>
+            LEADERBOARD
+          </button>
+          <button className="btn-retro btn-retro-primary" onClick={() => navigate('/race')} style={{ padding: '0.5rem 1rem' }}>
+            RACE NOW →
+          </button>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 1fr', flex: 1, gap: '1rem', minHeight: 0 }}>
 
       {/* ── LEFT PANEL: Livery tool shortcuts ───────────────── */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', minHeight: 0 }}>
-        <div className="panel" style={{ flex: '0 0 auto' }}>
-          <div style={{ fontFamily: 'Consolas,monospace', fontSize: '0.7rem', color: 'var(--text-muted)', letterSpacing: '0.15em', marginBottom: '0.75rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', minHeight: 0 }}>
+        <div style={{ padding: '1.5rem', background: 'var(--bg-secondary)', border: '3px solid var(--text-primary)', borderRadius: '16px', boxShadow: '4px 4px 0px rgba(0,0,0,0.05)' }}>
+          <div className="font-display" style={{ fontSize: '1.2rem', marginBottom: '0.75rem' }}>
             EDIT YOUR LIVERY
           </div>
-          <div style={{ fontFamily: 'Trebuchet MS,sans-serif', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
             Design your ride.<br/>More style = more speed.
           </div>
           {[

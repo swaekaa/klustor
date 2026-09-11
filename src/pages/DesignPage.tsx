@@ -8,16 +8,63 @@ import LiveryEditor from '../components/editor/LiveryEditor';
 import PlayerCar from '../game/components/PlayerCar';
 import type { CarStats, TemplateView } from '../types';
 
-// Camera for the reveal screen
-function AutoRotateCamera() {
-  useFrame(({ camera, clock }) => {
-    const t = clock.getElapsedTime() * 0.4;
-    const radius = 6.5;
-    camera.position.x = Math.sin(t) * radius;
-    camera.position.z = Math.cos(t) * radius;
-    camera.position.y = 2.0;
+import { useThree } from '@react-three/fiber';
+
+// Custom lightweight drag controls for the showcase
+function DragToRotate() {
+  const { gl, camera } = useThree();
+  
+  useEffect(() => {
+    let isDragging = false;
+    let prevX = 0;
+    let prevY = 0;
+    
     camera.lookAt(0, 0.3, 0);
-  });
+
+    const onDown = (e: PointerEvent) => {
+      isDragging = true;
+      prevX = e.clientX;
+      prevY = e.clientY;
+    };
+    
+    const onUp = () => {
+      isDragging = false;
+    };
+    
+    const onMove = (e: PointerEvent) => {
+      if (!isDragging) return;
+      const deltaX = (e.clientX - prevX) * 0.01;
+      const deltaY = (e.clientY - prevY) * 0.01;
+      
+      const x = camera.position.x;
+      const y = camera.position.y;
+      const z = camera.position.z;
+      
+      // Horizontal rotation
+      camera.position.x = x * Math.cos(deltaX) - z * Math.sin(deltaX);
+      camera.position.z = x * Math.sin(deltaX) + z * Math.cos(deltaX);
+      
+      // Very limited vertical rotation
+      const newY = Math.max(0.5, Math.min(4.0, y + deltaY));
+      camera.position.y = newY;
+      
+      camera.lookAt(0, 0.3, 0);
+      
+      prevX = e.clientX;
+      prevY = e.clientY;
+    };
+    
+    gl.domElement.addEventListener('pointerdown', onDown);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointermove', onMove);
+    
+    return () => {
+      gl.domElement.removeEventListener('pointerdown', onDown);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointermove', onMove);
+    };
+  }, [gl, camera]);
+  
   return null;
 }
 
@@ -61,52 +108,50 @@ export default function DesignPage() {
   ];
 
   return (
-    <div className="page" style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem 2rem', background: 'var(--bg-secondary)', borderBottom: '3px solid var(--text-primary)', flexShrink: 0 }}>
+    <div className="page" style={{ display: 'flex', flexDirection: 'column', height: '100vh', padding: '1rem', background: 'var(--bg-primary)', overflow: 'hidden' }}>
+      
+      {/* Top Header Floating Bar */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', padding: '1rem 2rem', background: 'var(--bg-secondary)', border: '3px solid var(--text-primary)', borderRadius: '16px', boxShadow: '4px 4px 0px rgba(0,0,0,0.05)' }}>
         <div>
-          <div className="font-display" style={{ fontSize: '1.2rem', letterSpacing: '0.1em' }}>KLUSTOR</div>
-          <h1 style={{ fontSize: '2.5rem', lineHeight: 1 }}>LIVERY STUDIO</h1>
+          <div className="font-display" style={{ fontSize: '1rem', letterSpacing: '0.1em', color: 'var(--klustor-pink)' }}>KLUSTOR</div>
+          <h1 style={{ fontSize: '2rem', lineHeight: 1, margin: 0 }}>LIVERY STUDIO</h1>
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <div style={{ textAlign: 'right', marginRight: '1rem' }}>
-             <div className="font-mono" style={{ fontSize: '1rem' }}>Design Score: <strong>{stats.designScore.toFixed(1)}</strong></div>
-             <div className="font-mono" style={{ fontSize: '1rem' }}>Top Speed: <strong>{stats.topSpeed} km/h</strong></div>
-          </div>
-          <button className="btn-retro" onClick={() => navigate('/garage')} style={{ padding: '0.75rem 1.5rem', fontSize: '1rem' }}>
+          <button className="btn-retro" onClick={() => navigate('/garage')} style={{ padding: '0.5rem 1rem' }}>
             ← GARAGE
           </button>
-          <button className="btn-retro btn-retro-primary" onClick={() => navigate('/race')} style={{ padding: '0.75rem 1.5rem', fontSize: '1rem' }}>
+          <button className="btn-retro btn-retro-primary" onClick={() => navigate('/race')} style={{ padding: '0.5rem 1rem' }}>
             DONE (RACE) →
           </button>
         </div>
       </div>
 
-      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 450px', minHeight: 0 }}>
-        {/* Left Side: Unlayer Editor */}
-        <div className="klustor-editor-wrapper" style={{ display: 'flex', flexDirection: 'column', borderRight: '3px solid var(--text-primary)', background: 'white' }}>
-          <div style={{ display: 'flex', background: 'var(--bg-secondary)', borderBottom: '3px solid var(--text-primary)', flexShrink: 0 }}>
-            {VIEWS.map((v, i) => (
+      <div style={{ flex: 1, display: 'flex', gap: '1rem', minHeight: 0 }}>
+        
+        {/* Left Side: Unlayer & View Controls */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          
+          {/* View Selector Panel */}
+          <div style={{ display: 'flex', gap: '0.5rem', padding: '1rem', background: 'var(--bg-secondary)', border: '3px solid var(--text-primary)', borderRadius: '16px', boxShadow: '4px 4px 0px rgba(0,0,0,0.05)' }}>
+            <div style={{ marginRight: '1rem', display: 'flex', alignItems: 'center' }}>
+               <strong className="font-display" style={{ fontSize: '1.2rem' }}>EDIT VIEW:</strong>
+            </div>
+            {VIEWS.map((v) => (
               <button
                 key={v.id}
                 onClick={() => setSelectedView(v.id)}
-                style={{
-                  flex: 1, padding: '1rem 0', cursor: 'pointer',
-                  background: selectedView === v.id ? 'var(--klustor-yellow)' : 'transparent',
-                  border: 'none', borderRight: i === VIEWS.length - 1 ? 'none' : '3px solid var(--text-primary)',
-                  fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: '1.25rem',
-                  color: 'var(--text-primary)', transition: 'background 0.2s',
-                }}
+                className={selectedView === v.id ? "btn-retro btn-retro-primary" : "btn-retro"}
+                style={{ flex: 1, padding: '0.5rem', fontSize: '1rem' }}
               >
                 {v.label}
               </button>
             ))}
           </div>
           
-          <div style={{ flex: 1, position: 'relative' }}>
-            <div style={{ position: 'absolute', top: '1rem', left: '1rem', zIndex: 10, pointerEvents: 'none', background: 'rgba(255,255,255,0.9)', padding: '0.5rem 1rem', border: '2px solid var(--text-primary)', borderRadius: '8px' }}>
-              <strong className="font-display" style={{ fontSize: '1.2rem' }}>{VIEWS.find(v => v.id === selectedView)?.label}</strong>
-              <div className="font-mono" style={{ fontSize: '0.8rem' }}>Draw over the car outline below.</div>
+          {/* Unlayer Canvas Panel */}
+          <div style={{ flex: 1, position: 'relative', background: 'white', border: '3px solid var(--text-primary)', borderRadius: '16px', overflow: 'hidden', boxShadow: '4px 4px 0px rgba(0,0,0,0.05)' }}>
+            <div style={{ position: 'absolute', top: '1rem', left: '1rem', zIndex: 10, pointerEvents: 'none', background: 'var(--klustor-yellow)', padding: '0.5rem 1rem', border: '3px solid var(--text-primary)', borderRadius: '12px' }}>
+              <strong className="font-display" style={{ fontSize: '1.2rem' }}>{VIEWS.find(v => v.id === selectedView)?.label} TEMPLATE</strong>
             </div>
 
             {templateUrl && (
@@ -120,38 +165,49 @@ export default function DesignPage() {
             
             {isSaving && (
               <div style={{
-                position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.8)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 20,
-                fontFamily: 'var(--font-mono)', fontSize: '1.5rem', fontWeight: 'bold'
+                position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(4px)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 20
               }}>
-                SAVING TO 3D CAR...
+                <div className="font-display" style={{ fontSize: '2rem', color: 'var(--klustor-pink)' }}>
+                  APPLYING LIVERY...
+                </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Right Side: 3D Preview */}
-        <div style={{ display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', position: 'relative' }}>
-          <div style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 10 }}>
-            <div className="font-display" style={{ background: 'var(--text-primary)', color: 'white', padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.9rem', letterSpacing: '0.1em' }}>
-              LIVE 3D PREVIEW
-            </div>
-          </div>
+        {/* Right Side: 3D Preview & Stats */}
+        <div style={{ width: '450px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           
-          <div style={{ flex: 1, position: 'relative' }}>
-            <Canvas camera={{ position: [0, 2, 5], fov: 45 }} gl={{ antialias: true }}>
-              <ambientLight intensity={1.2} color="#FFFFFF" />
-              <directionalLight position={[5, 8, 5]} intensity={1.5} color="#FFFFFF" />
-              <hemisphereLight color="#FFFFFF" groundColor="#EAF2B6" intensity={0.6} />
+          {/* 3D Canvas Panel */}
+          <div style={{ flex: 1, position: 'relative', background: 'var(--bg-secondary)', border: '3px solid var(--text-primary)', borderRadius: '16px', overflow: 'hidden', boxShadow: '4px 4px 0px rgba(0,0,0,0.05)' }}>
+            <div style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 10 }}>
+              <div className="font-display" style={{ background: 'var(--text-primary)', color: 'white', padding: '0.5rem 1rem', borderRadius: '12px', fontSize: '0.9rem', letterSpacing: '0.1em' }}>
+                LIVE 3D PREVIEW
+              </div>
+            </div>
+            
+            <Canvas camera={{ position: [0, 1.5, 4.5], fov: 45 }} gl={{ antialias: true, toneMapping: 1, toneMappingExposure: 1.2 }}>
+              <ambientLight intensity={1.5} color="#FFFFFF" />
+              <directionalLight position={[5, 8, 5]} intensity={2.0} color="#FFF5E6" castShadow />
+              <directionalLight position={[-5, 5, -5]} intensity={1.0} color="#E6F0FF" />
+              <hemisphereLight color="#FFFFFF" groundColor="#EAF2B6" intensity={0.8} />
+              
+              {/* Studio Backdrop Ring */}
+              <mesh position={[0, -0.4, 0]} rotation={[-Math.PI/2, 0, 0]}>
+                <ringGeometry args={[2, 6, 32]} />
+                <meshBasicMaterial color="#E0E8E8" transparent opacity={0.5} />
+              </mesh>
+
               <Suspense fallback={null}>
                 <PlayerCar groupRef={{ current: null } as any} textures={textures} speed={0} steering={0} />
               </Suspense>
-              <AutoRotateCamera />
+              <DragToRotate />
             </Canvas>
           </div>
           
           {/* Stats Panel */}
-          <div style={{ padding: '2rem', borderTop: '3px solid var(--text-primary)', background: 'var(--bg-secondary)', flexShrink: 0 }}>
+          <div style={{ padding: '1.5rem', background: 'var(--bg-secondary)', border: '3px solid var(--text-primary)', borderRadius: '16px', boxShadow: '4px 4px 0px rgba(0,0,0,0.05)' }}>
             <h3 className="font-display" style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>CAR STATS</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)' }}>
@@ -166,12 +222,13 @@ export default function DesignPage() {
                 <span>HANDLING</span>
                 <strong>{stats.handling.toFixed(1)}</strong>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', color: 'var(--klustor-pink)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', color: 'var(--klustor-pink)', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '2px dashed var(--text-primary)' }}>
                 <span>DESIGN SCORE</span>
-                <strong>{stats.designScore.toFixed(1)} / 10</strong>
+                <strong style={{ fontSize: '1.2rem' }}>{stats.designScore.toFixed(1)} / 10</strong>
               </div>
             </div>
           </div>
+          
         </div>
       </div>
     </div>

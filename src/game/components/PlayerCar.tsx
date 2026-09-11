@@ -12,10 +12,12 @@ import { buildLiveryTexture, createFallbackTexture } from '../utils/liveryTextur
 import type { TemplateView } from '../../types';
 
 interface PlayerCarProps {
-  groupRef: RefObject<THREE.Group>;
+  groupRef?: RefObject<THREE.Group>;
   textures?: Partial<Record<TemplateView, string>>;
   speed?: number;
   steering?: number;
+  position?: [number, number, number];
+  color?: string; // Base color for opponents
 }
 
 const WHEEL_POSITIONS: [number, number, number][] = [
@@ -25,7 +27,7 @@ const WHEEL_POSITIONS: [number, number, number][] = [
   [1.1, -0.35, -1.5],  // rear-left
 ];
 
-export default function PlayerCar({ groupRef, textures, speed = 0, steering = 0 }: PlayerCarProps) {
+export default function PlayerCar({ groupRef, textures, speed = 0, steering = 0, position = [0, 0, 0], color = '#C8D8E8' }: PlayerCarProps) {
   const [loadedTextures, setLoadedTextures] = useState<Partial<Record<TemplateView, THREE.Texture>>>({});
   const wheelRef0 = useRef<THREE.Mesh>(null!);
   const wheelRef1 = useRef<THREE.Mesh>(null!);
@@ -33,6 +35,8 @@ export default function PlayerCar({ groupRef, textures, speed = 0, steering = 0 
   const wheelRef3 = useRef<THREE.Mesh>(null!);
   const wheelRefs = [wheelRef0, wheelRef1, wheelRef2, wheelRef3];
   const wheelRotationRef = useRef(0);
+  const fallbackGroupRef = useRef<THREE.Group>(null!);
+  const actualGroupRef = groupRef || fallbackGroupRef;
 
   // Load livery textures
   useEffect(() => {
@@ -49,7 +53,6 @@ export default function PlayerCar({ groupRef, textures, speed = 0, steering = 0 
       for (const view of views) {
         if (textures[view]) {
           try {
-             // We no longer need to pass the mask template
              const tex = await buildLiveryTexture(textures[view]!);
              loaded[view] = tex;
           } catch {
@@ -68,23 +71,23 @@ export default function PlayerCar({ groupRef, textures, speed = 0, steering = 0 
   }, [textures]);
 
   // Memoize static materials
-  const bodyMat = useMemo(() => new THREE.MeshLambertMaterial({ color: '#C8D8E8' }), []);
-  const darkMat = useMemo(() => new THREE.MeshLambertMaterial({ color: '#2A3540' }), []);
-  const glassMat = useMemo(() => new THREE.MeshLambertMaterial({ color: '#A8D0E6', transparent: true, opacity: 0.5 }), []);
-  const wheelMat = useMemo(() => new THREE.MeshLambertMaterial({ color: '#1A2030' }), []);
-  const hubMat = useMemo(() => new THREE.MeshLambertMaterial({ color: '#C8C8C8' }), []);
-  const lightMat = useMemo(() => new THREE.MeshLambertMaterial({ color: '#FFEEAA', emissive: new THREE.Color('#FFDD88'), emissiveIntensity: 0.5 }), []);
-  const redLightMat = useMemo(() => new THREE.MeshLambertMaterial({ color: '#FF4444', emissive: new THREE.Color('#FF2222'), emissiveIntensity: 0.4 }), []);
-  const chassisMat = useMemo(() => new THREE.MeshLambertMaterial({ color: '#1A2030' }), []);
+  const bodyMat = useMemo(() => new THREE.MeshPhysicalMaterial({ color, roughness: 0.2, metalness: 0.1, clearcoat: 1.0, clearcoatRoughness: 0.1 }), [color]);
+  const darkMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#1A2530', roughness: 0.8, metalness: 0.2 }), []);
+  const glassMat = useMemo(() => new THREE.MeshPhysicalMaterial({ color: '#111111', roughness: 0.1, metalness: 0.9, transparent: true, opacity: 0.85 }), []);
+  const wheelMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#111315', roughness: 0.9, metalness: 0.1 }), []);
+  const hubMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#E0E0E0', roughness: 0.3, metalness: 0.8 }), []);
+  const lightMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#FFFFFF', emissive: new THREE.Color('#FFFFFF'), emissiveIntensity: 2.0 }), []);
+  const redLightMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#FF0000', emissive: new THREE.Color('#FF0000'), emissiveIntensity: 2.0 }), []);
+  const chassisMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#101520', roughness: 0.9 }), []);
 
   // Memoize dynamic livery materials
-  const defaultLiveryMat = useMemo(() => new THREE.MeshLambertMaterial({ color: '#FAF9F3', transparent: true, opacity: 0.9, side: THREE.FrontSide }), []);
+  const defaultLiveryMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#FFFFFF', transparent: true, opacity: 0.0, side: THREE.FrontSide }), []);
   
-  const matLeft = useMemo(() => loadedTextures.left ? new THREE.MeshLambertMaterial({ map: loadedTextures.left, transparent: true, side: THREE.FrontSide }) : defaultLiveryMat, [loadedTextures.left, defaultLiveryMat]);
-  const matRight = useMemo(() => loadedTextures.right ? new THREE.MeshLambertMaterial({ map: loadedTextures.right, transparent: true, side: THREE.FrontSide }) : defaultLiveryMat, [loadedTextures.right, defaultLiveryMat]);
-  const matTop = useMemo(() => loadedTextures.top ? new THREE.MeshLambertMaterial({ map: loadedTextures.top, transparent: true, side: THREE.FrontSide }) : defaultLiveryMat, [loadedTextures.top, defaultLiveryMat]);
-  const matFront = useMemo(() => loadedTextures.front ? new THREE.MeshLambertMaterial({ map: loadedTextures.front, transparent: true, side: THREE.FrontSide }) : defaultLiveryMat, [loadedTextures.front, defaultLiveryMat]);
-  const matRear = useMemo(() => loadedTextures.rear ? new THREE.MeshLambertMaterial({ map: loadedTextures.rear, transparent: true, side: THREE.FrontSide }) : defaultLiveryMat, [loadedTextures.rear, defaultLiveryMat]);
+  const matLeft = useMemo(() => loadedTextures.left ? new THREE.MeshStandardMaterial({ map: loadedTextures.left, transparent: true, side: THREE.FrontSide, roughness: 0.4 }) : defaultLiveryMat, [loadedTextures.left, defaultLiveryMat]);
+  const matRight = useMemo(() => loadedTextures.right ? new THREE.MeshStandardMaterial({ map: loadedTextures.right, transparent: true, side: THREE.FrontSide, roughness: 0.4 }) : defaultLiveryMat, [loadedTextures.right, defaultLiveryMat]);
+  const matTop = useMemo(() => loadedTextures.top ? new THREE.MeshStandardMaterial({ map: loadedTextures.top, transparent: true, side: THREE.FrontSide, roughness: 0.4 }) : defaultLiveryMat, [loadedTextures.top, defaultLiveryMat]);
+  const matFront = useMemo(() => loadedTextures.front ? new THREE.MeshStandardMaterial({ map: loadedTextures.front, transparent: true, side: THREE.FrontSide, roughness: 0.4 }) : defaultLiveryMat, [loadedTextures.front, defaultLiveryMat]);
+  const matRear = useMemo(() => loadedTextures.rear ? new THREE.MeshStandardMaterial({ map: loadedTextures.rear, transparent: true, side: THREE.FrontSide, roughness: 0.4 }) : defaultLiveryMat, [loadedTextures.rear, defaultLiveryMat]);
 
   // Animate wheels each frame
   useFrame((_, delta) => {
@@ -102,95 +105,143 @@ export default function PlayerCar({ groupRef, textures, speed = 0, steering = 0 
     });
   });
 
+  // Detailed sports car geometry
   return (
-    <group ref={groupRef} position={[0, 0, 10]}>
-      {/* === MAIN BODY === */}
-      <mesh position={[0, 0.15, 0]} material={bodyMat}>
-        <boxGeometry args={[2.1, 0.55, 4.2]} />
+    <group ref={actualGroupRef} position={position}>
+      {/* === LOWER BODY === */}
+      {/* Main Chassis */}
+      <mesh position={[0, 0.25, 0]} material={bodyMat}>
+        <boxGeometry args={[1.9, 0.4, 4.2]} />
+      </mesh>
+      
+      {/* Front Nose/Hood */}
+      <mesh position={[0, 0.35, 1.6]} rotation={[-0.15, 0, 0]} material={bodyMat}>
+        <boxGeometry args={[1.85, 0.3, 1.2]} />
+      </mesh>
+      
+      {/* Rear Trunk */}
+      <mesh position={[0, 0.38, -1.7]} rotation={[0.05, 0, 0]} material={bodyMat}>
+        <boxGeometry args={[1.85, 0.35, 0.9]} />
       </mesh>
 
-      {/* Cabin */}
-      <mesh position={[0, 0.72, -0.2]} material={bodyMat}>
-        <boxGeometry args={[1.7, 0.5, 2.2]} />
+      {/* === CABIN / GREENHOUSE === */}
+      <mesh position={[0, 0.75, -0.2]} material={bodyMat}>
+        <boxGeometry args={[1.6, 0.45, 2.0]} />
       </mesh>
 
-      {/* Windshield front */}
-      <mesh position={[0, 0.68, 0.95]} rotation={[0.5, 0, 0]} material={glassMat}>
-        <boxGeometry args={[1.58, 0.5, 0.05]} />
+      {/* Windshield */}
+      <mesh position={[0, 0.73, 0.9]} rotation={[0.45, 0, 0]} material={glassMat}>
+        <boxGeometry args={[1.45, 0.55, 0.05]} />
       </mesh>
 
-      {/* Rear window */}
-      <mesh position={[0, 0.68, -1.35]} rotation={[-0.5, 0, 0]} material={glassMat}>
-        <boxGeometry args={[1.58, 0.5, 0.05]} />
+      {/* Rear Window */}
+      <mesh position={[0, 0.73, -1.25]} rotation={[-0.35, 0, 0]} material={glassMat}>
+        <boxGeometry args={[1.45, 0.55, 0.05]} />
       </mesh>
 
-      {/* Side windows */}
-      <mesh position={[0.87, 0.72, -0.2]} material={glassMat}>
-        <boxGeometry args={[0.05, 0.38, 1.6]} />
+      {/* Side Windows */}
+      <mesh position={[0.81, 0.75, -0.2]} material={glassMat}>
+        <boxGeometry args={[0.05, 0.4, 1.5]} />
       </mesh>
-      <mesh position={[-0.87, 0.72, -0.2]} material={glassMat}>
-        <boxGeometry args={[0.05, 0.38, 1.6]} />
-      </mesh>
-
-      {/* Front bumper */}
-      <mesh position={[0, 0.05, 2.2]} material={darkMat}>
-        <boxGeometry args={[2.0, 0.28, 0.2]} />
+      <mesh position={[-0.81, 0.75, -0.2]} material={glassMat}>
+        <boxGeometry args={[0.05, 0.4, 1.5]} />
       </mesh>
 
-      {/* Rear bumper */}
-      <mesh position={[0, 0.05, -2.2]} material={darkMat}>
-        <boxGeometry args={[2.0, 0.28, 0.2]} />
+      {/* === DETAILS === */}
+      {/* Front Grille */}
+      <mesh position={[0, 0.2, 2.11]} material={darkMat}>
+        <boxGeometry args={[1.2, 0.2, 0.05]} />
       </mesh>
-
-      {/* Front grill */}
-      <mesh position={[0, 0.1, 2.31]} material={darkMat}>
-        <boxGeometry args={[1.4, 0.18, 0.05]} />
+      <mesh position={[0, 0.05, 2.11]} material={darkMat}>
+        <boxGeometry args={[1.4, 0.1, 0.05]} />
       </mesh>
 
       {/* Headlights */}
-      <mesh position={[0.7, 0.2, 2.12]} material={lightMat}>
-        <boxGeometry args={[0.4, 0.15, 0.08]} />
+      <mesh position={[0.7, 0.32, 2.1]} rotation={[-0.1, 0.1, 0]} material={lightMat}>
+        <boxGeometry args={[0.35, 0.12, 0.05]} />
       </mesh>
-      <mesh position={[-0.7, 0.2, 2.12]} material={lightMat}>
-        <boxGeometry args={[0.4, 0.15, 0.08]} />
+      <mesh position={[-0.7, 0.32, 2.1]} rotation={[-0.1, -0.1, 0]} material={lightMat}>
+        <boxGeometry args={[0.35, 0.12, 0.05]} />
       </mesh>
 
-      {/* Rear lights */}
-      <mesh position={[0.7, 0.2, -2.12]} material={redLightMat}>
-        <boxGeometry args={[0.4, 0.15, 0.08]} />
+      {/* Taillights */}
+      <mesh position={[0.65, 0.4, -2.11]} material={redLightMat}>
+        <boxGeometry args={[0.4, 0.12, 0.05]} />
       </mesh>
-      <mesh position={[-0.7, 0.2, -2.12]} material={redLightMat}>
-        <boxGeometry args={[0.4, 0.15, 0.08]} />
+      <mesh position={[-0.65, 0.4, -2.11]} material={redLightMat}>
+        <boxGeometry args={[0.4, 0.12, 0.05]} />
+      </mesh>
+      {/* Light bar */}
+      <mesh position={[0, 0.4, -2.11]} material={redLightMat}>
+        <boxGeometry args={[0.9, 0.05, 0.05]} />
+      </mesh>
+
+      {/* Rear Diffuser & Exhausts */}
+      <mesh position={[0, 0.1, -2.05]} material={darkMat}>
+        <boxGeometry args={[1.6, 0.15, 0.2]} />
+      </mesh>
+      <mesh position={[0.5, 0.05, -2.16]} material={hubMat}>
+        <cylinderGeometry args={[0.06, 0.06, 0.1]} />
+      </mesh>
+      <mesh position={[-0.5, 0.05, -2.16]} material={hubMat}>
+        <cylinderGeometry args={[0.06, 0.06, 0.1]} />
+      </mesh>
+
+      {/* Rear Spoiler */}
+      <mesh position={[0, 0.65, -1.95]} material={bodyMat}>
+        <boxGeometry args={[1.7, 0.05, 0.3]} />
+      </mesh>
+      <mesh position={[0.6, 0.58, -1.9]} material={darkMat}>
+        <boxGeometry args={[0.05, 0.15, 0.15]} />
+      </mesh>
+      <mesh position={[-0.6, 0.58, -1.9]} material={darkMat}>
+        <boxGeometry args={[0.05, 0.15, 0.15]} />
+      </mesh>
+
+      {/* Mirrors */}
+      <mesh position={[0.9, 0.6, 0.4]} material={bodyMat}>
+        <boxGeometry args={[0.2, 0.1, 0.15]} />
+      </mesh>
+      <mesh position={[-0.9, 0.6, 0.4]} material={bodyMat}>
+        <boxGeometry args={[0.2, 0.1, 0.15]} />
+      </mesh>
+
+      {/* Side Skirts */}
+      <mesh position={[0.96, 0.05, 0]} material={darkMat}>
+        <boxGeometry args={[0.05, 0.1, 2.2]} />
+      </mesh>
+      <mesh position={[-0.96, 0.05, 0]} material={darkMat}>
+        <boxGeometry args={[0.05, 0.1, 2.2]} />
       </mesh>
 
       {/* === LIVERY PANELS === */}
       {/* Right side */}
-      <mesh position={[1.06, 0.15, 0]} rotation={[0, Math.PI / 2, 0]} material={matRight}>
+      <mesh position={[0.96, 0.25, 0]} rotation={[0, Math.PI / 2, 0]} material={matRight}>
         <planeGeometry args={[4.2, 0.55]} />
       </mesh>
       {/* Left side (mirrored) */}
-      <mesh position={[-1.06, 0.15, 0]} rotation={[0, -Math.PI / 2, 0]} material={matLeft}>
+      <mesh position={[-0.96, 0.25, 0]} rotation={[0, -Math.PI / 2, 0]} material={matLeft}>
         <planeGeometry args={[4.2, 0.55]} />
       </mesh>
       {/* Front bumper panel */}
-      <mesh position={[0, 0.05, 2.31]} rotation={[0, 0, 0]} material={matFront}>
-        <planeGeometry args={[2.0, 0.28]} />
+      <mesh position={[0, 0.25, 2.12]} rotation={[0, 0, 0]} material={matFront}>
+        <planeGeometry args={[1.9, 0.4]} />
       </mesh>
       {/* Rear bumper panel */}
-      <mesh position={[0, 0.05, -2.31]} rotation={[0, Math.PI, 0]} material={matRear}>
-        <planeGeometry args={[2.0, 0.28]} />
+      <mesh position={[0, 0.25, -2.12]} rotation={[0, Math.PI, 0]} material={matRear}>
+        <planeGeometry args={[1.9, 0.4]} />
       </mesh>
       {/* Top - Hood */}
-      <mesh position={[0, 0.43, 1.4]} rotation={[-Math.PI / 2, 0, 0]} material={matTop}>
-        <planeGeometry args={[2.0, 1.4]} />
+      <mesh position={[0, 0.51, 1.6]} rotation={[-Math.PI / 2 - 0.15, 0, 0]} material={matTop}>
+        <planeGeometry args={[1.85, 1.2]} />
       </mesh>
       {/* Top - Roof */}
       <mesh position={[0, 0.98, -0.2]} rotation={[-Math.PI / 2, 0, 0]} material={matTop}>
-        <planeGeometry args={[1.6, 2.1]} />
+        <planeGeometry args={[1.6, 2.0]} />
       </mesh>
       {/* Top - Trunk */}
-      <mesh position={[0, 0.43, -1.8]} rotation={[-Math.PI / 2, 0, 0]} material={matTop}>
-        <planeGeometry args={[2.0, 1.0]} />
+      <mesh position={[0, 0.56, -1.7]} rotation={[-Math.PI / 2 + 0.05, 0, 0]} material={matTop}>
+        <planeGeometry args={[1.85, 0.9]} />
       </mesh>
 
       {/* === WHEELS === */}
@@ -198,18 +249,20 @@ export default function PlayerCar({ groupRef, textures, speed = 0, steering = 0 
         const refs = [wheelRef0, wheelRef1, wheelRef2, wheelRef3];
         return (
           <group key={i} position={pos}>
+            {/* Tire */}
             <mesh ref={refs[i]} rotation={[0, 0, Math.PI / 2]} material={wheelMat}>
-              <cylinderGeometry args={[0.38, 0.38, 0.22, 12]} />
+              <cylinderGeometry args={[0.38, 0.38, 0.25, 16]} />
             </mesh>
-            <mesh rotation={[0, 0, Math.PI / 2]} material={hubMat} position={[i % 2 === 0 ? -0.12 : 0.12, 0, 0]}>
-              <cylinderGeometry args={[0.18, 0.18, 0.04, 8]} />
+            {/* Rim */}
+            <mesh rotation={[0, 0, Math.PI / 2]} material={hubMat} position={[i % 2 === 0 ? -0.13 : 0.13, 0, 0]}>
+              <cylinderGeometry args={[0.22, 0.22, 0.05, 12]} />
             </mesh>
           </group>
         );
       })}
 
       {/* Chassis underside */}
-      <mesh position={[0, -0.4, 0]} material={chassisMat}>
+      <mesh position={[0, -0.35, 0]} material={chassisMat}>
         <boxGeometry args={[1.8, 0.05, 3.8]} />
       </mesh>
     </group>

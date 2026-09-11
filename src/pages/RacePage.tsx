@@ -65,11 +65,18 @@ function RaceScene({ textures, stats, isRacing, carRef, onSpeedUpdate, onPositio
       <Track />
       <MiamiEnvironment />
 
+      {/* Starting Grid: Opponents */}
+      <PlayerCar position={[-3.5, 0, 10]} color="#FF9999" />
+      <PlayerCar position={[3.5, 0, 6]} color="#9999FF" />
+      <PlayerCar position={[-3.5, 0, 2]} color="#99FF99" />
+
+      {/* Player Car */}
       <PlayerCar
         groupRef={carRef}
         textures={textures}
         speed={speedRef.current}
         steering={steeringRef.current}
+        position={[0, 0, 10]} // Start at front of grid
       />
 
       <RaceCamera carRef={carRef} isActive={isRacing} />
