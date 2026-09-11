@@ -4,7 +4,7 @@ import { useState, useCallback, useRef, Suspense, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useGameStore } from '../store/gameStore';
-import { analyzeDesign, defaultStats } from '../game/utils/designAnalysis';
+import { analyzeAllFaces, defaultStats } from '../game/utils/designAnalysis';
 import { getCarTemplateUrl } from '../game/utils/carTemplateUrl';
 import LiveryEditor from '../components/editor/LiveryEditor';
 import PlayerCar from '../game/components/PlayerCar';
@@ -16,18 +16,29 @@ import type { CarStats, TemplateView } from '../types';
 const CAR_TEMPLATE_URL = '/car-template.png';
 
 // ── Interactive camera for 3D preview ─────────────────────────
-function InteractiveCamera() {
+function TargetCamera({ view }: { view: TemplateView }) {
   const { camera } = useThree();
-  const currentAngle = useRef(Math.PI / 4);
+  const currentAngle = useRef(0);
   
   useFrame(({ pointer }) => {
-    // Map pointer X (-1 to 1) to a full rotation (-PI to PI)
-    const targetAngle = pointer.x * Math.PI;
+    let baseAngle = 0;
+    let baseY = 2.5;
+    let dist = 6.5;
+    
+    switch (view) {
+      case 'left': baseAngle = Math.PI / 2; break;
+      case 'right': baseAngle = -Math.PI / 2; break;
+      case 'front': baseAngle = 0; break;
+      case 'rear': baseAngle = Math.PI; break;
+      case 'top': baseAngle = Math.PI / 4; baseY = 6; dist = 3; break;
+    }
+    
+    const targetAngle = baseAngle + pointer.x * 0.5;
     currentAngle.current += (targetAngle - currentAngle.current) * 0.1;
     
-    const tx = Math.sin(currentAngle.current) * 6.5;
-    const tz = Math.cos(currentAngle.current) * 6.5;
-    const ty = 1.5 + ((pointer.y + 1) / 2) * 2.5; // pointer Y maps to height
+    const tx = Math.sin(currentAngle.current) * dist;
+    const tz = Math.cos(currentAngle.current) * dist;
+    const ty = baseY + pointer.y * 1.5;
 
     camera.position.x += (tx - camera.position.x) * 0.1;
     camera.position.y += (ty - camera.position.y) * 0.1;
@@ -38,7 +49,7 @@ function InteractiveCamera() {
 }
 
 // ── 3D preview scene ─────────────────────────────────────────
-function PreviewScene({ liveryDataUrl }: { liveryDataUrl?: string }) {
+function PreviewScene({ textures, view }: { textures: Partial<Record<TemplateView, string>>; view: TemplateView }) {
   const groupRef = useRef<THREE.Group>(null!);
   return (
     <>
@@ -49,8 +60,8 @@ function PreviewScene({ liveryDataUrl }: { liveryDataUrl?: string }) {
         <circleGeometry args={[5, 32]} />
         <meshLambertMaterial color="#E8E4D8" />
       </mesh>
-      <PlayerCar groupRef={groupRef} liveryDataUrl={liveryDataUrl} speed={0} steering={0} />
-      <InteractiveCamera />
+      <PlayerCar groupRef={groupRef} textures={textures} speed={0} steering={0} />
+      <TargetCamera view={view} />
     </>
   );
 }
@@ -72,40 +83,51 @@ function StatBadge({ label, value, color }: { label: string; value: string | num
 // ── Main CustomizePage ────────────────────────────────────────
 export default function CustomizePage() {
   const navigate = useNavigate();
-  const { saveLivery, currentLivery } = useGameStore();
-  const [templateUrl, setTemplateUrl] = useState<string>('/car-template.png');
-  const [savedDataUrl, setSavedDataUrl] = useState<string | undefined>(currentLivery?.dataUrl);
+  const { saveLiveryFace, currentLivery } = useGameStore();
+  const [selectedView, setSelectedView] = useState<TemplateView>('left');
+  const [templateUrl, setTemplateUrl] = useState<string>('');
+  
+  const [textures, setTextures] = useState<Partial<Record<TemplateView, string>>>(currentLivery?.textures ?? {});
   const [stats, setStats] = useState<CarStats>(currentLivery?.stats ?? defaultStats());
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [selectedView] = useState<TemplateView>('left');
   const [liveryName, setLiveryName] = useState(currentLivery?.name ?? 'MY LIVERY');
 
-  // Resolve the template URL (tries public file, falls back to generated canvas)
+  // Load template for selected view
   useEffect(() => {
-    getCarTemplateUrl().then(setTemplateUrl);
-  }, []);
+    getCarTemplateUrl(selectedView).then(setTemplateUrl);
+  }, [selectedView]);
 
   const handleEditorSave = useCallback(async (dataUrl: string) => {
     setIsSaving(true);
     try {
-      // Run design analysis using the resolved template URL
-      const computed = await analyzeDesign(templateUrl, dataUrl);
+      const newTextures = { ...textures, [selectedView]: dataUrl };
+      setTextures(newTextures);
+      
+      // Run design analysis on all faces
+      const computed = await analyzeAllFaces(newTextures, getCarTemplateUrl);
       setStats(computed);
-      setSavedDataUrl(dataUrl);
-      saveLivery(dataUrl, liveryName, selectedView, computed);
+      
+      saveLiveryFace(dataUrl, selectedView, computed, liveryName);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
       console.error('[KLUSTOR] Save/analyze failed:', err);
       const fallback = defaultStats();
       setStats(fallback);
-      setSavedDataUrl(dataUrl);
-      saveLivery(dataUrl, liveryName, selectedView, fallback);
+      saveLiveryFace(dataUrl, selectedView, fallback, liveryName);
     } finally {
       setIsSaving(false);
     }
-  }, [liveryName, saveLivery, selectedView, templateUrl]);
+  }, [liveryName, saveLiveryFace, selectedView, textures]);
+
+  const VIEWS: { id: TemplateView; label: string }[] = [
+    { id: 'left', label: 'LEFT' },
+    { id: 'right', label: 'RIGHT' },
+    { id: 'top', label: 'TOP' },
+    { id: 'front', label: 'FRONT' },
+    { id: 'rear', label: 'REAR' },
+  ];
 
   return (
     <div style={{
@@ -193,13 +215,38 @@ export default function CustomizePage() {
 
       {/* Main split: Unlayer left, 3D preview right */}
       <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 380px', minHeight: 0 }}>
-        {/* Unlayer editor */}
-        <div style={{ position: 'relative', borderRight: '2px solid var(--border-light)' }}>
-          <LiveryEditor
-            templateSrc={templateUrl}
-            onSave={handleEditorSave}
-            editorId="livery-editor-main"
-          />
+        {/* Left Side: Unlayer Editor + Tabs */}
+        <div style={{ display: 'flex', flexDirection: 'column', borderRight: '2px solid var(--border-light)' }}>
+          {/* Tabs */}
+          <div style={{ display: 'flex', background: 'var(--bg-panel-solid)', borderBottom: '1px solid var(--border-light)' }}>
+            {VIEWS.map(v => (
+              <button
+                key={v.id}
+                onClick={() => setSelectedView(v.id)}
+                style={{
+                  flex: 1, padding: '0.6rem 0', cursor: 'pointer',
+                  background: selectedView === v.id ? 'var(--bg-primary)' : 'transparent',
+                  border: 'none', borderBottom: selectedView === v.id ? '3px solid var(--klustor-cyan)' : '3px solid transparent',
+                  fontFamily: 'Consolas,monospace', fontWeight: 'bold', fontSize: '0.8rem',
+                  color: selectedView === v.id ? 'var(--text-primary)' : 'var(--text-muted)',
+                  transition: 'all 0.2s',
+                }}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ flex: 1, position: 'relative' }}>
+            {templateUrl && (
+              <LiveryEditor
+                key={selectedView} // force remount to load correct aspect ratio/template
+                templateSrc={templateUrl}
+                onSave={handleEditorSave}
+                editorId="livery-editor-main"
+              />
+            )}
+          </div>
         </div>
 
         {/* Right: 3D preview + stats */}
@@ -215,16 +262,16 @@ export default function CustomizePage() {
             </div>
             <Canvas camera={{ position: [0, 2, 6], fov: 55 }} gl={{ antialias: true }}>
               <Suspense fallback={null}>
-                <PreviewScene liveryDataUrl={savedDataUrl} />
+                <PreviewScene textures={textures} view={selectedView} />
               </Suspense>
             </Canvas>
-            {!savedDataUrl && (
+            {Object.keys(textures).length === 0 && (
               <div style={{
                 position: 'absolute', inset: 0, display: 'flex', alignItems: 'center',
                 justifyContent: 'center', pointerEvents: 'none',
               }}>
                 <div style={{ fontFamily: 'Consolas,monospace', fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center' }}>
-                  Design your livery<br/>then click Save
+                  Design a face<br/>then click Save
                 </div>
               </div>
             )}

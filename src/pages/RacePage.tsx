@@ -13,7 +13,7 @@ import Track from '../game/components/Track';
 import MiamiEnvironment from '../game/components/MiamiEnvironment';
 import RaceCamera from '../game/components/RaceCamera';
 import RaceHUD from '../game/components/RaceHUD';
-import type { CarStats } from '../types';
+import type { CarStats, TemplateView } from '../types';
 
 // ── Error boundary for WebGL crashes ────────────────────────
 class RaceErrorBoundary extends Component<{ children: ReactNode; onError: () => void }, { hasError: boolean }> {
@@ -34,7 +34,7 @@ class RaceErrorBoundary extends Component<{ children: ReactNode; onError: () => 
 
 // ── Inner 3D Scene (inside Canvas) ───────────────────────────
 interface RaceSceneProps {
-  liveryDataUrl?: string;
+  textures?: Partial<Record<TemplateView, string>>;
   stats?: CarStats;
   isRacing: boolean;
   carRef: RefObject<THREE.Group>;
@@ -43,7 +43,7 @@ interface RaceSceneProps {
   checkCheckpoint: (pos: THREE.Vector3) => void;
 }
 
-function RaceScene({ liveryDataUrl, stats, isRacing, carRef, onSpeedUpdate, onPositionUpdate, checkCheckpoint }: RaceSceneProps) {
+function RaceScene({ textures, stats, isRacing, carRef, onSpeedUpdate, onPositionUpdate, checkCheckpoint }: RaceSceneProps) {
   const { speedRef, steeringRef } = useCarPhysics(carRef, isRacing, stats, (state) => {
     onSpeedUpdate(state.speed);
   });
@@ -67,7 +67,7 @@ function RaceScene({ liveryDataUrl, stats, isRacing, carRef, onSpeedUpdate, onPo
 
       <PlayerCar
         groupRef={carRef}
-        liveryDataUrl={liveryDataUrl}
+        textures={textures}
         speed={speedRef.current}
         steering={steeringRef.current}
       />
@@ -79,12 +79,12 @@ function RaceScene({ liveryDataUrl, stats, isRacing, carRef, onSpeedUpdate, onPo
 
 // ── Pre-Race Screen ───────────────────────────────────────────
 function PreRaceScreen({
-  liveryDataUrl, liveryName, stats, onStart, onBack, onCustomize,
+  textures, liveryName, stats, onStart, onBack, onCustomize,
 }: {
-  liveryDataUrl?: string; liveryName?: string; stats?: CarStats;
+  textures?: Partial<Record<TemplateView, string>>; liveryName?: string; stats?: CarStats;
   onStart: () => void; onBack: () => void; onCustomize: () => void;
 }) {
-  const hasLivery = !!liveryDataUrl;
+  const hasLivery = !!textures && Object.keys(textures).length > 0;
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -107,8 +107,8 @@ function PreRaceScreen({
               YOUR LIVERY — {liveryName?.toUpperCase()}
             </div>
             <img
-              src={liveryDataUrl}
-              alt="Car Livery"
+              src={textures?.left}
+              alt="Car Livery Left Side"
               style={{ maxWidth: '320px', width: '100%', height: 'auto', borderRadius: '8px', border: '2px solid var(--border-light)', boxShadow: '0 4px 20px rgba(30,40,50,0.1)' }}
             />
           </div>
@@ -262,7 +262,7 @@ export default function RacePage() {
   const navigate = useNavigate();
   const { currentLivery, player } = useGameStore();
 
-  const liveryDataUrl = currentLivery?.dataUrl;
+  const textures = currentLivery?.textures;
   const stats = currentLivery?.stats;
 
   const carRef = useRef<THREE.Group>(null!);
@@ -340,7 +340,7 @@ export default function RacePage() {
         {!raceStarted && phase === 'prerace' && (
           <PreRaceScreen
             key="prerace"
-            liveryDataUrl={liveryDataUrl}
+            textures={textures}
             liveryName={currentLivery?.name}
             stats={stats}
             onStart={handleStartRace}
@@ -360,7 +360,7 @@ export default function RacePage() {
               shadows={false}
             >
               <RaceScene
-                liveryDataUrl={liveryDataUrl}
+                textures={textures}
                 stats={stats}
                 isRacing={isRacing}
                 carRef={carRef}

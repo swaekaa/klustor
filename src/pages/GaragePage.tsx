@@ -65,24 +65,24 @@ function InteractiveCamera() {
 }
 
 // ── Garage 3D preview scene ─────────────────────────────────
-function GarageScene({ liveryDataUrl }: { liveryDataUrl?: string }) {
+function GarageScene({ textures }: { textures?: Partial<Record<TemplateView, string>> }) {
   const groupRef = useRef<THREE.Group>(null!);
   return (
     <>
       <ambientLight intensity={1.0} color="#FFF5EE" />
-      <directionalLight position={[5, 8, 5]} intensity={1.4} color="#FFE8CC" />
+      <directionalLight position={[4, 8, 4]} intensity={1.5} color="#FFE8CC" />
       <hemisphereLight color="#87CEEB" groundColor="#F2EFE4" intensity={0.5} />
       {/* Ground disc */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
-        <circleGeometry args={[6, 48]} />
-        <meshLambertMaterial color="#E8E4D8" />
+        <circleGeometry args={[6, 32]} />
+        <meshLambertMaterial color="#D0C8B8" transparent opacity={0.5} />
       </mesh>
       {/* Subtle shadow disc */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
         <circleGeometry args={[2.4, 24]} />
         <meshLambertMaterial color="#D0C8B8" transparent opacity={0.5} />
       </mesh>
-      <PlayerCar groupRef={groupRef} liveryDataUrl={liveryDataUrl} speed={0} steering={0} />
+      <PlayerCar groupRef={groupRef} textures={textures} speed={0} steering={0} />
       <InteractiveCamera />
     </>
   );
@@ -175,8 +175,8 @@ export default function GaragePage() {
       {/* ── CENTER: 3D Preview + Stats ────────────────────────── */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', minHeight: 0 }}>
         {/* 3D Car Preview */}
-        <div className="panel" style={{ flex: '1', minHeight: 0, position: 'relative', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+        <div className="panel" style={{ flex: '1', minHeight: 0, position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flex: '0 0 auto' }}>
             <div>
               <div style={{ fontFamily: 'Trebuchet MS,sans-serif', fontWeight: 'bold', fontSize: '0.95rem', color: 'var(--text-primary)', letterSpacing: '0.08em' }}>
                 CAR PREVIEW — MOVE MOUSE TO ROTATE
@@ -190,10 +190,10 @@ export default function GaragePage() {
             </div>
           </div>
 
-          <div style={{ height: 'calc(100% - 40px)', minHeight: '200px' }}>
+          <div style={{ flex: 1, minHeight: '200px', position: 'relative', overflow: 'hidden' }}>
             <Canvas camera={{ position: [0, 2.5, 7], fov: 50 }} gl={{ antialias: true }}>
               <Suspense fallback={null}>
-                <GarageScene liveryDataUrl={currentLivery?.dataUrl} />
+                <GarageScene textures={currentLivery?.textures} />
               </Suspense>
             </Canvas>
           </div>
@@ -280,8 +280,8 @@ export default function GaragePage() {
             topRecords.map((r, i) => (
               <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', padding: '0.4rem 0.5rem', background: !r.isNPC ? 'rgba(143,213,209,0.15)' : 'transparent', borderRadius: '8px' }}>
                 <span style={{ fontFamily: 'Trebuchet MS,sans-serif', fontWeight: 'bold', fontSize: '0.8rem', color: i === 0 ? '#FFD700' : 'var(--text-muted)', minWidth: '16px' }}>{i + 1}</span>
-                {r.liveryDataUrl ? (
-                  <img src={r.liveryDataUrl} alt="" style={{ width: '32px', height: '20px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border-light)' }} />
+                {r.liveryTextures?.left ? (
+                  <img src={r.liveryTextures.left} alt="" style={{ width: '32px', height: '20px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border-light)' }} />
                 ) : (
                   <div style={{ width: '32px', height: '20px', background: 'var(--bg-secondary)', borderRadius: '4px', border: '1px solid var(--border-light)' }} />
                 )}

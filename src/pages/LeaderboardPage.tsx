@@ -152,9 +152,9 @@ export default function LeaderboardPage() {
                 </div>
 
                 {/* Livery thumbnail */}
-                {record.liveryDataUrl ? (
+                {record.liveryTextures?.left ? (
                   <img
-                    src={record.liveryDataUrl}
+                    src={record.liveryTextures.left}
                     alt="Livery"
                     style={{ width: '48px', height: '32px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--border-light)' }}
                   />

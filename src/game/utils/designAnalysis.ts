@@ -230,6 +230,52 @@ export async function analyzeDesign(
   }
 }
 
+/**
+ * Averages stats across all provided faces.
+ */
+export async function analyzeAllFaces(
+  textures: Partial<Record<TemplateView, string>>,
+  getTemplateFn: (view: TemplateView) => Promise<string>
+): Promise<CarStats> {
+  const views = Object.keys(textures) as TemplateView[];
+  if (views.length === 0) return defaultStats();
+
+  let sumSpeed = 0, sumAccel = 0, sumHandling = 0, sumDesign = 0;
+
+  for (const view of views) {
+    const dataUrl = textures[view];
+    if (dataUrl) {
+      const template = await getTemplateFn(view);
+      const faceStats = await analyzeDesign(template, dataUrl);
+      sumSpeed += faceStats.topSpeed;
+      sumAccel += faceStats.acceleration;
+      sumHandling += faceStats.handling;
+      sumDesign += faceStats.designScore;
+    }
+  }
+
+  const n = views.length;
+  const avgSpeed = Math.round(sumSpeed / n);
+  const avgAccel = parseFloat((sumAccel / n).toFixed(1));
+  const avgHandling = parseFloat((sumHandling / n).toFixed(1));
+  const avgDesign = parseFloat((sumDesign / n).toFixed(1));
+
+  const overallRating = parseFloat((
+    (avgSpeed / 140 * 10 * 0.3) +
+    (avgAccel * 0.25) +
+    (avgHandling * 0.25) +
+    (avgDesign * 0.2)
+  ).toFixed(1));
+
+  return {
+    topSpeed: avgSpeed,
+    acceleration: avgAccel,
+    handling: avgHandling,
+    designScore: avgDesign,
+    overallRating,
+  };
+}
+
 /** Default stats for a plain/unedited car */
 export function defaultStats(): CarStats {
   return {

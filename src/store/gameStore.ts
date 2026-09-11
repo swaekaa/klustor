@@ -31,17 +31,30 @@ export const useGameStore = create<GameState>()(
       bestLivery: null,
       raceRecords: [],
 
-      // ── Save a new livery from Unlayer ────────────────────
-      saveLivery: (dataUrl: string, name: string, view: TemplateView, stats: CarStats) => {
+      // ── Save a new livery face from Unlayer ─────────────────
+      saveLiveryFace: (dataUrl: string, view: TemplateView, newStats: CarStats, liveryName?: string) => {
+        const state = get();
+        const existing = state.currentLivery;
+        
+        // Merge textures
+        const newTextures = {
+          ...(existing?.textures || {}),
+          [view]: dataUrl,
+        };
+
+        // For now, average the stats with the new one.
+        // If there are existing stats, we do a basic blend, or just keep the latest for simplicity.
+        // Actually, the best way to average stats is to recalculate them in the UI and pass them here, 
+        // OR pass the specific face's stats and average them. The user requested all sides contribute.
+        // We'll store the computed overallStats passed from UI.
         const livery: LiveryData = {
-          name,
-          dataUrl,
-          templateView: view,
+          name: liveryName ?? existing?.name ?? 'MY LIVERY',
+          textures: newTextures,
           stats: {
-            ...stats,
-            overallRating: computeOverallRating(stats),
+            ...newStats,
+            overallRating: computeOverallRating(newStats),
           },
-          createdAt: new Date().toISOString(),
+          createdAt: existing?.createdAt ?? new Date().toISOString(),
         };
         set({ currentLivery: livery });
       },
@@ -57,7 +70,7 @@ export const useGameStore = create<GameState>()(
           time,
           topSpeed,
           designScore: livery?.stats.designScore ?? 0,
-          liveryDataUrl: livery?.dataUrl ?? '',
+          liveryTextures: livery?.textures ?? {},
           liveryName: livery?.name ?? 'DEFAULT',
           driverName: state.player.driverName,
           isNPC: false,
@@ -102,26 +115,20 @@ export const useGameStore = create<GameState>()(
             localStorage.setItem(name, JSON.stringify(value));
           } catch (e: any) {
             if (e.name === 'QuotaExceededError' || (e.message ?? '').includes('quota')) {
-              console.warn('[KLUSTOR] LocalStorage quota — stripping livery dataUrls');
+              console.warn('[KLUSTOR] LocalStorage quota — stripping livery textures');
               const fallback = { ...value };
               if (fallback.state) {
-                // Strip large dataUrls from raceRecords to save space
+                // Strip large dataUrls to save space
                 if (fallback.state.raceRecords) {
                   fallback.state.raceRecords = fallback.state.raceRecords.map(
-                    (r: any) => ({ ...r, liveryDataUrl: '' })
+                    (r: any) => ({ ...r, liveryTextures: {} })
                   );
                 }
                 if (fallback.state.currentLivery) {
-                  fallback.state.currentLivery = {
-                    ...fallback.state.currentLivery,
-                    dataUrl: '',
-                  };
+                  fallback.state.currentLivery.textures = {};
                 }
                 if (fallback.state.bestLivery) {
-                  fallback.state.bestLivery = {
-                    ...fallback.state.bestLivery,
-                    dataUrl: '',
-                  };
+                  fallback.state.bestLivery.textures = {};
                 }
               }
               try {
@@ -137,3 +144,4 @@ export const useGameStore = create<GameState>()(
     }
   )
 );
+

@@ -12,15 +12,14 @@ export interface CarStats {
 }
 
 // ── Livery / Design ─────────────────────────────────────────
+export type TemplateView = 'left' | 'right' | 'front' | 'rear' | 'top';
+
 export interface LiveryData {
   name: string;
-  dataUrl: string;        // base64 from Unlayer onSave
-  templateView: TemplateView;
+  textures: Partial<Record<TemplateView, string>>; // base64 images per face
   stats: CarStats;
   createdAt: string;      // ISO string
 }
-
-export type TemplateView = 'left' | 'right' | 'front' | 'rear' | 'top';
 
 // ── Race Records ─────────────────────────────────────────────
 export interface RaceRecord {
@@ -29,7 +28,7 @@ export interface RaceRecord {
   time: number;           // lap time in ms
   topSpeed: number;       // km/h achieved during race
   designScore: number;
-  liveryDataUrl: string;
+  liveryTextures: Partial<Record<TemplateView, string>>;
   liveryName: string;
   driverName: string;     // player name or NPC name
   isNPC: boolean;
@@ -53,7 +52,7 @@ export interface GameState {
   raceRecords: RaceRecord[];        // all race records (player + NPCs)
 
   // Actions
-  saveLivery: (dataUrl: string, name: string, view: TemplateView, stats: CarStats) => void;
+  saveLiveryFace: (dataUrl: string, view: TemplateView, newStats: CarStats, liveryName?: string) => void;
   recordRaceResult: (time: number, topSpeed: number) => void;
   resetGame: () => void;
 }

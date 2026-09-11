@@ -20,9 +20,9 @@ import * as THREE from 'three';
  */
 export async function buildLiveryTexture(
   editedDataUrl: string,
-  originalTemplateUrl?: string
+  _originalTemplateUrl?: string // No longer needed for masking
 ): Promise<THREE.CanvasTexture> {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const editedImg = new Image();
     editedImg.crossOrigin = 'anonymous';
 
@@ -35,81 +35,16 @@ export async function buildLiveryTexture(
       canvas.height = H;
       const ctx = canvas.getContext('2d')!;
 
-      if (!originalTemplateUrl) {
-        // No template — just render full image on white background
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, W, H);
-        ctx.drawImage(editedImg, 0, 0);
-        const texture = new THREE.CanvasTexture(canvas);
-        texture.needsUpdate = true;
-        resolve(texture);
-        return;
-      }
-
-      // Load original template for comparison masking
-      const templateImg = new Image();
-      templateImg.crossOrigin = 'anonymous';
-
-      templateImg.onload = () => {
-        const templateCanvas = document.createElement('canvas');
-        templateCanvas.width = W;
-        templateCanvas.height = H;
-        const tCtx = templateCanvas.getContext('2d')!;
-        tCtx.drawImage(templateImg, 0, 0, W, H);
-        const templateData = tCtx.getImageData(0, 0, W, H);
-
-        // Draw edited image
-        ctx.drawImage(editedImg, 0, 0, W, H);
-        const editedData = ctx.getImageData(0, 0, W, H);
-
-        // Process pixels: make template-identical pixels transparent
-        const TOLERANCE = 30; // How much a pixel can differ from template and still be "background"
-        for (let i = 0; i < editedData.data.length; i += 4) {
-          const rDiff = Math.abs(editedData.data[i] - templateData.data[i]);
-          const gDiff = Math.abs(editedData.data[i + 1] - templateData.data[i + 1]);
-          const bDiff = Math.abs(editedData.data[i + 2] - templateData.data[i + 2]);
-          
-          if (rDiff < TOLERANCE && gDiff < TOLERANCE && bDiff < TOLERANCE) {
-            // Pixel is same as template = background → transparent
-            editedData.data[i + 3] = 0;
-          }
-          // Otherwise keep as-is (user's artwork)
-        }
-
-        ctx.putImageData(editedData, 0, 0);
-        const texture = new THREE.CanvasTexture(canvas);
-        texture.needsUpdate = true;
-        resolve(texture);
-      };
-
-      templateImg.onerror = () => {
-        // Fallback if template fails: use full image as-is
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, W, H);
-        ctx.drawImage(editedImg, 0, 0);
-        const texture = new THREE.CanvasTexture(canvas);
-        texture.needsUpdate = true;
-        resolve(texture);
-      };
-
-      templateImg.src = originalTemplateUrl;
+      // Draw the user's design directly
+      ctx.drawImage(editedImg, 0, 0);
+      
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.needsUpdate = true;
+      resolve(texture);
     };
 
     editedImg.onerror = () => {
-      // If edited image fails: create plain white texture
-      const canvas = document.createElement('canvas');
-      canvas.width = 1024;
-      canvas.height = 512;
-      const ctx = canvas.getContext('2d')!;
-      ctx.fillStyle = '#f5f5f5';
-      ctx.fillRect(0, 0, 1024, 512);
-      ctx.fillStyle = '#8FD5D1';
-      ctx.font = 'bold 48px Trebuchet MS, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('KLUSTOR RACING', 512, 256);
-      const texture = new THREE.CanvasTexture(canvas);
-      texture.needsUpdate = true;
-      resolve(texture); // Resolve with fallback, don't reject
+      resolve(createFallbackTexture());
     };
 
     editedImg.src = editedDataUrl;
