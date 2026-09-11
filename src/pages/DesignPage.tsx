@@ -25,7 +25,6 @@ export default function DesignPage() {
   const navigate = useNavigate();
   const { saveLiveryFace, currentLivery } = useGameStore();
   
-  const [phase, setPhase] = useState<'design' | 'reveal'>('design');
   const [selectedView, setSelectedView] = useState<TemplateView>('left');
   const [templateUrl, setTemplateUrl] = useState<string>('');
   
@@ -46,122 +45,134 @@ export default function DesignPage() {
       const computed = await analyzeAllFaces(newTextures, getCarTemplateUrl);
       setStats(computed);
       saveLiveryFace(dataUrl, selectedView, computed, 'MY RIDE');
-      
-      // Give a slight delay before revealing
-      setTimeout(() => {
-         setPhase('reveal');
-         setIsSaving(false);
-      }, 600);
     } catch (err) {
       console.error('Save failed:', err);
+    } finally {
       setIsSaving(false);
     }
   }, [selectedView, textures, saveLiveryFace]);
 
   const VIEWS: { id: TemplateView; label: string }[] = [
-    { id: 'left', label: 'LEFT' },
-    { id: 'right', label: 'RIGHT' },
+    { id: 'left', label: 'LEFT SIDE' },
+    { id: 'right', label: 'RIGHT SIDE' },
     { id: 'top', label: 'TOP' },
     { id: 'front', label: 'FRONT' },
     { id: 'rear', label: 'REAR' },
   ];
 
-  if (phase === 'reveal') {
-    return (
-      <div className="page" style={{ alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ position: 'absolute', top: '3rem', textAlign: 'center', zIndex: 10 }}>
-          <h2 className="font-display" style={{ fontSize: '2rem', letterSpacing: '0.1em' }}>YOUR CAR</h2>
-        </div>
-
-        <div style={{ width: '100vw', height: '55vh', position: 'relative' }}>
-          <Canvas camera={{ position: [0, 2.5, 6], fov: 50 }} gl={{ antialias: true }}>
-            <ambientLight intensity={1.2} color="#FFFFFF" />
-            <directionalLight position={[5, 8, 5]} intensity={1.5} color="#FFFFFF" />
-            <hemisphereLight color="#FFFFFF" groundColor="#EAF2B6" intensity={0.6} />
-            <Suspense fallback={null}>
-              <PlayerCar groupRef={{ current: null } as any} textures={textures} speed={0} steering={0} />
-            </Suspense>
-            <AutoRotateCamera />
-          </Canvas>
-        </div>
-
-        <div style={{ textAlign: 'center', zIndex: 10, marginTop: '1rem' }}>
-          <h1 style={{ fontSize: 'min(10vw, 5rem)', marginBottom: '0.5rem', lineHeight: 1 }}>LOOKS FAST.</h1>
-          <div style={{ fontSize: '1.5rem', fontFamily: 'var(--font-mono)', marginBottom: '0.25rem' }}>
-            {stats.topSpeed} KM/H
-          </div>
-          <div style={{ fontSize: '1.25rem', fontFamily: 'var(--font-mono)', marginBottom: '2rem', color: 'var(--text-muted)' }}>
-            DESIGN {stats.designScore.toFixed(1)}
-          </div>
-          
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-            <button className="btn-retro" onClick={() => setPhase('design')}>
-              EDIT CAR
-            </button>
-            <button className="btn-retro btn-retro-primary" onClick={() => navigate('/race')}>
-              DRIVE →
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="page" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexShrink: 0 }}>
+    <div className="page" style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem 2rem', background: 'var(--bg-secondary)', borderBottom: '3px solid var(--text-primary)', flexShrink: 0 }}>
         <div>
           <div className="font-display" style={{ fontSize: '1.2rem', letterSpacing: '0.1em' }}>KLUSTOR</div>
-          <h1 style={{ fontSize: '3rem', lineHeight: 1 }}>DESIGN YOUR RIDE</h1>
+          <h1 style={{ fontSize: '2.5rem', lineHeight: 1 }}>LIVERY STUDIO</h1>
         </div>
-        <div style={{ textAlign: 'right', background: 'var(--bg-secondary)', padding: '1rem 1.5rem', borderRadius: '16px', border: '3px solid var(--text-primary)', boxShadow: '4px 4px 0px rgba(0,0,0,0.1)' }}>
-           <div className="font-mono" style={{ fontSize: '1.1rem', marginBottom: '0.25rem' }}>Design: <strong>{stats.designScore.toFixed(1)}</strong></div>
-           <div className="font-mono" style={{ fontSize: '1.1rem' }}>Speed: <strong>{stats.topSpeed} km/h</strong></div>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <div style={{ textAlign: 'right', marginRight: '1rem' }}>
+             <div className="font-mono" style={{ fontSize: '1rem' }}>Design Score: <strong>{stats.designScore.toFixed(1)}</strong></div>
+             <div className="font-mono" style={{ fontSize: '1rem' }}>Top Speed: <strong>{stats.topSpeed} km/h</strong></div>
+          </div>
+          <button className="btn-retro" onClick={() => navigate('/garage')} style={{ padding: '0.75rem 1.5rem', fontSize: '1rem' }}>
+            ← GARAGE
+          </button>
+          <button className="btn-retro btn-retro-primary" onClick={() => navigate('/race')} style={{ padding: '0.75rem 1.5rem', fontSize: '1rem' }}>
+            DONE (RACE) →
+          </button>
         </div>
       </div>
 
-      <div className="klustor-editor-wrapper" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-        <div style={{ display: 'flex', background: 'var(--bg-secondary)', borderBottom: '3px solid var(--text-primary)', flexShrink: 0 }}>
-          {VIEWS.map((v, i) => (
-            <button
-              key={v.id}
-              onClick={() => setSelectedView(v.id)}
-              style={{
-                flex: 1, padding: '1rem 0', cursor: 'pointer',
-                background: selectedView === v.id ? 'var(--klustor-yellow)' : 'transparent',
-                border: 'none', borderRight: i === VIEWS.length - 1 ? 'none' : '3px solid var(--text-primary)',
-                fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: '1.25rem',
-                color: 'var(--text-primary)', transition: 'background 0.2s',
-              }}
-            >
-              {v.label}
-            </button>
-          ))}
-        </div>
-        
-        <div style={{ flex: 1, position: 'relative', background: 'white' }}>
-          {templateUrl && (
-            <LiveryEditor
-              key={selectedView}
-              templateSrc={templateUrl}
-              onSave={handleEditorSave}
-              editorId={`editor-${selectedView}`}
-            />
-          )}
-          {isSaving && (
-            <div style={{
-              position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.8)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: 'var(--font-mono)', fontSize: '1.5rem', fontWeight: 'bold'
-            }}>
-              ANALYZING...
+      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 450px', minHeight: 0 }}>
+        {/* Left Side: Unlayer Editor */}
+        <div className="klustor-editor-wrapper" style={{ display: 'flex', flexDirection: 'column', borderRight: '3px solid var(--text-primary)', background: 'white' }}>
+          <div style={{ display: 'flex', background: 'var(--bg-secondary)', borderBottom: '3px solid var(--text-primary)', flexShrink: 0 }}>
+            {VIEWS.map((v, i) => (
+              <button
+                key={v.id}
+                onClick={() => setSelectedView(v.id)}
+                style={{
+                  flex: 1, padding: '1rem 0', cursor: 'pointer',
+                  background: selectedView === v.id ? 'var(--klustor-yellow)' : 'transparent',
+                  border: 'none', borderRight: i === VIEWS.length - 1 ? 'none' : '3px solid var(--text-primary)',
+                  fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: '1.25rem',
+                  color: 'var(--text-primary)', transition: 'background 0.2s',
+                }}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+          
+          <div style={{ flex: 1, position: 'relative' }}>
+            <div style={{ position: 'absolute', top: '1rem', left: '1rem', zIndex: 10, pointerEvents: 'none', background: 'rgba(255,255,255,0.9)', padding: '0.5rem 1rem', border: '2px solid var(--text-primary)', borderRadius: '8px' }}>
+              <strong className="font-display" style={{ fontSize: '1.2rem' }}>{VIEWS.find(v => v.id === selectedView)?.label}</strong>
+              <div className="font-mono" style={{ fontSize: '0.8rem' }}>Draw over the car outline below.</div>
             </div>
-          )}
+
+            {templateUrl && (
+              <LiveryEditor
+                key={selectedView}
+                templateSrc={textures[selectedView] || templateUrl}
+                onSave={handleEditorSave}
+                editorId={`editor-${selectedView}`}
+              />
+            )}
+            
+            {isSaving && (
+              <div style={{
+                position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.8)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 20,
+                fontFamily: 'var(--font-mono)', fontSize: '1.5rem', fontWeight: 'bold'
+              }}>
+                SAVING TO 3D CAR...
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-      
-      <div style={{ marginTop: '1rem', textAlign: 'center', color: 'var(--text-muted)', flexShrink: 0 }}>
-        <p className="font-mono" style={{ fontSize: '0.9rem' }}>More style = more speed. Click "Save" inside the editor when done.</p>
+
+        {/* Right Side: 3D Preview */}
+        <div style={{ display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', position: 'relative' }}>
+          <div style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 10 }}>
+            <div className="font-display" style={{ background: 'var(--text-primary)', color: 'white', padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.9rem', letterSpacing: '0.1em' }}>
+              LIVE 3D PREVIEW
+            </div>
+          </div>
+          
+          <div style={{ flex: 1, position: 'relative' }}>
+            <Canvas camera={{ position: [0, 2, 5], fov: 45 }} gl={{ antialias: true }}>
+              <ambientLight intensity={1.2} color="#FFFFFF" />
+              <directionalLight position={[5, 8, 5]} intensity={1.5} color="#FFFFFF" />
+              <hemisphereLight color="#FFFFFF" groundColor="#EAF2B6" intensity={0.6} />
+              <Suspense fallback={null}>
+                <PlayerCar groupRef={{ current: null } as any} textures={textures} speed={0} steering={0} />
+              </Suspense>
+              <AutoRotateCamera />
+            </Canvas>
+          </div>
+          
+          {/* Stats Panel */}
+          <div style={{ padding: '2rem', borderTop: '3px solid var(--text-primary)', background: 'var(--bg-secondary)', flexShrink: 0 }}>
+            <h3 className="font-display" style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>CAR STATS</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)' }}>
+                <span>TOP SPEED</span>
+                <strong>{stats.topSpeed} KM/H</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)' }}>
+                <span>ACCELERATION</span>
+                <strong>{stats.acceleration.toFixed(1)}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)' }}>
+                <span>HANDLING</span>
+                <strong>{stats.handling.toFixed(1)}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', color: 'var(--klustor-pink)' }}>
+                <span>DESIGN SCORE</span>
+                <strong>{stats.designScore.toFixed(1)} / 10</strong>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

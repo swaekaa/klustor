@@ -165,12 +165,12 @@ export default function PlayerCar({ groupRef, textures, speed = 0, steering = 0 
 
       {/* === LIVERY PANELS === */}
       {/* Right side */}
-      <mesh position={[1.06, 0.2, -0.15]} rotation={[0, 0, 0]} material={matRight}>
-        <planeGeometry args={[3.6, 0.48]} />
+      <mesh position={[1.06, 0.15, 0]} rotation={[0, Math.PI / 2, 0]} material={matRight}>
+        <planeGeometry args={[4.2, 0.55]} />
       </mesh>
       {/* Left side (mirrored) */}
-      <mesh position={[-1.06, 0.2, -0.15]} rotation={[0, Math.PI, 0]} material={matLeft}>
-        <planeGeometry args={[3.6, 0.48]} />
+      <mesh position={[-1.06, 0.15, 0]} rotation={[0, -Math.PI / 2, 0]} material={matLeft}>
+        <planeGeometry args={[4.2, 0.55]} />
       </mesh>
       {/* Front bumper panel */}
       <mesh position={[0, 0.05, 2.31]} rotation={[0, 0, 0]} material={matFront}>
