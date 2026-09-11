@@ -1,13 +1,7 @@
-import { useRef, useEffect } from 'react';
 import { TRACK_WAYPOINTS, CHECKPOINTS, REQUIRED_CHECKPOINTS } from '../data/viceCoastCircuit';
 import { formatRaceTime } from '../hooks/useRaceState';
 import type { RacePhase } from '../hooks/useRaceState';
 import * as THREE from 'three';
-
-// ============================================================
-// RaceHUD — HTML overlay for race information
-// Styled with KLUSTOR retro-console aesthetic
-// ============================================================
 
 interface RaceHUDProps {
   phase: RacePhase;
@@ -18,9 +12,7 @@ interface RaceHUDProps {
   carPosition?: THREE.Vector3;
 }
 
-// Minimap SVG path from track waypoints
 function buildMinimapPath(waypoints: typeof TRACK_WAYPOINTS, width: number, height: number): string {
-  // Find bounds
   const xs = waypoints.map(p => p.x);
   const zs = waypoints.map(p => p.z);
   const minX = Math.min(...xs), maxX = Math.max(...xs);
@@ -36,7 +28,7 @@ function buildMinimapPath(waypoints: typeof TRACK_WAYPOINTS, width: number, heig
     svgY: (z - minZ) * scale + pad,
   });
 
-  const pts = [...waypoints, waypoints[0]]; // close loop
+  const pts = [...waypoints, waypoints[0]];
   return pts.map((p, i) => {
     const { svgX, svgY } = toSVG(p.x, p.z);
     return `${i === 0 ? 'M' : 'L'} ${svgX.toFixed(1)} ${svgY.toFixed(1)}`;
@@ -44,10 +36,9 @@ function buildMinimapPath(waypoints: typeof TRACK_WAYPOINTS, width: number, heig
 }
 
 function Minimap({ currentCheckpoint, carPosition }: { currentCheckpoint: number; carPosition?: THREE.Vector3 }) {
-  const W = 120, H = 90;
+  const W = 150, H = 150;
   const path = buildMinimapPath(TRACK_WAYPOINTS, W, H);
 
-  // Map car position to minimap coords
   const xs = TRACK_WAYPOINTS.map(p => p.x);
   const zs = TRACK_WAYPOINTS.map(p => p.z);
   const minX = Math.min(...xs), maxX = Math.max(...xs);
@@ -59,17 +50,12 @@ function Minimap({ currentCheckpoint, carPosition }: { currentCheckpoint: number
   const carSVGY = carPosition ? (carPosition.z - minZ) * scale + pad : H / 2;
 
   return (
-    <div className="klustor-race-minimap">
-      <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontWeight: 'bold', letterSpacing: '0.1em', marginBottom: '4px' }}>
-        VICE COAST CIRCUIT
-      </div>
+    <div style={{ position: 'absolute', bottom: '2rem', right: '2rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '16px', border: '3px solid var(--text-primary)', boxShadow: '4px 4px 0px rgba(0,0,0,0.1)' }}>
       <svg width={W} height={H} style={{ display: 'block' }}>
-        {/* Track outline */}
-        <path d={path} fill="none" stroke="rgba(30,41,51,0.3)" strokeWidth="6" strokeLinejoin="round" />
-        <path d={path} fill="none" stroke="#8FD5D1" strokeWidth="3" strokeLinejoin="round" />
+        <path d={path} fill="none" stroke="rgba(18,22,25,0.1)" strokeWidth="6" strokeLinejoin="round" />
+        <path d={path} fill="none" stroke="var(--klustor-cyan)" strokeWidth="3" strokeLinejoin="round" />
         
-        {/* Checkpoints */}
-        {CHECKPOINTS.filter(cp => cp.index < REQUIRED_CHECKPOINTS).map((cp, i) => {
+        {CHECKPOINTS.filter(cp => cp.index < REQUIRED_CHECKPOINTS).map((cp) => {
           const svgX = (cp.position[0] - minX) * scale + pad;
           const svgY = (cp.position[2] - minZ) * scale + pad;
           const done = currentCheckpoint > cp.index;
@@ -79,19 +65,17 @@ function Minimap({ currentCheckpoint, carPosition }: { currentCheckpoint: number
               cx={svgX}
               cy={svgY}
               r={4}
-              fill={done ? '#A8C99B' : '#E9B58D'}
-              stroke="#1E2933"
-              strokeWidth={1}
+              fill={done ? 'var(--klustor-green)' : 'var(--bg-secondary)'}
+              stroke="var(--text-primary)"
+              strokeWidth={2}
             />
           );
         })}
 
-        {/* Finish line */}
-        <circle cx={(0 - minX) * scale + pad} cy={(0 - minZ) * scale + pad} r={5}
-          fill="#DCA8B8" stroke="#1E2933" strokeWidth={1} />
+        <circle cx={(0 - minX) * scale + pad} cy={(0 - minZ) * scale + pad} r={6}
+          fill="var(--klustor-pink)" stroke="var(--text-primary)" strokeWidth={2} />
 
-        {/* Car position */}
-        <circle cx={carSVGX} cy={carSVGY} r={5} fill="#1E2933" stroke="#8FD5D1" strokeWidth={2} />
+        <circle cx={carSVGX} cy={carSVGY} r={6} fill="var(--klustor-yellow)" stroke="var(--text-primary)" strokeWidth={2} />
       </svg>
     </div>
   );
@@ -99,61 +83,35 @@ function Minimap({ currentCheckpoint, carPosition }: { currentCheckpoint: number
 
 export default function RaceHUD({ phase, countdown, lapTimeMs, speed, currentCheckpoint, carPosition }: RaceHUDProps) {
   const speedKmh = Math.round(Math.abs(speed) * 3.6);
-  const nextCP = currentCheckpoint < REQUIRED_CHECKPOINTS
-    ? `CP ${currentCheckpoint + 1}`
-    : 'FINISH';
 
   return (
     <div className="klustor-race-hud">
-      {/* Top Left — Circuit + Lap */}
-      <div className="klustor-race-hud-panel klustor-race-hud-tl">
-        <div className="klustor-race-hud-label">VICE COAST CIRCUIT</div>
-        <div className="klustor-race-hud-value">LAP 1 / 1</div>
-        <div className="klustor-race-hud-sub">
-          {nextCP !== 'FINISH'
-            ? `NEXT: ${nextCP}`
-            : currentCheckpoint >= REQUIRED_CHECKPOINTS
-            ? 'HIT FINISH!'
-            : `CP ${currentCheckpoint} / ${REQUIRED_CHECKPOINTS}`}
+      {/* Top Left — Main Info */}
+      <div style={{ position: 'absolute', top: '2rem', left: '2rem' }}>
+        <div className="font-display" style={{ fontSize: '1.5rem', letterSpacing: '0.1em', marginBottom: '0.5rem', WebkitTextStroke: '1px white' }}>
+          VICE COAST
         </div>
-      </div>
-
-      {/* Top Right — Timer + Speed */}
-      <div className="klustor-race-hud-panel klustor-race-hud-tr">
-        <div className="klustor-race-hud-label">TIME</div>
-        <div className="klustor-race-hud-value" style={{ fontVariantNumeric: 'tabular-nums' }}>
+        <div className="font-mono" style={{ fontSize: '3rem', fontWeight: 'bold', lineHeight: 1, WebkitTextStroke: '2px white' }}>
           {formatRaceTime(lapTimeMs)}
         </div>
-        <div className="klustor-race-hud-label" style={{ marginTop: '0.5rem' }}>SPEED</div>
-        <div className="klustor-race-hud-value">{String(speedKmh).padStart(3, '0')} km/h</div>
-      </div>
-
-      {/* Bottom Left — Controls legend */}
-      <div className="klustor-race-hud-panel klustor-race-hud-bl">
-        <div className="klustor-race-controls-grid">
-          <span>W / ↑</span><span>ACCELERATE</span>
-          <span>S / ↓</span><span>BRAKE</span>
-          <span>A / ←</span><span>LEFT</span>
-          <span>D / →</span><span>RIGHT</span>
-          <span>R</span><span>RESET</span>
-          <span>ESC</span><span>PAUSE</span>
+        <div className="font-mono" style={{ fontSize: '1.5rem', marginTop: '0.5rem', color: 'var(--text-muted)', WebkitTextStroke: '1px white' }}>
+          {String(speedKmh).padStart(3, '0')} KM/H
+        </div>
+        <div className="font-mono" style={{ fontSize: '1.2rem', marginTop: '0.25rem', color: 'var(--text-muted)', WebkitTextStroke: '1px white' }}>
+          CHECKPOINT {Math.min(currentCheckpoint, REQUIRED_CHECKPOINTS)} / {REQUIRED_CHECKPOINTS}
         </div>
       </div>
 
-      {/* Bottom Right — Minimap */}
       <Minimap currentCheckpoint={currentCheckpoint} carPosition={carPosition} />
 
       {/* Countdown overlay */}
       {phase === 'countdown' && (
-        <div className="klustor-race-countdown">
-          <div className="klustor-race-countdown-number">
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="font-display" style={{ fontSize: '15rem', color: 'var(--klustor-pink)', WebkitTextStroke: '6px var(--text-primary)', textShadow: '8px 8px 0px var(--text-primary)' }}>
             {countdown > 0 ? countdown : 'GO!'}
           </div>
         </div>
       )}
-
-      {/* Checkpoint flash */}
-      {/* This would be driven by parent event — see RacePage for notification */}
     </div>
   );
 }
