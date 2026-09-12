@@ -93,7 +93,7 @@ export default function LeaderboardPage() {
                   </div>
 
                   <div className="font-mono" style={{ fontSize: '1rem', color: 'var(--text-muted)', textAlign: 'right' }}>
-                    DESIGN {record.designScore.toFixed(1)}
+                    DESIGN {(record.designScore ?? 0).toFixed(1)}
                   </div>
                 </motion.div>
               );

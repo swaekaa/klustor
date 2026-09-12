@@ -89,18 +89,20 @@ function GarageScene({ textures }: { textures?: Partial<Record<TemplateView, str
 }
 
 // ── Main GaragePage ──────────────────────────────────────────
+const defaultStats = (): CarStats => ({
+  topSpeed: 100,
+  acceleration: 3,
+  handling: 3,
+  designScore: 0,
+  overallRating: 3,
+});
+
 export default function GaragePage() {
   const navigate = useNavigate();
   const { player, currentLivery, raceRecords } = useGameStore();
   const [selectedView, setSelectedView] = useState<typeof TEMPLATE_VIEWS[number]['id']>('left');
-
-  const stats: CarStats = currentLivery?.stats ?? {
-    topSpeed: 100,
-    acceleration: 3,
-    handling: 3,
-    designScore: 0,
-    overallRating: 3,
-  };
+  const rawStats = currentLivery?.stats ?? defaultStats();
+  const stats = { ...defaultStats(), ...rawStats };
 
   const bestTime = player.bestTime;
   const formatTime = (ms: number) => {

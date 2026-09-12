@@ -104,7 +104,10 @@ export default function DesignPage() {
   const [templateUrl, setTemplateUrl] = useState<string>('');
   
   const [textures, setTextures] = useState<Partial<Record<TemplateView, string>>>(currentLivery?.textures ?? {});
-  const [stats, setStats] = useState<CarStats>(currentLivery?.stats ?? defaultStats());
+  // Ensure all stat properties exist even if loading from an old save
+  const rawStats = currentLivery?.stats ?? defaultStats();
+  const safeStats = { ...defaultStats(), ...rawStats };
+  const [stats, setStats] = useState<CarStats>(safeStats);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
