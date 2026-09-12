@@ -211,16 +211,7 @@ function OceanArea() {
 
   return (
     <>
-      {/* Main ocean plane */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[170, -0.2, 80]}>
-        <planeGeometry args={[280, 320]} />
-        <meshLambertMaterial map={oceanTex} />
-      </mesh>
-      {/* Beach strip */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[100, -0.05, 80]}>
-        <planeGeometry args={[70, 320]} />
-        <meshLambertMaterial color="#D4C89A" />
-      </mesh>
+      {/* Central lake is now rendered in Track.tsx */}
     </>
   );
 }
@@ -389,37 +380,30 @@ export default function ViceCoastEnvironment() {
     return s.position.clone().addScaledVector(s.normal, side * dist);
   };
 
-  // ── Buildings (explicit, carefully placed) ────────────────
+  // ── Buildings (explicit, carefully placed on OUTSIDE only) ──
   const bldgDefs: {
     frac: number; side: -1|1; clearance: number;
     w: number; h: number; d: number; color: string; type: BldgType;
   }[] = [
-    // ── CITY START (Palm Avenue) ──
-    { frac: 0.03, side: -1, clearance: 20, w: 15, h: 22, d: 12, color: '#E8C8B4', type: 'artdeco'   },
-    { frac: 0.07, side: -1, clearance: 20, w: 13, h: 30, d: 12, color: '#B8D0E8', type: 'artdeco'   },
-    { frac: 0.11, side: -1, clearance: 20, w: 16, h: 18, d: 12, color: '#D8B8E8', type: 'apartment' },
-    { frac: 0.04, side:  1, clearance: 20, w: 14, h: 26, d: 12, color: '#FAD8A8', type: 'hotel'     },
-    { frac: 0.08, side:  1, clearance: 20, w: 11, h: 16, d: 12, color: '#C8E8B8', type: 'shop'      },
-    { frac: 0.13, side:  1, clearance: 20, w: 18, h: 22, d: 12, color: '#E8D8C8', type: 'artdeco'   },
-    // ── TURN DISTRICT ──
-    { frac: 0.18, side:  1, clearance: 18, w: 14, h: 20, d: 10, color: '#D8E0C8', type: 'artdeco'   },
-    { frac: 0.23, side:  1, clearance: 18, w: 10, h: 14, d: 10, color: '#E8C8D0', type: 'shop'      },
-    { frac: 0.26, side: -1, clearance: 18, w: 12, h: 16, d: 10, color: '#C8D8E0', type: 'apartment' },
-    // ── HARBOR ──
-    { frac: 0.38, side:  1, clearance: 22, w: 22, h: 12, d: 16, color: '#B8C8D0', type: 'warehouse' },
-    { frac: 0.43, side:  1, clearance: 22, w: 16, h: 10, d: 14, color: '#98A8B0', type: 'warehouse' },
-    // ── CHICANE / CITY RETURN ──
-    { frac: 0.74, side: -1, clearance: 20, w: 14, h: 18, d: 12, color: '#E8C8D8', type: 'shop'      },
-    { frac: 0.80, side: -1, clearance: 20, w: 16, h: 24, d: 12, color: '#C8D8E8', type: 'artdeco'   },
-    { frac: 0.76, side:  1, clearance: 20, w: 13, h: 20, d: 12, color: '#D8E8C8', type: 'hotel'     },
-    // ── FINISH STRAIGHT ──
-    { frac: 0.88, side: -1, clearance: 20, w: 16, h: 22, d: 12, color: '#E8D8B8', type: 'artdeco'   },
-    { frac: 0.93, side: -1, clearance: 20, w: 14, h: 28, d: 12, color: '#B8D0E8', type: 'artdeco'   },
-    { frac: 0.90, side:  1, clearance: 20, w: 18, h: 20, d: 12, color: '#D8C8E8', type: 'apartment' },
-    { frac: 0.96, side:  1, clearance: 20, w: 13, h: 16, d: 12, color: '#C8E8D8', type: 'shop'      },
+    // We place buildings along the entire outside of the track (-1)
+    ...Array.from({ length: 45 }, (_, i) => {
+      const typeList: BldgType[] = ['artdeco', 'shop', 'hotel', 'apartment', 'warehouse'];
+      const colorList = ['#E8C8B4', '#B8D0E8', '#D8B8E8', '#FAD8A8', '#C8E8B8', '#E8D8C8', '#D8E0C8', '#E8C8D0', '#C8D8E0'];
+      const type = typeList[i % typeList.length];
+      const color = colorList[i % colorList.length];
+      return {
+        frac: (i * 0.022) + 0.01,
+        side: -1 as -1|1,
+        clearance: 20 + (i % 3) * 2,
+        w: 12 + (i % 5) * 2,
+        h: 15 + (i % 7) * 4,
+        d: 12,
+        color, type
+      };
+    })
   ];
 
-  const buildings = useMemo(() => bldgDefs.map(b => {
+  const buildings = useMemo(() => bldgDefs.map((b, i) => {
     const s  = at(b.frac);
     const pt = edgePt(b.frac, b.side, b.clearance);
     pt.y     = 0;
@@ -429,20 +413,21 @@ export default function ViceCoastEnvironment() {
   }), [td]);
 
   // ── Palms ─────────────────────────────────────────────────
-  // Explicit positions with slight scale variation (deterministic via index)
-  const palmDefs: { frac: number; side: -1|1; dist: number; scaleStep: number }[] = [
-    // Palm Avenue — left side
-    ...Array.from({ length: 7 }, (_, i) => ({ frac: 0.02 + i*0.023, side: -1 as -1|1, dist: 8.5, scaleStep: i })),
-    // Palm Avenue — right side
-    ...Array.from({ length: 5 }, (_, i) => ({ frac: 0.03 + i*0.028, side:  1 as -1|1, dist: 8.5, scaleStep: i })),
-    // Harbor palms
-    ...Array.from({ length: 4 }, (_, i) => ({ frac: 0.35 + i*0.03,  side: -1 as -1|1, dist: 9,   scaleStep: i })),
-    // Ocean drive palms — scattered
-    ...Array.from({ length: 6 }, (_, i) => ({ frac: 0.58 + i*0.028, side:  1 as -1|1, dist: 11,  scaleStep: i })),
-    ...Array.from({ length: 4 }, (_, i) => ({ frac: 0.60 + i*0.028, side: -1 as -1|1, dist: 8,   scaleStep: i })),
-    // Finish area
-    ...Array.from({ length: 3 }, (_, i) => ({ frac: 0.87 + i*0.025, side: -1 as -1|1, dist: 8.5, scaleStep: i })),
-    ...Array.from({ length: 3 }, (_, i) => ({ frac: 0.89 + i*0.025, side:  1 as -1|1, dist: 8.5, scaleStep: i })),
+  const palmDefs = [
+    // Dense palm avenue around the entire outside
+    ...Array.from({ length: 150 }, (_, i) => ({
+      frac: i * 0.0066,
+      side: -1 as -1|1,
+      dist: 8.5 + (i % 2),
+      scaleStep: i
+    })),
+    // A few palms on the inside beach edge
+    ...Array.from({ length: 60 }, (_, i) => ({
+      frac: i * 0.016,
+      side: 1 as -1|1,
+      dist: 5,
+      scaleStep: i
+    }))
   ];
 
   const palms = useMemo(() => palmDefs.map((p, i) => {
@@ -453,21 +438,11 @@ export default function ViceCoastEnvironment() {
   }), [td]);
 
   // ── Street lights ─────────────────────────────────────────
-  // Urban sections: start+finish district, turn district
-  const lightDefs: { frac: number; side: -1|1 }[] = [
-    // Start straight: every 5% on both sides
-    ...Array.from({ length: 4 }, (_, i) => ({ frac: 0.02 + i*0.04, side: -1 as -1|1 })),
-    ...Array.from({ length: 4 }, (_, i) => ({ frac: 0.04 + i*0.04, side:  1 as -1|1 })),
-    // Turn district
-    ...Array.from({ length: 3 }, (_, i) => ({ frac: 0.18 + i*0.04, side:  1 as -1|1 })),
-    // Harbor
-    ...Array.from({ length: 3 }, (_, i) => ({ frac: 0.36 + i*0.04, side:  1 as -1|1 })),
-    // City return
-    ...Array.from({ length: 3 }, (_, i) => ({ frac: 0.74 + i*0.04, side: -1 as -1|1 })),
-    ...Array.from({ length: 3 }, (_, i) => ({ frac: 0.76 + i*0.04, side:  1 as -1|1 })),
-    // Finish
-    ...Array.from({ length: 3 }, (_, i) => ({ frac: 0.88 + i*0.04, side: -1 as -1|1 })),
-    ...Array.from({ length: 3 }, (_, i) => ({ frac: 0.90 + i*0.04, side:  1 as -1|1 })),
+  const lightDefs = [
+    ...Array.from({ length: 80 }, (_, i) => ({
+      frac: i * 0.0125,
+      side: -1 as -1|1
+    }))
   ];
 
   const lights = useMemo(() => lightDefs.map(l => {
@@ -482,24 +457,29 @@ export default function ViceCoastEnvironment() {
 
   // ── Harbor docks ──────────────────────────────────────────
   const harborDocks = useMemo(() => [
-    { frac: 0.36, dist: 18 },
-    { frac: 0.42, dist: 20 },
-    { frac: 0.48, dist: 22 },
+    { frac: 0.10, dist: 8 },
+    { frac: 0.15, dist: 10 },
+    { frac: 0.30, dist: 12 },
+    { frac: 0.45, dist: 8 },
+    { frac: 0.60, dist: 10 },
+    { frac: 0.75, dist: 12 },
   ].map(({ frac, dist }) => {
     const s   = at(frac);
-    const pt  = s.position.clone().addScaledVector(s.normal, (ROAD_WIDTH / 2) + dist);
+    const pt  = edgePt(frac, 1, dist);
     pt.y      = 0;
     const rotY = Math.atan2(s.tangent.x, s.tangent.z);
     return { px: pt.x, pz: pt.z, rotY };
   }), [td]);
 
-  // ── Boats ─────────────────────────────────────────────────
+  // ── Boats in the lake ─────────────────────────────────────
   const boats = useMemo(() => [
-    { frac: 0.38, side: 1 as 1, dist: 28 },
-    { frac: 0.44, side: 1 as 1, dist: 34 },
-    { frac: 0.50, side: 1 as 1, dist: 28 },
-  ].map(({ frac, side, dist }) => {
-    const pt  = edgePt(frac, side, dist + (ROAD_WIDTH / 2));
+    { frac: 0.12, dist: 28 },
+    { frac: 0.28, dist: 34 },
+    { frac: 0.48, dist: 28 },
+    { frac: 0.62, dist: 40 },
+    { frac: 0.82, dist: 25 },
+  ].map(({ frac, dist }) => {
+    const pt  = edgePt(frac, 1, dist);
     pt.y      = -0.15;
     const s   = at(frac);
     const rotY = Math.atan2(s.tangent.x, s.tangent.z) + (Math.PI / 4);
@@ -508,35 +488,34 @@ export default function ViceCoastEnvironment() {
 
   // ── Beach umbrellas ───────────────────────────────────────
   const umbrellas = useMemo(() => [
-    { frac: 0.60 }, { frac: 0.63 }, { frac: 0.66 }, { frac: 0.69 },
-  ].map(({ frac }, i) => {
-    const side: 1 = 1;
-    const pt = edgePt(frac, side, 18 + (ROAD_WIDTH / 2) + i * 3);
+    ...Array.from({ length: 15 }, (_, i) => ({ frac: 0.20 + i * 0.01 })),
+    ...Array.from({ length: 15 }, (_, i) => ({ frac: 0.65 + i * 0.01 })),
+  ].map(({ frac }) => {
+    const pt = edgePt(frac, 1, 6);
     return { px: pt.x, pz: pt.z };
   }), [td]);
 
   // ── Turn signs ────────────────────────────────────────────
   const turnSigns = useMemo(() => [
-    0.14, 0.24, 0.44, 0.58, 0.72, 0.86,
+    0.10, 0.25, 0.40, 0.55, 0.70, 0.85
   ].map((frac, i) => {
     const s   = at(frac);
-    const pt  = s.position.clone().addScaledVector(s.normal, -(ROAD_WIDTH / 2) - 3.5);
+    const pt  = edgePt(frac, -1, 3.5);
     pt.y      = 0;
     const rotY = Math.atan2(s.tangent.x, s.tangent.z);
     return { px: pt.x, pz: pt.z, rotY, label: `T${i + 1}` };
   }), [td]);
 
-  // ── Braking boards (before hairpin ~45%) ──────────────────
+  // ── Braking boards ──────────────────
   const brakingBoards = useMemo(() => {
-    const hairpinFrac = 0.44;
     return [
-      { offset: 0.030, color: '#E8365D' }, // 100m board
-      { offset: 0.022, color: '#1A2530' }, // 75m
-      { offset: 0.015, color: '#1A2530' }, // 50m
-    ].map(({ offset, color }) => {
-      const frac = hairpinFrac - offset;
+      { frac: 0.22, color: '#E8365D' },
+      { frac: 0.23, color: '#1A2530' },
+      { frac: 0.38, color: '#E8365D' },
+      { frac: 0.39, color: '#1A2530' },
+    ].map(({ frac, color }) => {
       const s    = at(frac);
-      const pt   = s.position.clone().addScaledVector(s.normal, -(ROAD_WIDTH / 2) - 2.5);
+      const pt   = edgePt(frac, -1, 2.5);
       pt.y       = 0;
       const rotY = Math.atan2(s.tangent.x, s.tangent.z);
       return { px: pt.x, pz: pt.z, rotY, color };

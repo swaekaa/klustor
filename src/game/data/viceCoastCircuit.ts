@@ -54,53 +54,34 @@ export interface TrackData {
 // It does NOT self-intersect.
 
 const WAYPOINTS: THREE.Vector3[] = [
-  // START / FINISH STRAIGHT
-  new THREE.Vector3(  0,  0,   0),   // P0  — Start/Finish line
-  new THREE.Vector3( 30,  0,   0),   // P1  — Palm Straight
-  new THREE.Vector3( 65,  0,   0),   // P2
-  new THREE.Vector3(100,  0,   0),   // P3
-
-  // TURN 1 — 90° Right (City Entry)
-  new THREE.Vector3(120,  0,   8),   // P4  — Apex of Turn 1
-  new THREE.Vector3(128,  0,  30),   // P5  — Exit of Turn 1
-
-  // SHORT STRAIGHT + SWEEPING LEFT (Turn 2 — Harbor Bend)
-  new THREE.Vector3(125,  0,  60),   // P6
-  new THREE.Vector3(118,  0,  88),   // P7  — Sweeping apex
-
-  // HARBOR STRAIGHT
-  new THREE.Vector3(105,  0, 112),   // P8
-  new THREE.Vector3( 80,  0, 125),   // P9
-
-  // HARBOR HAIRPIN ENTRY (Turn 3)
-  new THREE.Vector3( 45,  0, 132),   // P10
-
-  // OCEAN DRIVE HAIRPIN — tightest point (Turns 4)
-  new THREE.Vector3(  5,  0, 140),   // P11
-  new THREE.Vector3(-30,  0, 138),   // P12 — Hairpin apex
-  new THREE.Vector3(-55,  0, 125),   // P13 — Hairpin exit
-
-  // ACCELERATION SECTION
-  new THREE.Vector3(-68,  0, 100),   // P14
-  new THREE.Vector3(-72,  0,  75),   // P15
-
-  // LEFT-RIGHT CHICANE (Turns 5-6)
-  new THREE.Vector3(-65,  0,  55),   // P16 — Chicane LEFT
-  new THREE.Vector3(-52,  0,  42),   // P17 — Chicane apex
-  new THREE.Vector3(-65,  0,  28),   // P18 — Chicane RIGHT
-  new THREE.Vector3(-72,  0,  15),   // P19
-
-  // OCEAN SWEEP (Turn 7 — long sweeper)
-  new THREE.Vector3(-85,  0,   5),   // P20
-  new THREE.Vector3(-90,  0,  -8),   // P21 — Turn 8 entry
-
-  // FINAL CORNER — 90° Right (Turn 8)
-  new THREE.Vector3(-80,  0, -20),   // P22 — Final apex
-  new THREE.Vector3(-55,  0, -22),   // P23 — Final exit
-
-  // FINAL STRAIGHT back to Start
-  new THREE.Vector3(-30,  0, -18),   // P24
-  new THREE.Vector3(-10,  0,  -8),   // P25 — final kink
+  // Start / City Straight
+  new THREE.Vector3(   0, 0,    0), // P0
+  new THREE.Vector3( 150, 0,    0), // P1
+  new THREE.Vector3( 300, 0,   20), // P2
+  
+  // Outer Coast Sweep
+  new THREE.Vector3( 450, 0,   80), // P3
+  new THREE.Vector3( 550, 0,  200), // P4
+  new THREE.Vector3( 600, 0,  350), // P5
+  new THREE.Vector3( 550, 0,  550), // P6
+  
+  // Deep Corner
+  new THREE.Vector3( 400, 0,  700), // P7
+  new THREE.Vector3( 200, 0,  780), // P8
+  new THREE.Vector3(   0, 0,  800), // P9
+  
+  // Technical section (cuts inward then outward)
+  new THREE.Vector3(-150, 0,  750), // P10
+  new THREE.Vector3(-250, 0,  650), // P11
+  new THREE.Vector3(-200, 0,  500), // P12  
+  new THREE.Vector3(-250, 0,  350), // P13  
+  new THREE.Vector3(-400, 0,  300), // P14
+  
+  // Return Sweep
+  new THREE.Vector3(-500, 0,  150), // P15
+  new THREE.Vector3(-400, 0,   50), // P16
+  new THREE.Vector3(-200, 0,   -5), // P17
+  new THREE.Vector3(-100, 0,    0), // P18
 ];
 
 // ── Lazy singleton ────────────────────────────────────────────

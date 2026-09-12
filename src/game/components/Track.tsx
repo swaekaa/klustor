@@ -312,6 +312,20 @@ function makeStartTex(): THREE.CanvasTexture {
 
 // ── Main Component ────────────────────────────────────────────
 
+function lakeGeo(samples: Samples): THREE.BufferGeometry {
+  const shape = new THREE.Shape();
+  // The right edge forms the inside of the counter-clockwise loop
+  samples.forEach((s, i) => {
+    if (i === 0) shape.moveTo(s.rightEdge.x, -s.rightEdge.z);
+    else shape.lineTo(s.rightEdge.x, -s.rightEdge.z);
+  });
+  shape.closePath();
+  const g = new THREE.ShapeGeometry(shape);
+  // ShapeGeometry creates faces in XY plane; we must rotate to XZ
+  g.rotateX(Math.PI / 2);
+  return g;
+}
+
 export default function Track() {
   const td = useMemo(() => getTrackData(), []);
 
@@ -320,14 +334,13 @@ export default function Track() {
   const gCurbR     = useMemo(() => curbGeo(td.samples, 'right'),     [td]);
   const gSidewalkL = useMemo(() => sidewalkGeo(td.samples, 'left'),  [td]);
   const gSidewalkR = useMemo(() => sidewalkGeo(td.samples, 'right'), [td]);
-  const gBaseL = useMemo(() => guardrailBaseGeo(td.samples, 'left'),  [td]);
-  const gBaseR = useMemo(() => guardrailBaseGeo(td.samples, 'right'), [td]);
-  
-  const gBeamL = useMemo(() => guardrailBeamGeo(td.samples, 'left'),  [td]);
-  const gBeamR = useMemo(() => guardrailBeamGeo(td.samples, 'right'), [td]);
-
-  const gPostsL = useMemo(() => guardrailPostsGeo(td.samples, 'left'),  [td]);
-  const gPostsR = useMemo(() => guardrailPostsGeo(td.samples, 'right'), [td]);
+  const gBaseL     = useMemo(() => guardrailBaseGeo(td.samples, 'left'),  [td]);
+  const gBaseR     = useMemo(() => guardrailBaseGeo(td.samples, 'right'), [td]);
+  const gBeamL     = useMemo(() => guardrailBeamGeo(td.samples, 'left'),  [td]);
+  const gBeamR     = useMemo(() => guardrailBeamGeo(td.samples, 'right'), [td]);
+  const gPostsL    = useMemo(() => guardrailPostsGeo(td.samples, 'left'),  [td]);
+  const gPostsR    = useMemo(() => guardrailPostsGeo(td.samples, 'right'), [td]);
+  const gLake      = useMemo(() => lakeGeo(td.samples),              [td]);
 
   const tRoad     = useMemo(() => makeRoadTex(),     []);
   const tCurb     = useMemo(() => makeCurbTex(),     []);
@@ -340,9 +353,14 @@ export default function Track() {
   return (
     <group>
       {/* ── Ground base (large world plane) ── */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[15, -0.04, 55]}>
-        <planeGeometry args={[500, 420]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.04, 0]}>
+        <planeGeometry args={[2000, 2000]} />
         <meshLambertMaterial color="#A8B882" />
+      </mesh>
+
+      {/* ── Central Lake ── */}
+      <mesh geometry={gLake} position={[0, -0.02, 0]}>
+        <meshLambertMaterial color="#38A8CC" transparent opacity={0.9} />
       </mesh>
 
       {/* ── Road ── */}
