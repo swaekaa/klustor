@@ -548,7 +548,7 @@ export default function ViceCoastEnvironment() {
     const s = samples[0];
     // Gantry is BEHIND the start line (so player drives through at finish)
     const pt = s.position.clone().addScaledVector(s.tangent, -2);
-    const rotY = Math.atan2(s.tangent.x, s.tangent.z) + Math.PI / 2;
+    const rotY = Math.atan2(s.tangent.x, s.tangent.z);
     return { px: pt.x, pz: pt.z, rotY };
   }, [td]);
 
