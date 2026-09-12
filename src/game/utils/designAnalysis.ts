@@ -146,7 +146,8 @@ function computeBrightnessVariance(data: Uint8ClampedArray): number {
     sumSq += br * br;
   }
   const mean = sum / n;
-  return Math.sqrt(sumSq / n - mean * mean);
+  const variance = sumSq / n - mean * mean;
+  return Math.sqrt(Math.max(0, variance));
 }
 
 // ── MAIN EXPORT ───────────────────────────────────────────────
