@@ -19,7 +19,7 @@ import type { CarStats } from '../../types';
 // ============================================================
 
 const BASE_MAX_SPEED      = 22;
-const BASE_ACCELERATION   = 12;
+const BASE_ACCELERATION   = 7;
 const BASE_FRICTION       = 5;
 const BASE_STEERING       = 2.0;
 const REVERSE_SPEED       = 6;
@@ -27,8 +27,11 @@ const BRAKING             = 22;
 const CAR_HALF_WIDTH      = 1.1;   // half car width for boundary clamping
 
 export interface CarPhysicsState {
-  speed:    number;
-  steering: number;
+  speed:      number;
+  steering:   number;
+  boost:      number; // 0.0 to 1.0 (current boost reserve)
+  maxBoost:   number; // 0.0 to 1.0 (capacity based on designScore)
+  isBoosting: boolean;
 }
 
 // ── Nearest Track Point (Local Search Window) ───────────────────
@@ -68,7 +71,7 @@ function findNearest(pos: THREE.Vector3, lastIdx: number = -1) {
     }
   }
 
-  return { nearest, nearestIdx, distance: Math.sqrt(minDistSq) };
+  return { nearest, nearestIdx };
 }
 
 // ── Hook ─────────────────────────────────────────────────────
@@ -91,8 +94,12 @@ export function useCarPhysics(
   const ACCELERATION      = BASE_ACCELERATION * accelMult;
   const STEERING_STRENGTH = BASE_STEERING     * steerMult;
 
+  // Max boost capacity depends on design score (10 = 100%, 0 = 0%)
+  const maxBoostCapacity = Math.max(0, Math.min(1.0, (stats?.designScore ?? 0) / 10));
+
   const speedRef    = useRef(0);
   const steeringRef = useRef(0);
+  const boostRef    = useRef(maxBoostCapacity); // Starts full
 
   // ── Reset to start position ───────────────────────────────
   const resetToStart = useCallback(() => {
@@ -103,7 +110,8 @@ export function useCarPhysics(
     speedRef.current    = 0;
     steeringRef.current = 0;
     lastNearestIdxRef.current = -1;
-  }, [carRef]);
+    boostRef.current    = maxBoostCapacity;
+  }, [carRef, maxBoostCapacity]);
 
   // ── Reset to nearest valid track point ────────────────────
   const resetToNearestTrackPoint = useCallback(() => {
@@ -131,18 +139,36 @@ export function useCarPhysics(
     const left      = isAnyPressed('KeyA',  'ArrowLeft');
     const right     = isAnyPressed('KeyD',  'ArrowRight');
     const handbrake = isAnyPressed('Space');
+    const shiftKey  = isAnyPressed('ShiftLeft', 'ShiftRight');
     const resetKey  = isAnyPressed('KeyR');
 
     if (resetKey) { resetToNearestTrackPoint(); return; }
 
+    // ── Boost Logic ────────────────────────────────────────
+    let isBoosting = false;
+    if (shiftKey && boostRef.current > 0.01) {
+      // Drain boost
+      boostRef.current = Math.max(0, boostRef.current - 0.2 * dt); // Takes 5 seconds to drain
+      isBoosting = true;
+    } else if (!shiftKey) {
+      // Regen boost
+      boostRef.current = Math.min(maxBoostCapacity, boostRef.current + 0.1 * dt); // Takes 10 seconds to fully regen
+    }
+
+    // Boost strength gives a flat 1.5x speed/accel multiplier when active
+    const boostMult = isBoosting ? 1.5 : 1.0;
+    
+    const currentMaxSpeed = MAX_SPEED * boostMult;
+    const currentAccel    = ACCELERATION * boostMult;
+
     // ── Speed ──────────────────────────────────────────────
     if (fwd) {
-      speedRef.current = Math.min(MAX_SPEED, speedRef.current + ACCELERATION * dt);
+      speedRef.current = Math.min(currentMaxSpeed, speedRef.current + currentAccel * dt);
     } else if (back) {
       if (speedRef.current > 0.5) {
         speedRef.current = Math.max(0, speedRef.current - BRAKING * dt);
       } else {
-        speedRef.current = Math.max(-REVERSE_SPEED, speedRef.current - ACCELERATION * dt);
+        speedRef.current = Math.max(-REVERSE_SPEED, speedRef.current - currentAccel * dt);
       }
     } else {
       const friction = BASE_FRICTION * dt * (handbrake ? 3 : 1);
@@ -202,9 +228,15 @@ export function useCarPhysics(
     }
 
     carRef.current.position.y = 0;
-    onUpdate?.({ speed: speedRef.current, steering: steeringRef.current });
+    onUpdate?.({ 
+      speed: speedRef.current, 
+      steering: steeringRef.current,
+      boost: boostRef.current,
+      maxBoost: maxBoostCapacity,
+      isBoosting
+    });
   });
 
   const setOffRoad = useCallback(() => {}, []);
-  return { speedRef, steeringRef, setOffRoad, resetToStart, resetToLastSafe: resetToNearestTrackPoint };
+  return { speedRef, steeringRef, boostRef, setOffRoad, resetToStart, resetToLastSafe: resetToNearestTrackPoint };
 }

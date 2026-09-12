@@ -172,32 +172,57 @@ export default function DesignPage() {
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Design your ride. More style = more speed.</div>
           </div>
           
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-            {VIEWS.map(v => (
-              <button 
-                key={v.id} 
-                onClick={() => setSelectedView(v.id)} 
-                className="btn" 
-                style={{ 
-                  padding: '0.5rem 1.25rem', borderRadius: '999px', fontSize: '0.9rem',
-                  background: selectedView === v.id ? 'var(--klustor-cyan)' : 'var(--bg-secondary)',
-                  border: '1px solid var(--border-light)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-                }}
-              >
-                {v.label}
-              </button>
-            ))}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {VIEWS.map(v => (
+                <button 
+                  key={v.id} 
+                  onClick={() => setSelectedView(v.id)} 
+                  className="btn" 
+                  style={{ 
+                    padding: '0.5rem 1.25rem', borderRadius: '999px', fontSize: '0.9rem',
+                    background: selectedView === v.id ? 'var(--klustor-cyan)' : 'var(--bg-secondary)',
+                    border: '1px solid var(--border-light)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                  }}
+                >
+                  {v.label}
+                </button>
+              ))}
+            </div>
+            
+            <button 
+              className="btn"
+              onClick={() => {
+                useGameStore.getState().resetLivery();
+                setTextures({});
+                setStats(defaultStats());
+              }}
+              style={{
+                padding: '0.5rem 1.25rem', borderRadius: '999px', fontSize: '0.9rem',
+                background: '#FF4D4D', color: '#FFF',
+                border: '1px solid rgba(0,0,0,0.1)', boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              }}
+            >
+              RESET DESIGN
+            </button>
           </div>
           
-          <div style={{ flex: 1, background: 'white', borderRadius: '24px', overflow: 'hidden', position: 'relative', boxShadow: '0 8px 24px rgba(0,0,0,0.05)', minHeight: '500px', border: '1px solid var(--border-light)' }}>
-            {templateUrl && (
-              <LiveryEditor
-                key={selectedView}
-                templateSrc={textures[selectedView] || templateUrl}
-                onSave={handleEditorSave}
-                editorId={`editor-${selectedView}`}
-              />
-            )}
+          <div style={{ flex: 1, background: 'white', borderRadius: '24px', overflow: 'hidden', position: 'relative', boxShadow: '0 8px 24px rgba(0,0,0,0.05)', minHeight: '500px', border: '1px solid var(--border-light)', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: '0.5rem', background: '#F8F9FA', borderBottom: '1px solid var(--border-light)', textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+              TIP: Use the 🔍+ and 🔍- buttons in the editor toolbar to zoom the canvas.
+            </div>
+            <div style={{ flex: 1, position: 'relative' }}>
+              {templateUrl && (
+                <div style={{ width: '100%', height: '100%' }}>
+                  <LiveryEditor
+                    key={selectedView}
+                    templateSrc={textures[selectedView] || templateUrl}
+                    onSave={handleEditorSave}
+                    editorId={`editor-${selectedView}`}
+                  />
+                </div>
+              )}
+            </div>
             {isSaving && (
               <div style={{
                 position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)',

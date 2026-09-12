@@ -6,7 +6,8 @@ import { motion } from 'framer-motion';
 import { useGameStore } from '../store/gameStore';
 import { RACE_REWARDS } from '../game/data/viceCoastCircuit';
 import { formatRaceTime, useRaceState } from '../game/hooks/useRaceState';
-import { useCarPhysics } from '../game/hooks/useCarPhysics';
+import { useCarPhysics, type CarPhysicsState } from '../game/hooks/useCarPhysics';
+import { useEngineSound } from '../game/hooks/useEngineSound';
 import PlayerCar from '../game/components/PlayerCar';
 import Track from '../game/components/Track';
 import ViceCoastEnvironment from '../game/components/ViceCoastEnvironment';
@@ -75,10 +76,10 @@ function FollowSun({ carRef }: { carRef: RefObject<THREE.Group> }) {
   );
 }
 
-function RaceScene({ textures, stats, phase, carRef, onSpeedUpdate, onPositionUpdate, checkCheckpoint }: RaceSceneProps) {
+function RaceScene({ textures, stats, phase, carRef, onPhysicsUpdate, onPositionUpdate, checkCheckpoint }: RaceSceneProps) {
   const isRacing = phase === 'racing';
   const { speedRef, steeringRef, resetToStart } = useCarPhysics(carRef, isRacing, stats, (state) => {
-    onSpeedUpdate(state.speed);
+    onPhysicsUpdate(state);
   });
 
   useEffect(() => {
@@ -208,7 +209,7 @@ export default function RacePage() {
 
   const carRef = useRef<THREE.Group>(null!);
   const [webglError, setWebglError] = useState(false);
-  const [speed, setSpeed] = useState(0);
+  const [physicsState, setPhysicsState] = useState<CarPhysicsState>({ speed: 0, steering: 0, boost: 1.0, maxBoost: 1.0, isBoosting: false });
   const [maxSpeedSeen, setMaxSpeedSeen] = useState(0);
   const [carPosition, setCarPosition] = useState<THREE.Vector3 | undefined>();
   const [raceStarted, setRaceStarted] = useState(false);
@@ -221,6 +222,9 @@ export default function RacePage() {
   const isRacing = phase === 'racing';
   const prevBestTime = player.bestTime;
 
+  // Start engine audio
+  useEngineSound(physicsState.speed, physicsState.isBoosting, phase);
+
   // Start race on mount
   useEffect(() => {
     if (!raceStarted && phase === 'prerace') {
@@ -232,12 +236,12 @@ export default function RacePage() {
 
   // Track max speed
   useEffect(() => {
-    if (isRacing) setMaxSpeedSeen(prev => Math.max(prev, Math.abs(speed)));
-  }, [speed, isRacing]);
+    if (isRacing) setMaxSpeedSeen(prev => Math.max(prev, Math.abs(physicsState.speed)));
+  }, [physicsState.speed, isRacing]);
 
   const handleRestart = useCallback(() => {
     restartRace();
-    setSpeed(0);
+    setPhysicsState(prev => ({ ...prev, speed: 0, isBoosting: false }));
     setMaxSpeedSeen(0);
     startCountdown();
   }, [restartRace, startCountdown]);
@@ -289,7 +293,7 @@ export default function RacePage() {
             stats={stats}
             phase={phase}
             carRef={carRef}
-            onSpeedUpdate={setSpeed}
+            onPhysicsUpdate={setPhysicsState}
             onPositionUpdate={setCarPosition}
             checkCheckpoint={checkCheckpoint}
           />
@@ -340,7 +344,10 @@ export default function RacePage() {
           phase={phase}
           countdown={countdown}
           lapTimeMs={lapTimeMs}
-          speed={speed}
+          speed={physicsState.speed}
+          boost={physicsState.boost}
+          maxBoost={physicsState.maxBoost}
+          isBoosting={physicsState.isBoosting}
           currentCheckpoint={currentCheckpoint}
           latestSplitDiff={latestSplitDiff}
           carPosition={carPosition}

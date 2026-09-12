@@ -180,8 +180,8 @@ export async function analyzeDesign(
     // brightnessVar:  0–0.5 (brightness standard deviation)
 
     const topSpeed = clamp(
-      Math.round(100 + colorVariety * 0.8 + nonWhiteRatio * 25),
-      100, 140
+      Math.round(130 + colorVariety * 1.5 + nonWhiteRatio * 40),
+      130, 200
     );
 
     const acceleration = clamp(
@@ -196,17 +196,17 @@ export async function analyzeDesign(
 
     const designScore = clamp(
       parseFloat((
-        colorVariety * 0.18 +
-        edgeDensity * 25 +
-        nonWhiteRatio * 5 +
-        brightnessVar * 8
+        colorVariety * 0.12 +
+        edgeDensity * 15 +
+        nonWhiteRatio * 3 +
+        brightnessVar * 5
       ).toFixed(1)),
       0, 10
     );
 
     const overallRating = clamp(
       parseFloat((
-        (topSpeed / 140 * 10 * 0.3) +
+        (topSpeed / 200 * 10 * 0.3) +
         (acceleration * 0.25) +
         (handling * 0.25) +
         (designScore * 0.2)
@@ -261,7 +261,7 @@ export async function analyzeAllFaces(
   const avgDesign = parseFloat((sumDesign / n).toFixed(1));
 
   const overallRating = parseFloat((
-    (avgSpeed / 140 * 10 * 0.3) +
+    (avgSpeed / 200 * 10 * 0.3) +
     (avgAccel * 0.25) +
     (avgHandling * 0.25) +
     (avgDesign * 0.2)

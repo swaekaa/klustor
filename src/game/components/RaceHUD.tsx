@@ -12,6 +12,52 @@ interface RaceHUDProps {
   currentCheckpoint: number;
   latestSplitDiff?: number | null;
   carPosition?: THREE.Vector3;
+  boost?: number;
+  maxBoost?: number;
+  isBoosting?: boolean;
+}
+
+function BoostGauge({ boost = 1, maxBoost = 1, isBoosting = false }: { boost?: number, maxBoost?: number, isBoosting?: boolean }) {
+  // Boost is scaled relative to maxBoost capacity.
+  // We'll show the actual fill compared to the total bar size (which represents 1.0 = perfect score).
+  const pct = Math.min(100, Math.max(0, boost * 100));
+  const maxPct = Math.min(100, Math.max(0, maxBoost * 100));
+  
+  const isEmpty = boost < 0.05;
+
+  return (
+    <div style={{ width: '100%', marginTop: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+        <div className="font-display" style={{ fontSize: '1rem', fontWeight: 'bold', color: isBoosting ? 'var(--klustor-pink)' : 'var(--text-primary)', letterSpacing: '0.1em', transition: 'color 0.1s' }}>
+          BOOST
+        </div>
+        <div className="font-mono" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+          {isEmpty ? 'EMPTY' : `${Math.round(pct)}%`}
+        </div>
+      </div>
+      
+      {/* Background track (full 100% width) */}
+      <div style={{ 
+        width: '100%', height: '16px', background: 'rgba(0,0,0,0.1)', 
+        borderRadius: '8px', border: '1px solid var(--border-light)',
+        position: 'relative', overflow: 'hidden'
+      }}>
+        {/* Max capacity limit indicator (shows how much you CAN fill based on design score) */}
+        <div style={{
+          position: 'absolute', top: 0, bottom: 0, left: 0, width: `${maxPct}%`,
+          background: 'rgba(255,255,255,0.2)', borderRight: '2px solid rgba(0,0,0,0.2)'
+        }} />
+
+        {/* Current boost level */}
+        <div style={{
+          position: 'absolute', top: 0, bottom: 0, left: 0, width: `${pct}%`,
+          background: isBoosting ? 'var(--klustor-pink)' : 'var(--klustor-cyan)',
+          transition: 'width 0.1s linear, background 0.1s',
+          boxShadow: isBoosting ? '0 0 10px var(--klustor-pink)' : 'none'
+        }} />
+      </div>
+    </div>
+  );
 }
 
 function Minimap({ currentCheckpoint, carPosition }: { currentCheckpoint: number; carPosition?: THREE.Vector3 }) {
@@ -148,7 +194,50 @@ function AnalogSpeedometer({ speedKmh }: { speedKmh: number }) {
   );
 }
 
-export default function RaceHUD({ phase, countdown, lapTimeMs, speed, currentCheckpoint, latestSplitDiff, carPosition }: RaceHUDProps) {
+function ControlsLegend() {
+  return (
+    <div style={{ 
+      position: 'absolute', top: '2rem', right: '2rem', 
+      background: 'var(--bg-secondary)', backdropFilter: 'blur(8px)',
+      padding: '1.5rem', borderRadius: '24px', 
+      border: '2px solid var(--border-light)',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.05)',
+      display: 'flex', flexDirection: 'column', gap: '0.75rem',
+      minWidth: '200px'
+    }}>
+      <div className="font-display" style={{ fontSize: '1rem', fontWeight: 'bold', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>
+        CONTROLS
+      </div>
+      
+      {[
+        { key: 'W / ↑', action: 'ACCELERATE' },
+        { key: 'S / ↓', action: 'BRAKE / REVERSE' },
+        { key: 'A D / ← →', action: 'STEER' },
+        { key: 'SHIFT', action: 'NOS BOOST', color: 'var(--klustor-pink)' },
+        { key: 'R', action: 'RESET TO TRACK' },
+        { key: 'ESC', action: 'PAUSE' }
+      ].map(ctrl => (
+        <div key={ctrl.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="font-mono" style={{ 
+            background: 'var(--bg-primary)', padding: '0.25rem 0.5rem', 
+            borderRadius: '4px', border: '1px solid var(--border-light)',
+            fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-primary)'
+          }}>
+            {ctrl.key}
+          </div>
+          <div className="font-display" style={{ fontSize: '0.85rem', fontWeight: 'bold', color: ctrl.color || 'var(--text-primary)' }}>
+            {ctrl.action}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function RaceHUD({ 
+  phase, countdown, lapTimeMs, speed, currentCheckpoint, latestSplitDiff, carPosition,
+  boost, maxBoost, isBoosting
+}: RaceHUDProps) {
   const speedKmh = Math.round(Math.abs(speed) * 3.6);
   const trackData = useMemo(() => getTrackData(), []);
 
@@ -190,7 +279,21 @@ export default function RaceHUD({ phase, countdown, lapTimeMs, speed, currentChe
           </div>
         </div>
         
-        <AnalogSpeedometer speedKmh={speedKmh} />
+        <div style={{
+          background: 'var(--bg-secondary)', 
+          backdropFilter: 'blur(8px)',
+          padding: '1rem 2rem', 
+          borderRadius: '24px', 
+          border: '2px solid var(--border-light)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.05)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          width: '280px'
+        }}>
+          <AnalogSpeedometer speedKmh={speedKmh} />
+          <BoostGauge boost={boost} maxBoost={maxBoost} isBoosting={isBoosting} />
+        </div>
 
         {/* Checkpoint Panel */}
         <div style={{ 
@@ -226,6 +329,8 @@ export default function RaceHUD({ phase, countdown, lapTimeMs, speed, currentChe
           )}
         </div>
       </div>
+
+      <ControlsLegend />
 
       <Minimap currentCheckpoint={currentCheckpoint} carPosition={carPosition} />
 

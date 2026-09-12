@@ -32,6 +32,11 @@ export const useGameStore = create<GameState>()(
       bestLivery: null,
       raceRecords: [],
 
+      // ── Reset all livery designs ──────────────────────────────
+      resetLivery: () => {
+        set({ currentLivery: null });
+      },
+
       // ── Save a new livery face from Unlayer ─────────────────
       saveLiveryFace: (dataUrl: string, view: TemplateView, newStats: CarStats, liveryName?: string) => {
         const state = get();

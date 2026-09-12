@@ -250,17 +250,34 @@ export default function CustomizePage() {
           )}
         </div>
 
-        <button
-          onClick={() => navigate('/race')}
-          style={{
-            padding: '0.6rem 1.5rem', background: 'var(--klustor-pink)',
-            border: '2px solid rgba(30,41,51,0.15)', borderRadius: '10px',
-            fontFamily: 'Trebuchet MS,sans-serif', fontWeight: 'bold', fontSize: '0.9rem',
-            letterSpacing: '0.08em', color: 'var(--text-primary)', cursor: 'pointer',
-          }}
-        >
-          🏁 RACE NOW
-        </button>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button
+            onClick={() => {
+              useGameStore.getState().resetLivery();
+              setTextures({});
+              setStats(defaultStats());
+            }}
+            style={{
+              padding: '0.6rem 1.5rem', background: '#FF4D4D',
+              border: '2px solid rgba(30,41,51,0.15)', borderRadius: '10px',
+              fontFamily: 'Trebuchet MS,sans-serif', fontWeight: 'bold', fontSize: '0.9rem',
+              letterSpacing: '0.08em', color: '#FFFFFF', cursor: 'pointer',
+            }}
+          >
+            RESET ALL
+          </button>
+          <button
+            onClick={() => navigate('/race')}
+            style={{
+              padding: '0.6rem 1.5rem', background: 'var(--klustor-pink)',
+              border: '2px solid rgba(30,41,51,0.15)', borderRadius: '10px',
+              fontFamily: 'Trebuchet MS,sans-serif', fontWeight: 'bold', fontSize: '0.9rem',
+              letterSpacing: '0.08em', color: 'var(--text-primary)', cursor: 'pointer',
+            }}
+          >
+            🏁 RACE NOW
+          </button>
+        </div>
       </div>
 
       {/* Main split: Unlayer left, 3D preview right */}
@@ -287,14 +304,16 @@ export default function CustomizePage() {
             ))}
           </div>
 
-          <div style={{ flex: 1, position: 'relative' }}>
+          <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
             {templateUrl && (
-              <LiveryEditor
-                key={selectedView} // force remount to load correct aspect ratio/template
-                templateSrc={templateUrl}
-                onSave={handleEditorSave}
-                editorId="livery-editor-main"
-              />
+              <div style={{ width: '100%', height: '100%', transform: 'scale(1.2)', transformOrigin: 'center center' }}>
+                <LiveryEditor
+                  key={selectedView} // force remount to load correct aspect ratio/template
+                  templateSrc={templateUrl}
+                  onSave={handleEditorSave}
+                  editorId="livery-editor-main"
+                />
+              </div>
             )}
           </div>
         </div>

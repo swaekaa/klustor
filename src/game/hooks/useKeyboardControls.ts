@@ -31,6 +31,7 @@ export function useKeyboardControls(isActive: boolean) {
           'KeyW', 'KeyA', 'KeyS', 'KeyD',
           'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
           'Space', 'KeyR', 'Escape',
+          'ShiftLeft', 'ShiftRight'
         ]);
         if (gameCodes.has(e.code)) {
           e.preventDefault();
