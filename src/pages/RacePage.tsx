@@ -305,7 +305,7 @@ export default function RacePage() {
               <button 
                 className="btn-retro" 
                 onClick={() => navigate('/')}
-                style={{ width: '100%', background: 'transparent', color: 'var(--text-primary)', border: '2px solid var(--border-color)' }}
+                style={{ width: '100%', background: 'transparent', color: 'var(--text-primary)', border: '3px solid var(--text-primary)' }}
               >
                 QUIT TO GARAGE
               </button>

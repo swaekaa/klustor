@@ -36,6 +36,29 @@ const M_LAMP        = new THREE.MeshLambertMaterial({ color: '#FFF0AA', emissive
 const M_CONCRETE    = new THREE.MeshLambertMaterial({ color: '#B8BBBE' });
 const M_BOLLARD     = new THREE.MeshLambertMaterial({ color: '#2A2A2A' });
 
+// ── Performant Window Texture ──
+const BUILDING_TEX = (() => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.fillStyle = '#FFFFFF'; // White wall base (will be tinted by Lambert material color)
+    ctx.fillRect(0, 0, 128, 128);
+    // Dark windows
+    ctx.fillStyle = '#1A2A3A';
+    ctx.fillRect(24, 24, 32, 32);
+    ctx.fillRect(72, 24, 32, 32);
+    ctx.fillRect(24, 76, 32, 32);
+    ctx.fillRect(72, 76, 32, 32);
+  }
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.magFilter = THREE.NearestFilter; // Crisp edges
+  return tex;
+})();
+
 // ──────────────────────────────────────────────────────────────
 // Sub-components
 // ──────────────────────────────────────────────────────────────
@@ -129,72 +152,67 @@ function StreetLight({ px, pz, rotY = 0 }: { px: number; pz: number; rotY?: numb
 
 // ── Building system ───────────────────────────────────────────
 
-type BldgType = 'artdeco' | 'shop' | 'hotel' | 'apartment' | 'warehouse';
+type BldgType = 'artdeco' | 'shop' | 'hotel' | 'apartment' | 'warehouse' | 'garage';
 
-function BuildingBlock({
-  px, pz, rotY, w, h, d, baseColor, type = 'artdeco',
-}: {
+interface BuildingBlockProps {
   px: number; pz: number; rotY: number;
   w: number; h: number; d: number;
-  baseColor: string; type?: BldgType;
-}) {
-  // Derived colors
-  const trim  = type === 'artdeco'   ? '#FFFFFF'
-              : type === 'hotel'     ? '#FAF0E0'
-              : type === 'shop'      ? '#FFFFFF'
-              : type === 'warehouse' ? '#8B9BA8'
-              :                        '#E0DDD8';
+  baseColor: string; type: BldgType;
+}
 
-  const windowColor = '#7AB8CC';
-  const awningColors: Record<BldgType, string> = {
-    artdeco: '#8FD5D1', shop: '#E8365D', hotel: '#FAD080',
-    apartment: '#A8C99B', warehouse: '#9BA8B8',
-  };
+function BuildingBlock({ px, pz, rotY, w, h, d, baseColor, type }: BuildingBlockProps) {
+  const trim = '#FFFFFF';
+  const awningColors = { shop: '#FF6B6B', hotel: '#4ECDC4' };
+  const winRows = Math.floor(h / 5);
+  
+  // Create perfectly mapped wall materials based on width and depth to prevent stretched windows
+  const matWallFB = useMemo(() => {
+    const t = BUILDING_TEX.clone();
+    t.needsUpdate = true;
+    t.repeat.set(Math.max(1, w / 6), Math.max(1, h / 6));
+    return new THREE.MeshLambertMaterial({ color: baseColor, map: t });
+  }, [w, h, baseColor]);
 
-  const floors  = Math.floor(h / 5);
-  const winRows = Math.max(1, floors);
-  const winCols = Math.max(1, Math.floor(w / 4));
+  const matWallLR = useMemo(() => {
+    const t = BUILDING_TEX.clone();
+    t.needsUpdate = true;
+    t.repeat.set(Math.max(1, d / 6), Math.max(1, h / 6));
+    return new THREE.MeshLambertMaterial({ color: baseColor, map: t });
+  }, [d, h, baseColor]);
+
+  const matRoof = useMemo(() => new THREE.MeshLambertMaterial({ color: baseColor }), [baseColor]);
+  
+  // [right, left, top, bottom, front, back]
+  const buildingMaterials = type !== 'garage' && type !== 'warehouse' 
+    ? [matWallLR, matWallLR, matRoof, matRoof, matWallFB, matWallFB] 
+    : new THREE.MeshLambertMaterial({ color: baseColor });
 
   return (
     <group position={[px, 0, pz]} rotation={[0, rotY, 0]}>
-      {/* Main body */}
-      <mesh castShadow receiveShadow position={[0, h / 2, 0]}>
+      {/* Main body with textured windows on 4 sides */}
+      <mesh castShadow receiveShadow position={[0, h / 2, 0]} material={buildingMaterials}>
         <boxGeometry args={[w, h, d]} />
-        <meshLambertMaterial color={baseColor} />
       </mesh>
 
       {/* Roof trim (Art Deco stepped look) */}
-      <mesh castShadow receiveShadow position={[0, h + 0.2, 0]}>
-        <boxGeometry args={[w + 0.4, 0.4, d + 0.4]} />
-        <meshLambertMaterial color={trim} />
-      </mesh>
-      {type === 'artdeco' && h > 15 && (
-        <mesh castShadow receiveShadow position={[0, h + 1.0, 0]}>
-          <boxGeometry args={[w * 0.6, 0.6, d * 0.6]} />
-          <meshLambertMaterial color={trim} />
-        </mesh>
-      )}
-
-      {/* Windows — simple planes on front face */}
-      {Array.from({ length: winRows }, (_, row) =>
-        Array.from({ length: winCols }, (_, col) => {
-          const wx = -w / 2 + (col + 0.5) * (w / winCols);
-          const wy = 3 + row * 5;
-          if (wy > h - 2) return null;
-          return (
-            <mesh castShadow receiveShadow key={`w-${row}-${col}`} position={[wx, wy, d / 2 + 0.05]}>
-              <boxGeometry args={[w / winCols * 0.55, 2.2, 0.08]} />
-              <meshLambertMaterial color={windowColor} transparent opacity={0.6} />
-            </mesh>
-          );
-        })
+      {type === 'artdeco' && (
+        <>
+          <mesh castShadow receiveShadow position={[0, h + 0.2, 0]}>
+            <boxGeometry args={[w + 0.4, 0.4, d + 0.4]} />
+            <meshLambertMaterial color={trim} />
+          </mesh>
+          <mesh castShadow receiveShadow position={[0, h + 1.0, 0]}>
+            <boxGeometry args={[w * 0.6, 0.6, d * 0.6]} />
+            <meshLambertMaterial color={trim} />
+          </mesh>
+        </>
       )}
 
       {/* Awning (shop/hotel only) */}
       {(type === 'shop' || type === 'hotel') && (
         <mesh castShadow receiveShadow position={[0, 3.2, d / 2 + 0.9]} rotation={[0.38, 0, 0]}>
           <boxGeometry args={[w * 0.8, 0.12, 1.8]} />
-          <meshLambertMaterial color={awningColors[type]} />
+          <meshLambertMaterial color={awningColors[type as 'shop'|'hotel']} />
         </mesh>
       )}
 
@@ -446,8 +464,8 @@ export default function ViceCoastEnvironment() {
     const s  = at(b.frac);
     const pt = edgePt(b.frac, b.side, b.clearance);
     pt.y     = 0;
-    // Buildings face the road (angle derived from track tangent)
-    const rotY = Math.atan2(s.tangent.x, s.tangent.z) + (b.side === -1 ? 0 : Math.PI);
+    // Buildings face the road (rotate tangent by 90 degrees based on side)
+    const rotY = Math.atan2(s.tangent.x, s.tangent.z) + (b.side === -1 ? -Math.PI/2 : Math.PI/2);
     return { ...b, px: pt.x, pz: pt.z, rotY };
   }), [td]);
 
