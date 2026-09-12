@@ -10,6 +10,7 @@ interface RaceHUDProps {
   lapTimeMs: number;
   speed: number;
   currentCheckpoint: number;
+  latestSplitDiff?: number | null;
   carPosition?: THREE.Vector3;
 }
 
@@ -147,7 +148,7 @@ function AnalogSpeedometer({ speedKmh }: { speedKmh: number }) {
   );
 }
 
-export default function RaceHUD({ phase, countdown, lapTimeMs, speed, currentCheckpoint, carPosition }: RaceHUDProps) {
+export default function RaceHUD({ phase, countdown, lapTimeMs, speed, currentCheckpoint, latestSplitDiff, carPosition }: RaceHUDProps) {
   const speedKmh = Math.round(Math.abs(speed) * 3.6);
   const trackData = useMemo(() => getTrackData(), []);
 
@@ -201,7 +202,8 @@ export default function RaceHUD({ phase, countdown, lapTimeMs, speed, currentChe
           boxShadow: '0 8px 32px rgba(0,0,0,0.05)',
           display: 'inline-flex',
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          gap: '1.5rem'
         }}>
           <div className="font-display" style={{ 
             fontSize: '1.1rem', 
@@ -211,6 +213,17 @@ export default function RaceHUD({ phase, countdown, lapTimeMs, speed, currentChe
           }}>
             CHECKPOINT <span style={{ color: 'var(--klustor-pink)' }}>{Math.min(currentCheckpoint, trackData.totalCheckpoints)}</span> / {trackData.totalCheckpoints}
           </div>
+
+          {/* Split Diff */}
+          {latestSplitDiff !== undefined && latestSplitDiff !== null && (
+            <div className="font-mono" style={{ 
+              fontSize: '1.2rem', 
+              fontWeight: 'bold', 
+              color: latestSplitDiff < 0 ? 'var(--klustor-green)' : '#FF4444',
+            }}>
+              {latestSplitDiff > 0 ? '+' : ''}{(latestSplitDiff / 1000).toFixed(2)}s
+            </div>
+          )}
         </div>
       </div>
 

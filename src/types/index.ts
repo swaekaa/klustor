@@ -41,6 +41,7 @@ export interface PlayerState {
   rep: number;
   racesWon: number;
   bestTime: number | null;  // ms
+  bestSplits?: number[];    // ms elapsed at each checkpoint during the best lap
   driverName: string;
 }
 
@@ -53,6 +54,6 @@ export interface GameState {
 
   // Actions
   saveLiveryFace: (dataUrl: string, view: TemplateView, newStats: CarStats, liveryName?: string) => void;
-  recordRaceResult: (time: number, topSpeed: number) => void;
+  recordRaceResult: (time: number, topSpeed: number, splits: number[]) => void;
   resetGame: () => void;
 }

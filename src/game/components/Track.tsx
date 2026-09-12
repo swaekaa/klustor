@@ -460,6 +460,19 @@ export default function Track() {
               <boxGeometry args={[ROAD_WIDTH + 1.2, 0.3, 0.3]} />
               <meshLambertMaterial color={col} />
             </mesh>
+
+            {/* Glowing Glare (Drive-through) */}
+            <mesh position={[cp.position.x, GATE_H / 2, cp.position.z]} rotation={[0, yaw, 0]}>
+              <boxGeometry args={[ROAD_WIDTH + 1.0, GATE_H, 0.5]} />
+              <meshLambertMaterial 
+                color="#8FD5D1" 
+                emissive="#8FD5D1" 
+                emissiveIntensity={0.5} 
+                transparent 
+                opacity={0.25} 
+                depthWrite={false} 
+              />
+            </mesh>
           </group>
         );
       })}

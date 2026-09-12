@@ -10,17 +10,19 @@ import { getTrackData } from '../data/viceCoastCircuit';
 
 export type RacePhase = 'prerace' | 'countdown' | 'racing' | 'paused' | 'finished';
 
-export function useRaceState() {
+export function useRaceState(bestSplits: number[] = []) {
   const [phase, setPhase] = useState<RacePhase>('prerace');
   const [countdown, setCountdown] = useState(3);
   const [lapTimeMs, setLapTimeMs] = useState(0);
   const [currentCheckpoint, setCurrentCheckpoint] = useState(0);
   const [lapComplete, setLapComplete] = useState(false);
+  const [latestSplitDiff, setLatestSplitDiff] = useState<number | null>(null);
 
   // Refs for mutable game state (avoids stale closures in callbacks)
   const phaseRef = useRef<RacePhase>('prerace');
   const currentCheckpointRef = useRef(0);
   const lapCompletedRef = useRef(false);
+  const splitsRef = useRef<number[]>([]);
 
   const startTimeRef = useRef<number | null>(null);
   const pauseStartRef = useRef<number | null>(null);
@@ -101,6 +103,8 @@ export function useRaceState() {
     setCurrentCheckpoint(0);
     lapCompletedRef.current = false;
     setLapComplete(false);
+    splitsRef.current = [];
+    setLatestSplitDiff(null);
     startTimeRef.current = null;
     pauseStartRef.current = null;
     totalPausedRef.current = 0;
@@ -141,6 +145,35 @@ export function useRaceState() {
       
       // Give a little leeway (+ 2 meters) to prevent missing checkpoints due to physics stepping
       if (distFromCenter <= (cpWidth / 2) + 2) {
+        
+        // Play Chime
+        try {
+          const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.1);
+          gain.gain.setValueAtTime(0.5, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.5);
+        } catch(e) {}
+
+        // Record split
+        const currentSplitTime = startTimeRef.current ? (Date.now() - startTimeRef.current - totalPausedRef.current) : 0;
+        splitsRef.current.push(currentSplitTime);
+        
+        // Compute Diff
+        if (bestSplits && bestSplits.length > nextIdx) {
+          const diff = currentSplitTime - bestSplits[nextIdx];
+          setLatestSplitDiff(diff);
+        } else {
+          setLatestSplitDiff(null);
+        }
+
         if (nextIdx < totalCheckpoints - 1) {
           // Normal checkpoint cleared
           currentCheckpointRef.current = nextIdx + 1;
@@ -153,7 +186,7 @@ export function useRaceState() {
         }
       }
     }
-  }, [setPhaseSync]);
+  }, [setPhaseSync, bestSplits]);
 
   return {
     phase,
@@ -161,6 +194,8 @@ export function useRaceState() {
     lapTimeMs,
     currentCheckpoint,
     lapComplete,
+    lapSplits: splitsRef.current,
+    latestSplitDiff,
     startCountdown,
     pauseRace,
     resumeRace,

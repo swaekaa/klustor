@@ -36,21 +36,56 @@ class RaceErrorBoundary extends Component<{ children: ReactNode; onError: () => 
 interface RaceSceneProps {
   textures?: Partial<Record<TemplateView, string>>;
   stats?: CarStats;
-  isRacing: boolean;
+  phase: RacePhase;
   carRef: RefObject<THREE.Group>;
   onSpeedUpdate: (s: number) => void;
   onPositionUpdate: (p: THREE.Vector3) => void;
   checkCheckpoint: (pos: THREE.Vector3) => void;
 }
 
-function RaceScene({ textures, stats, isRacing, carRef, onSpeedUpdate, onPositionUpdate, checkCheckpoint }: RaceSceneProps) {
+function FollowSun({ carRef }: { carRef: RefObject<THREE.Group> }) {
+  const lightRef = useRef<THREE.DirectionalLight>(null);
+  
+  useFrame(() => {
+    if (carRef.current && lightRef.current) {
+      const carPos = carRef.current.position;
+      // Position sun relative to the car to maintain the lighting angle
+      lightRef.current.position.set(carPos.x + 100, 120, carPos.z - 60);
+      // Ensure the shadow camera stays centered precisely on the player
+      lightRef.current.target.position.copy(carPos);
+      lightRef.current.target.updateMatrixWorld();
+    }
+  });
+
+  return (
+    <directionalLight 
+      ref={lightRef}
+      intensity={1.6} 
+      color="#FFE8B8" 
+      castShadow 
+      shadow-mapSize={[2048, 2048]}
+      shadow-camera-left={-150}
+      shadow-camera-right={150}
+      shadow-camera-top={150}
+      shadow-camera-bottom={-150}
+      shadow-camera-near={0.1}
+      shadow-camera-far={500}
+      shadow-bias={-0.002}
+    />
+  );
+}
+
+function RaceScene({ textures, stats, phase, carRef, onSpeedUpdate, onPositionUpdate, checkCheckpoint }: RaceSceneProps) {
+  const isRacing = phase === 'racing';
   const { speedRef, steeringRef, resetToStart } = useCarPhysics(carRef, isRacing, stats, (state) => {
     onSpeedUpdate(state.speed);
   });
 
   useEffect(() => {
-    resetToStart();
-  }, [resetToStart]);
+    if (phase === 'countdown' || phase === 'prerace') {
+      resetToStart();
+    }
+  }, [phase, resetToStart]);
 
   useFrame(() => {
     if (carRef.current) {
@@ -58,7 +93,6 @@ function RaceScene({ textures, stats, isRacing, carRef, onSpeedUpdate, onPositio
       checkCheckpoint(carRef.current.position);
     }
   });
-
 
   // Player start position derived from authoritative track data
   const { startTransform } = getTrackData();
@@ -68,21 +102,8 @@ function RaceScene({ textures, stats, isRacing, carRef, onSpeedUpdate, onPositio
     <>
       {/* Warm golden-hour ambient */}
       <ambientLight intensity={0.75} color="#FFF0D8" />
-      {/* Main sun — low angle from west (side-lighting for depth) */}
-      <directionalLight 
-        position={[100, 120, -60]} 
-        intensity={1.6} 
-        color="#FFE8B8" 
-        castShadow 
-        shadow-mapSize={[2048, 2048]}
-        shadow-camera-left={-250}
-        shadow-camera-right={250}
-        shadow-camera-top={250}
-        shadow-camera-bottom={-250}
-        shadow-camera-near={0.1}
-        shadow-camera-far={500}
-        shadow-bias={-0.002}
-      />
+      {/* Dynamic Main Sun — follows the car to ensure shadows map the entire world */}
+      <FollowSun carRef={carRef} />
       {/* Fill from opposite side — cooler */}
       <directionalLight position={[-60, 30, 40]} intensity={0.4} color="#B8D8FF" castShadow={false} />
       {/* Hemisphere sky/ground */}
@@ -109,9 +130,9 @@ function RaceScene({ textures, stats, isRacing, carRef, onSpeedUpdate, onPositio
 
 // ── Results Screen ────────────────────────────────────────────
 function ResultsScreen({
-  lapTimeMs, topSpeed, designScore, onRaceAgain, onRedesign, isPersonalBest,
+  lapTimeMs, topSpeed, designScore, lapSplits, onRaceAgain, onRedesign, isPersonalBest,
 }: {
-  lapTimeMs: number; topSpeed: number; designScore: number;
+  lapTimeMs: number; topSpeed: number; designScore: number; lapSplits: number[];
   onRaceAgain: () => void; onRedesign: () => void; isPersonalBest: boolean;
 }) {
   const { recordRaceResult } = useGameStore();
@@ -120,9 +141,9 @@ function ResultsScreen({
   useEffect(() => {
     if (!claimed.current) {
       claimed.current = true;
-      recordRaceResult(lapTimeMs, topSpeed);
+      recordRaceResult(lapTimeMs, topSpeed, lapSplits);
     }
-  }, [lapTimeMs, topSpeed, recordRaceResult]);
+  }, [lapTimeMs, topSpeed, lapSplits, recordRaceResult]);
 
   return (
     <motion.div
@@ -193,9 +214,9 @@ export default function RacePage() {
   const [raceStarted, setRaceStarted] = useState(false);
 
   const {
-    phase, countdown, lapTimeMs, currentCheckpoint,
+    phase, countdown, lapTimeMs, currentCheckpoint, lapSplits, latestSplitDiff,
     startCountdown, restartRace, checkCheckpoint, pauseRace, resumeRace
-  } = useRaceState();
+  } = useRaceState(player.bestSplits);
 
   const isRacing = phase === 'racing';
   const prevBestTime = player.bestTime;
@@ -266,7 +287,7 @@ export default function RacePage() {
           <RaceScene
             textures={textures}
             stats={stats}
-            isRacing={isRacing}
+            phase={phase}
             carRef={carRef}
             onSpeedUpdate={setSpeed}
             onPositionUpdate={setCarPosition}
@@ -321,6 +342,7 @@ export default function RacePage() {
           lapTimeMs={lapTimeMs}
           speed={speed}
           currentCheckpoint={currentCheckpoint}
+          latestSplitDiff={latestSplitDiff}
           carPosition={carPosition}
         />
       )}
@@ -331,9 +353,10 @@ export default function RacePage() {
           lapTimeMs={lapTimeMs}
           topSpeed={maxSpeedSeen}
           designScore={stats?.designScore ?? 0}
+          lapSplits={lapSplits}
+          isPersonalBest={prevBestTime === null || lapTimeMs < prevBestTime}
           onRaceAgain={handleRestart}
-          onRedesign={handleRedesign}
-          isPersonalBest={isNewBest}
+          onRedesign={() => navigate('/case')}
         />
       )}
     </div>

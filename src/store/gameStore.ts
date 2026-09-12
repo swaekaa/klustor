@@ -6,11 +6,12 @@ import type { GameState, LiveryData, CarStats, TemplateView } from '../types';
 // KLUSTOR // VICE COAST RACING — Zustand Game Store
 // ============================================================
 
-const DEFAULT_PLAYER = {
+const DEFAULT_PLAYER: Partial<GameState['player']> & { cash: number, rep: number, racesWon: number, bestTime: number | null, driverName: string } = {
   cash: 1000,
   rep: 0,
   racesWon: 0,
   bestTime: null,
+  bestSplits: [],
   driverName: 'KLUSTOR_07',
 };
 
@@ -60,7 +61,7 @@ export const useGameStore = create<GameState>()(
       },
 
       // ── Record a completed race ───────────────────────────
-      recordRaceResult: (time: number, topSpeed: number) => {
+      recordRaceResult: (time: number, topSpeed: number, splits: number[]) => {
         const state = get();
         const livery = state.currentLivery;
 
@@ -78,7 +79,10 @@ export const useGameStore = create<GameState>()(
         };
 
         const isNewBest =
-          state.player.bestTime === null || time < state.player.bestTime;
+          state.player.bestTime === null || 
+          time < state.player.bestTime ||
+          !state.player.bestSplits ||
+          state.player.bestSplits.length === 0;
 
         set((s) => ({
           raceRecords: [...s.raceRecords, record],
@@ -89,6 +93,7 @@ export const useGameStore = create<GameState>()(
             rep: s.player.rep + 10 + (isNewBest ? 5 : 0),
             racesWon: s.player.racesWon + 1,
             bestTime: isNewBest ? time : s.player.bestTime,
+            bestSplits: isNewBest ? splits : s.player.bestSplits,
           },
         }));
       },
