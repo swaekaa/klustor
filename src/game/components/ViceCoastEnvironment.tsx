@@ -130,6 +130,53 @@ function FlowerBush({ px, pz, scale = 1 }: { px: number; pz: number; scale?: num
   );
 }
 
+// Spectator component (Crowds)
+const SPECTATOR_COLORS = ['#FF5E5E', '#5EA1FF', '#FFB75E', '#5EFF99', '#D95EFF', '#FFFFFF', '#333333'];
+
+function Spectator({ px, pz, rotY, isCheering, heightScale = 1 }: { px: number; pz: number; rotY: number; isCheering: boolean; heightScale?: number }) {
+  const color = useMemo(() => SPECTATOR_COLORS[Math.floor(Math.random() * SPECTATOR_COLORS.length)], []);
+  const bodyH = 1.4 * heightScale;
+  const headS = 0.35 * heightScale;
+  return (
+    <group position={[px, 0, pz]} rotation={[0, rotY, 0]}>
+      {/* Body */}
+      <mesh position={[0, bodyH / 2, 0]} castShadow>
+        <boxGeometry args={[0.5, bodyH, 0.3]} />
+        <meshLambertMaterial color={color} />
+      </mesh>
+      {/* Head */}
+      <mesh position={[0, bodyH + headS / 2, 0]} castShadow>
+        <boxGeometry args={[headS, headS, headS]} />
+        <meshLambertMaterial color="#FFD1B3" />
+      </mesh>
+      {/* Arms */}
+      {isCheering ? (
+        <>
+          <mesh position={[-0.35, bodyH - 0.2, 0]} rotation={[0, 0, -2.5]} castShadow>
+            <boxGeometry args={[0.15, 0.7, 0.15]} />
+            <meshLambertMaterial color={color} />
+          </mesh>
+          <mesh position={[0.35, bodyH - 0.2, 0]} rotation={[0, 0, 2.5]} castShadow>
+            <boxGeometry args={[0.15, 0.7, 0.15]} />
+            <meshLambertMaterial color={color} />
+          </mesh>
+        </>
+      ) : (
+        <>
+          <mesh position={[-0.3, bodyH / 2, 0]} castShadow>
+            <boxGeometry args={[0.15, 0.7, 0.15]} />
+            <meshLambertMaterial color={color} />
+          </mesh>
+          <mesh position={[0.3, bodyH / 2, 0]} castShadow>
+            <boxGeometry args={[0.15, 0.7, 0.15]} />
+            <meshLambertMaterial color={color} />
+          </mesh>
+        </>
+      )}
+    </group>
+  );
+}
+
 // Street light — clean modern style
 function StreetLight({ px, pz, rotY = 0 }: { px: number; pz: number; rotY?: number }) {
   return (
@@ -624,6 +671,60 @@ export default function ViceCoastEnvironment() {
     { px: 148, pz: 90,  w: 20, h: 20, d: 16, color: '#C0C8D5' },
   ];
 
+  // ── Spectators (Crowds) ───────────────────────────────────
+  const spectators = useMemo(() => {
+    const list: { px: number; pz: number; rotY: number; isCheering: boolean; heightScale: number }[] = [];
+    
+    // 1. Rally Corners (Cheering)
+    // Evaluate every 3rd sample to find sharp corners
+    for (let i = 0; i < N; i += 3) { 
+      const c = samples[i], nx = samples[(i + 1) % N];
+      const dot = c.tangent.dot(nx.tangent);
+      if (dot < 0.9995) { // Moderately sharp corner
+        // Place a cluster of cheering spectators on the outside
+        const crossY = c.tangent.x * nx.tangent.z - c.tangent.z * nx.tangent.x;
+        const turnSign = crossY > 0 ? -1 : 1; 
+        
+        for (let k = 0; k < 3; k++) {
+          // Place outside the guardrail
+          const offset = turnSign * ((ROAD_WIDTH / 2) + 3.0 + (k * 0.8));
+          const pos = c.position.clone().addScaledVector(c.normal, offset);
+          // Add some forward/backward jitter
+          pos.addScaledVector(c.tangent, ((i+k) % 5 - 2.5) * 1.5);
+          
+          const rotY = Math.atan2(-c.normal.x * turnSign, -c.normal.z * turnSign) + (((i+k)%3 - 1) * 0.5);
+          
+          list.push({
+            px: pos.x, pz: pos.z, rotY,
+            isCheering: true,
+            heightScale: 0.9 + ((i*k) % 3) * 0.1
+          });
+        }
+      }
+    }
+
+    // 2. Beach Chilling
+    // Beach zone is approx 0.55 to 0.72
+    const startI = Math.floor(N * 0.55);
+    const endI = Math.floor(N * 0.72);
+    for (let i = startI; i < endI; i += 6) {
+      const c = samples[i];
+      for (let k = 0; k < 2; k++) {
+        const offset = 12 + ((i*k) % 30); // Spread across the beach
+        const pos = c.position.clone().addScaledVector(c.normal, offset);
+        pos.addScaledVector(c.tangent, ((i+k)%7 - 3.5) * 2);
+        
+        const rotY = ((i+k) % 10) * (Math.PI / 5);
+        list.push({
+          px: pos.x, pz: pos.z, rotY,
+          isCheering: (i % 5 === 0), // Occasional cheerer
+          heightScale: 0.8 + ((i+k) % 4) * 0.1
+        });
+      }
+    }
+    return list;
+  }, [td, N, samples]);
+
   return (
     <group>
       {/* ── Ocean + Beach ── */}
@@ -684,6 +785,11 @@ export default function ViceCoastEnvironment() {
           <FlowerBush key={`flower-${i}`} px={n.px} pz={n.pz} scale={n.scale} /> :
           <Shrub key={`shrub-${i}`} px={n.px} pz={n.pz} scale={n.scale} />
       )}
+
+      {/* ── Spectator Crowds ── */}
+      {spectators.map((s, i) => (
+        <Spectator key={`spec-${i}`} px={s.px} pz={s.pz} rotY={s.rotY} isCheering={s.isCheering} heightScale={s.heightScale} />
+      ))}
 
 
 

@@ -57,6 +57,66 @@ function roadGeo(samples: Samples): THREE.BufferGeometry {
   g.computeVertexNormals();
   return g;
 }
+function centerLineGeo(samples: Samples): THREE.BufferGeometry {
+  const v: number[] = [], idx: number[] = [];
+  const n = samples.length;
+  let idxOffset = 0;
+  for (let i = 0; i < n; i++) {
+    if (i % 3 === 0) continue; // Gap for the dash
+
+    const c = samples[i], nx = samples[(i + 1) % n];
+    const left = c.position.clone().addScaledVector(c.normal, -0.15);
+    const right = c.position.clone().addScaledVector(c.normal, 0.15);
+    const nLeft = nx.position.clone().addScaledVector(nx.normal, -0.15);
+    const nRight = nx.position.clone().addScaledVector(nx.normal, 0.15);
+
+    const b = idxOffset * 4;
+    v.push(left.x, 0.02, left.z, right.x, 0.02, right.z, nLeft.x, 0.02, nLeft.z, nRight.x, 0.02, nRight.z);
+    idx.push(b, b+1, b+2, b+1, b+3, b+2);
+    idxOffset++;
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  return g;
+}
+
+function skidMarksGeo(samples: Samples): THREE.BufferGeometry {
+  const v: number[] = [], idx: number[] = [];
+  const n = samples.length;
+  let idxOffset = 0;
+  for (let i = 0; i < n; i++) {
+    const c = samples[i], nx = samples[(i + 1) % n];
+    const dot = c.tangent.dot(nx.tangent);
+    if (dot < 0.9992) { // Sharp corner
+       // Place skid marks slightly outside the centerline
+       const crossY = c.tangent.x * nx.tangent.z - c.tangent.z * nx.tangent.x;
+       const turnSign = crossY > 0 ? -1 : 1; // Left or right turn
+       const offset = turnSign * (ROAD_WIDTH / 4);
+       
+       const left = c.position.clone().addScaledVector(c.normal, offset - 1.8);
+       const right = c.position.clone().addScaledVector(c.normal, offset + 1.8);
+       const nLeft = nx.position.clone().addScaledVector(nx.normal, offset - 1.8);
+       const nRight = nx.position.clone().addScaledVector(nx.normal, offset + 1.8);
+
+       const b = idxOffset * 4;
+       v.push(left.x, 0.015, left.z, right.x, 0.015, right.z, nLeft.x, 0.015, nLeft.z, nRight.x, 0.015, nRight.z);
+       idx.push(b, b+1, b+2, b+1, b+3, b+2);
+       idxOffset++;
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  if (v.length > 0) {
+    g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
+    g.setIndex(idx);
+    g.computeVertexNormals();
+  } else {
+    // Fallback: dummy triangle so Three.js doesn't crash on an empty position buffer
+    g.setAttribute('position', new THREE.Float32BufferAttribute([0,0,0, 0,0,0, 0,0,0], 3));
+  }
+  return g;
+}
 
 function curbGeo(samples: Samples, side: 'left'|'right'): THREE.BufferGeometry {
   const sign = side === 'right' ? 1 : -1;
@@ -376,6 +436,9 @@ export default function Track() {
   const gBeach     = useMemo(() => beachGeo(td.samples, 18),         [td]);
   const gLake      = useMemo(() => lakeGeo(td.samples),              [td]);
 
+  const gCenterLine = useMemo(() => centerLineGeo(td.samples), [td]);
+  const gSkidMarks = useMemo(() => skidMarksGeo(td.samples), [td]);
+
   const tRoad     = useMemo(() => makeRoadTex(),     []);
   const tCurb     = useMemo(() => makeCurbTex(),     []);
   const tSidewalk = useMemo(() => makeSidewalkTex(), []);
@@ -423,14 +486,37 @@ export default function Track() {
       {/* Posts */}
       <mesh castShadow receiveShadow geometry={gPostsL}><meshLambertMaterial color="#5C6B7A" /></mesh>
 
-      {/* ── Start / Finish line ── */}
-      <mesh
-        position={[sp.position.x, 0.03, sp.position.z]}
-        rotation={[-Math.PI / 2, 0, startYaw]}
-      >
-        <planeGeometry args={[ROAD_WIDTH, 5]} />
-        <meshLambertMaterial map={tStart} />
+      {/* ── Road Decals ── */}
+      <mesh geometry={gCenterLine} receiveShadow>
+        <meshLambertMaterial color="#FFFFFF" />
       </mesh>
+      
+      <mesh geometry={gSkidMarks} receiveShadow>
+        <meshLambertMaterial color="#000000" transparent opacity={0.15} depthWrite={false} />
+      </mesh>
+
+      {/* ── Start / Finish line & Grid ── */}
+      <group position={[sp.position.x, 0, sp.position.z]} rotation={[0, startYaw, 0]}>
+        {/* Main finish line */}
+        <mesh position={[0, 0.03, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[ROAD_WIDTH, 5]} />
+          <meshLambertMaterial map={tStart} />
+        </mesh>
+        
+        {/* Starting Grid Slots (3 rows) */}
+        {[1, 2, 3].map((row) => (
+          <group key={`grid-${row}`} position={[0, 0.03, row * -8]}>
+            <mesh position={[-ROAD_WIDTH / 4, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+              <planeGeometry args={[2.5, 4]} />
+              <meshLambertMaterial color="#FFFFFF" transparent opacity={0.3} depthWrite={false} />
+            </mesh>
+            <mesh position={[ROAD_WIDTH / 4, 0, -4]} rotation={[-Math.PI / 2, 0, 0]}>
+              <planeGeometry args={[2.5, 4]} />
+              <meshLambertMaterial color="#FFFFFF" transparent opacity={0.3} depthWrite={false} />
+            </mesh>
+          </group>
+        ))}
+      </group>
 
       {/* ── Checkpoint gates — LOW PROFILE so they don't block camera ── */}
       {td.checkpoints.map((cp, i) => {
