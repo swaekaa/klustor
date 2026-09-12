@@ -15,6 +15,25 @@ const DEFAULT_PLAYER: Partial<GameState['player']> & { cash: number, rep: number
   driverName: 'KLUSTOR_07',
 };
 
+export const defaultStats = (): CarStats => ({
+  topSpeed: 100,
+  acceleration: 3,
+  handling: 3,
+  designScore: 0,
+  overallRating: 3,
+});
+
+export function sanitizeStats(stats: any): CarStats {
+  if (!stats) return defaultStats();
+  return {
+    topSpeed: typeof stats.topSpeed === 'number' && !Number.isNaN(stats.topSpeed) ? stats.topSpeed : 100,
+    acceleration: typeof stats.acceleration === 'number' && !Number.isNaN(stats.acceleration) ? stats.acceleration : 3,
+    handling: typeof stats.handling === 'number' && !Number.isNaN(stats.handling) ? stats.handling : 3,
+    designScore: typeof stats.designScore === 'number' && !Number.isNaN(stats.designScore) ? stats.designScore : 0,
+    overallRating: typeof stats.overallRating === 'number' && !Number.isNaN(stats.overallRating) ? stats.overallRating : 3,
+  };
+}
+
 function computeOverallRating(stats: CarStats): number {
   const ts = Number.isNaN(stats.topSpeed) || !stats.topSpeed ? 100 : stats.topSpeed;
   const ac = Number.isNaN(stats.acceleration) || !stats.acceleration ? 3 : stats.acceleration;
@@ -136,7 +155,27 @@ export const useGameStore = create<GameState>()(
       storage: {
         getItem: (name) => {
           const str = localStorage.getItem(name);
-          return str ? JSON.parse(str) : null;
+          if (!str) return null;
+          try {
+            const data = JSON.parse(str);
+            if (data?.state) {
+              if (data.state.currentLivery?.stats) {
+                data.state.currentLivery.stats = sanitizeStats(data.state.currentLivery.stats);
+              }
+              if (data.state.bestLivery?.stats) {
+                data.state.bestLivery.stats = sanitizeStats(data.state.bestLivery.stats);
+              }
+              if (Array.isArray(data.state.raceRecords)) {
+                data.state.raceRecords = data.state.raceRecords.map((r: any) => ({
+                  ...r,
+                  designScore: typeof r.designScore === 'number' && !Number.isNaN(r.designScore) ? r.designScore : 0
+                }));
+              }
+            }
+            return data;
+          } catch {
+            return null;
+          }
         },
         setItem: (name, value) => {
           try {

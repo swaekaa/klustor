@@ -101,8 +101,7 @@ export default function GaragePage() {
   const navigate = useNavigate();
   const { player, currentLivery, raceRecords } = useGameStore();
   const [selectedView, setSelectedView] = useState<typeof TEMPLATE_VIEWS[number]['id']>('left');
-  const rawStats = currentLivery?.stats ?? defaultStats();
-  const stats = { ...defaultStats(), ...rawStats };
+  const stats = currentLivery?.stats ?? defaultStats();
 
   const bestTime = player.bestTime;
   const formatTime = (ms: number) => {
