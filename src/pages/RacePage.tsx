@@ -69,7 +69,20 @@ function RaceScene({ textures, stats, isRacing, carRef, onSpeedUpdate, onPositio
       {/* Warm golden-hour ambient */}
       <ambientLight intensity={0.75} color="#FFF0D8" />
       {/* Main sun — low angle from west (side-lighting for depth) */}
-      <directionalLight position={[80, 60, -40]} intensity={1.6} color="#FFE8B8" castShadow={false} />
+      <directionalLight 
+        position={[100, 120, -60]} 
+        intensity={1.6} 
+        color="#FFE8B8" 
+        castShadow 
+        shadow-mapSize={[2048, 2048]}
+        shadow-camera-left={-250}
+        shadow-camera-right={250}
+        shadow-camera-top={250}
+        shadow-camera-bottom={-250}
+        shadow-camera-near={0.1}
+        shadow-camera-far={500}
+        shadow-bias={-0.002}
+      />
       {/* Fill from opposite side — cooler */}
       <directionalLight position={[-60, 30, 40]} intensity={0.4} color="#B8D8FF" castShadow={false} />
       {/* Hemisphere sky/ground */}
@@ -248,7 +261,7 @@ export default function RacePage() {
         <Canvas
           camera={{ position: [0, 5, -9], fov: 65 }}
           gl={{ antialias: true, powerPreference: 'high-performance' }}
-          shadows={false}
+          shadows
         >
           <RaceScene
             textures={textures}

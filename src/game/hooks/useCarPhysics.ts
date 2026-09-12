@@ -31,22 +31,40 @@ export interface CarPhysicsState {
   steering: number;
 }
 
-// ── Nearest Track Point ───────────────────────────────────────
+// ── Nearest Track Point (Local Search Window) ───────────────────
 
-function findNearest(pos: THREE.Vector3) {
+function findNearest(pos: THREE.Vector3, lastIdx: number = -1) {
   const { samples } = getTrackData();
   let minDistSq = Infinity;
   let nearest   = samples[0];
   let nearestIdx = 0;
+  
+  const numSamples = samples.length;
 
-  for (let i = 0; i < samples.length; i++) {
-    const dx = pos.x - samples[i].position.x;
-    const dz = pos.z - samples[i].position.z;
-    const d2 = dx * dx + dz * dz;
-    if (d2 < minDistSq) {
-      minDistSq = d2;
-      nearest   = samples[i];
-      nearestIdx = i;
+  if (lastIdx >= 0) {
+    // Only search a local window of +/- 20 samples to prevent teleporting across hairpins (corner cutting exploit)
+    for (let offset = -20; offset <= 20; offset++) {
+      let i = (lastIdx + offset + numSamples) % numSamples;
+      const dx = pos.x - samples[i].position.x;
+      const dz = pos.z - samples[i].position.z;
+      const d2 = dx * dx + dz * dz;
+      if (d2 < minDistSq) {
+        minDistSq = d2;
+        nearest   = samples[i];
+        nearestIdx = i;
+      }
+    }
+  } else {
+    // Global search (initial spawn)
+    for (let i = 0; i < samples.length; i++) {
+      const dx = pos.x - samples[i].position.x;
+      const dz = pos.z - samples[i].position.z;
+      const d2 = dx * dx + dz * dz;
+      if (d2 < minDistSq) {
+        minDistSq = d2;
+        nearest   = samples[i];
+        nearestIdx = i;
+      }
     }
   }
 
@@ -62,6 +80,7 @@ export function useCarPhysics(
   onUpdate?: (state: CarPhysicsState) => void,
 ) {
   const { isAnyPressed } = useKeyboardControls(isRacing);
+  const lastNearestIdxRef = useRef<number>(-1);
 
   // Stat scaling
   const speedMult = stats ? (stats.topSpeed      - 100) / 40 * 0.8  + 1.0 : 1.0;
@@ -83,17 +102,19 @@ export function useCarPhysics(
     carRef.current.rotation.set(0, startTransform.rotation, 0);
     speedRef.current    = 0;
     steeringRef.current = 0;
+    lastNearestIdxRef.current = -1;
   }, [carRef]);
 
   // ── Reset to nearest valid track point ────────────────────
   const resetToNearestTrackPoint = useCallback(() => {
     if (!carRef.current) return;
-    const { nearest } = findNearest(carRef.current.position);
+    const { nearest, nearestIdx } = findNearest(carRef.current.position, lastNearestIdxRef.current);
     const safePos = nearest.position.clone();
     safePos.y     = 0;
     carRef.current.position.copy(safePos);
     carRef.current.rotation.set(0, Math.atan2(nearest.tangent.x, nearest.tangent.z), 0);
     speedRef.current = 0;
+    lastNearestIdxRef.current = nearestIdx;
   }, [carRef]);
 
   // ── Frame update ──────────────────────────────────────────
@@ -156,22 +177,26 @@ export function useCarPhysics(
     // ── Boundary clamping ─────────────────────────────────
     // Use the nearest sample's left/right edges and the car's
     // lateral offset along the sample normal.
-    const { nearest } = findNearest(proposed);
+    const { nearest, nearestIdx } = findNearest(proposed, lastNearestIdxRef.current);
+    lastNearestIdxRef.current = nearestIdx;
+
     const toProposed  = proposed.clone().sub(nearest.position);
     const lateralOffset = toProposed.dot(nearest.normal); // positive = right of center
+    const longitudinalOffset = toProposed.dot(nearest.tangent); // distance along the track segment
 
     const maxOffset = (ROAD_WIDTH / 2) - CAR_HALF_WIDTH;
 
     if (Math.abs(lateralOffset) > maxOffset) {
-      // Project the car back onto the legal corridor
+      // Project the car back onto the legal corridor, preserving its forward progress (longitudinal offset)
       const clampedLateral = Math.sign(lateralOffset) * maxOffset;
       const clampedPos     = nearest.position.clone()
+        .addScaledVector(nearest.tangent, longitudinalOffset)
         .addScaledVector(nearest.normal, clampedLateral);
       clampedPos.y         = 0;
       carRef.current.position.copy(clampedPos);
 
       // Reduce speed on wall hit (arcade collision response)
-      speedRef.current *= 0.75;
+      speedRef.current *= 0.85; // Less punishing speed loss
     } else {
       carRef.current.position.copy(proposed);
     }

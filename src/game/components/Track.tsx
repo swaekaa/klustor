@@ -387,41 +387,41 @@ export default function Track() {
   return (
     <group>
       {/* ── Ground base (large world plane) ── */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.06, 0]}>
+      <mesh castShadow receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.06, 0]}>
         <planeGeometry args={[4000, 4000]} />
         <meshLambertMaterial color="#A8B882" />
       </mesh>
 
       {/* ── Central Lake ── */}
-      <mesh geometry={gLake} position={[0, -0.04, 0]}>
+      <mesh castShadow receiveShadow geometry={gLake} position={[0, -0.04, 0]}>
         <meshLambertMaterial color="#1A85FF" side={THREE.DoubleSide} transparent opacity={0.9} />
       </mesh>
 
       {/* ── Road ── */}
-      <mesh geometry={gRoad}>
+      <mesh castShadow receiveShadow geometry={gRoad}>
         <meshLambertMaterial map={tRoad} />
       </mesh>
 
       {/* ── Curbs ── */}
-      <mesh geometry={gCurbL}><meshLambertMaterial map={tCurb} /></mesh>
-      <mesh geometry={gCurbR}><meshLambertMaterial map={tCurb} /></mesh>
+      <mesh castShadow receiveShadow geometry={gCurbL}><meshLambertMaterial map={tCurb} /></mesh>
+      <mesh castShadow receiveShadow geometry={gCurbR}><meshLambertMaterial map={tCurb} /></mesh>
 
       {/* ── Sidewalks (City side) ── */}
-      <mesh geometry={gSidewalkL}><meshLambertMaterial map={tSidewalk} /></mesh>
+      <mesh castShadow receiveShadow geometry={gSidewalkL}><meshLambertMaterial map={tSidewalk} /></mesh>
 
       {/* ── Beach (Lake side) ── */}
-      <mesh geometry={gBeach}>
+      <mesh castShadow receiveShadow geometry={gBeach}>
         <meshLambertMaterial color="#D4C89A" />
       </mesh>
 
 
       {/* ── Continuous Guardrails (City side) ── */}
       {/* Bases */}
-      <mesh geometry={gBaseL}><meshLambertMaterial color="#E2DDD6" /></mesh>
+      <mesh castShadow receiveShadow geometry={gBaseL}><meshLambertMaterial color="#E2DDD6" /></mesh>
       {/* Beams */}
-      <mesh geometry={gBeamL}><meshLambertMaterial color="#8FA0B0" /></mesh>
+      <mesh castShadow receiveShadow geometry={gBeamL}><meshLambertMaterial color="#8FA0B0" /></mesh>
       {/* Posts */}
-      <mesh geometry={gPostsL}><meshLambertMaterial color="#5C6B7A" /></mesh>
+      <mesh castShadow receiveShadow geometry={gPostsL}><meshLambertMaterial color="#5C6B7A" /></mesh>
 
       {/* ── Start / Finish line ── */}
       <mesh
@@ -446,17 +446,17 @@ export default function Track() {
         return (
           <group key={cp.id}>
             {/* Left pole */}
-            <mesh position={[lPole.x, GATE_H / 2, lPole.z]}>
+            <mesh castShadow receiveShadow position={[lPole.x, GATE_H / 2, lPole.z]}>
               <cylinderGeometry args={[0.2, 0.2, GATE_H, 8]} />
               <meshLambertMaterial color={col} />
             </mesh>
             {/* Right pole */}
-            <mesh position={[rPole.x, GATE_H / 2, rPole.z]}>
+            <mesh castShadow receiveShadow position={[rPole.x, GATE_H / 2, rPole.z]}>
               <cylinderGeometry args={[0.2, 0.2, GATE_H, 8]} />
               <meshLambertMaterial color={col} />
             </mesh>
             {/* Crossbar */}
-            <mesh position={[cp.position.x, GATE_H + 0.15, cp.position.z]} rotation={[0, yaw, 0]}>
+            <mesh castShadow receiveShadow position={[cp.position.x, GATE_H + 0.15, cp.position.z]} rotation={[0, yaw, 0]}>
               <boxGeometry args={[ROAD_WIDTH + 1.2, 0.3, 0.3]} />
               <meshLambertMaterial color={col} />
             </mesh>
