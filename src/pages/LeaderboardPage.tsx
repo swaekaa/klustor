@@ -19,28 +19,18 @@ export default function LeaderboardPage() {
 
   return (
     <div className="page" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem', flexShrink: 0 }}>
-        <div>
-          <div className="font-display" style={{ fontSize: '1.2rem', letterSpacing: '0.1em' }}>VICE COAST CIRCUIT</div>
-          <h1 style={{ fontSize: '3rem', lineHeight: 1 }}>LEADERBOARD</h1>
-        </div>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <button 
-            className="btn-retro" 
-            style={{ color: '#FF4444', borderColor: '#FF4444' }}
-            onClick={() => {
-              if(window.confirm('Are you sure you want to clear all race records?')) {
-                useGameStore.getState().clearLeaderboard();
-              }
-            }}
-          >
-            CLEAR RECORDS
+      {/* 1. MINIMAL HEADER & NAV */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '3rem', width: '100%', flexShrink: 0 }}>
+        <h1 className="font-display" style={{ fontSize: '2.5rem', letterSpacing: '0.15em', color: 'var(--text-primary)', marginBottom: '1.5rem' }}>
+          KLUSTOR
+        </h1>
+        
+        <div style={{ display: 'flex', gap: '1rem', background: 'var(--bg-secondary)', padding: '0.5rem', borderRadius: '999px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+          <button className="btn" onClick={() => navigate('/')} style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>
+             GARAGE
           </button>
-          <button className="btn-retro" onClick={() => navigate('/design')}>
-            DESIGN CAR
-          </button>
-          <button className="btn-retro btn-retro-primary" onClick={() => navigate('/race')}>
-            RACE NOW →
+          <button className="btn" onClick={() => navigate('/leaderboard')} style={{ background: 'var(--klustor-pink)', border: 'none', boxShadow: 'none' }}>
+             LEADERBOARD
           </button>
         </div>
       </div>
@@ -98,6 +88,20 @@ export default function LeaderboardPage() {
                 </motion.div>
               );
             })}
+            
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
+              <button 
+                className="btn" 
+                style={{ background: 'transparent', color: '#FF4444', border: '2px solid #FF4444', fontSize: '0.8rem', padding: '0.5rem 1rem' }}
+                onClick={() => {
+                  if(window.confirm('Are you sure you want to clear all race records?')) {
+                    useGameStore.getState().clearLeaderboard();
+                  }
+                }}
+              >
+                CLEAR RECORDS
+              </button>
+            </div>
           </div>
         </div>
       )}

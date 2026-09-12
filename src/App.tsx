@@ -10,10 +10,11 @@ function AppRoutes() {
 
   return (
     <Routes location={location} key={location.pathname}>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/design" element={<DesignPage />} />
+      <Route path="/" element={<DesignPage />} />
+      <Route path="/design" element={<Navigate to="/" replace />} />
       <Route path="/race" element={<RacePage />} />
       <Route path="/leaderboard" element={<LeaderboardPage />} />
+      <Route path="/garage" element={<Navigate to="/" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

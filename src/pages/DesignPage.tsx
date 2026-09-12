@@ -150,14 +150,11 @@ export default function DesignPage() {
         </h1>
         
         <div style={{ display: 'flex', gap: '1rem', background: 'var(--bg-secondary)', padding: '0.5rem', borderRadius: '999px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-          <button className="btn" onClick={() => navigate('/garage')} style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>
-             ◉ GARAGE
-          </button>
-          <button className="btn" onClick={() => navigate('/race')} style={{ background: 'var(--klustor-pink)', border: 'none', boxShadow: 'none' }}>
-             ● RACE
+          <button className="btn" onClick={() => navigate('/')} style={{ background: 'var(--klustor-pink)', border: 'none', boxShadow: 'none' }}>
+             GARAGE
           </button>
           <button className="btn" onClick={() => navigate('/leaderboard')} style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>
-             ◉ LEADERBOARD
+             LEADERBOARD
           </button>
         </div>
       </div>

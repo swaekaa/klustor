@@ -27,9 +27,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   };
 
   const tabs = [
-    { path: '/garage', label: 'GARAGE', icon: '◈', color: 'var(--klustor-cyan)' },
-    { path: '/race', label: 'RACE', icon: '●', color: 'var(--klustor-pink)' },
-    { path: '/leaderboard', label: 'LEADERBOARD', icon: '◉', color: 'var(--klustor-yellow)' },
+    { path: '/', label: 'GARAGE', icon: '◈', color: 'var(--klustor-cyan)' },
+    { path: '/leaderboard', label: 'LEADERBOARD', icon: '🏆', color: 'var(--klustor-green)' },
   ];
 
   return (
