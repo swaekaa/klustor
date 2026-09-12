@@ -29,22 +29,38 @@ export function useEngineSound(speed: number, isBoosting: boolean, phase: string
           masterGain.connect(ctx.destination);
           gainNodeRef.current = masterGain;
 
-          // Lowpass filter to muffle the harsh sawtooth
+          // Lowpass filter to muffle the harsh "bee" buzz and add "throatiness"
           const filter = ctx.createBiquadFilter();
           filter.type = 'lowpass';
-          filter.frequency.value = 1000;
+          filter.frequency.value = 400;
+          filter.Q.value = 3; // Adds a bit of resonance/growl
           filter.connect(masterGain);
           filterNodeRef.current = filter;
 
-          // V12 Simulation: Multiple detuned oscillators for rich harmonics
-          const numOscillators = 3;
-          const detuneAmounts = [0, 15, -15];
+          // V12 Simulation: Mixed waveforms for a deeper, throatier engine
+          const types: OscillatorType[] = ['sawtooth', 'sawtooth', 'square', 'triangle'];
+          const detunes = [5, -5, 0, 0];
           
-          for (let i = 0; i < numOscillators; i++) {
+          for (let i = 0; i < 4; i++) {
             const osc = ctx.createOscillator();
-            osc.type = 'sawtooth';
-            osc.detune.value = detuneAmounts[i];
-            osc.connect(filter);
+            osc.type = types[i];
+            osc.detune.value = detunes[i];
+            
+            // The triangle wave acts as a sub-bass layer
+            if (i === 3) {
+              const subGain = ctx.createGain();
+              subGain.gain.value = 1.5;
+              osc.connect(subGain);
+              subGain.connect(filter);
+            } else if (i === 2) { // Square wave gives it a hollow exhaust growl, lower its volume slightly
+              const sqGain = ctx.createGain();
+              sqGain.gain.value = 0.4;
+              osc.connect(sqGain);
+              sqGain.connect(filter);
+            } else {
+              osc.connect(filter);
+            }
+            
             osc.start();
             oscillatorsRef.current.push(osc);
           }
@@ -76,10 +92,9 @@ export function useEngineSound(speed: number, isBoosting: boolean, phase: string
 
     const absSpeed = Math.abs(speed);
     
-    // Artificially accumulate speed when at top speed to force extra shifts
+    // Artificially accumulate speed when at top speed to force extra shifts indefinitely
     if (absSpeed > 20) {
-      // Max 4 extra shifts (48 units) over time
-      fakeSpeedRef.current = Math.min(fakeSpeedRef.current + 0.05, 48); 
+      fakeSpeedRef.current += 0.05; 
     } else {
       // Decay quickly when braking/slowing down to simulate downshifts
       fakeSpeedRef.current = Math.max(0, fakeSpeedRef.current - 0.2);
@@ -88,28 +103,31 @@ export function useEngineSound(speed: number, isBoosting: boolean, phase: string
     const effectiveSpeed = absSpeed + fakeSpeedRef.current;
 
     // Simulate gears
-    // Max speed is roughly 60 m/s. Let's make gears every 12 m/s.
     const GEAR_RATIO = 12;
     const speedInGear = effectiveSpeed % GEAR_RATIO;
     const gear = Math.floor(effectiveSpeed / GEAR_RATIO) + 1;
     
-    // Base frequency for idle is around 50Hz.
-    // Speed adds to the frequency linearly within the current gear.
-    // When boosting, we multiply the frequency to simulate high RPMs.
-    const baseFreq = 50 + (speedInGear * 6) + (gear * 3); 
-    const targetFreq = isBoosting ? baseFreq * 1.5 : baseFreq;
+    // Cap the overall pitch addition from gears so it doesn't squeak infinitely, 
+    // but the speedInGear will keep wrapping around (shifting) forever!
+    const effectiveGear = Math.min(gear, 6); 
+    
+    // Lower base frequency to give it a heavier motor sound (35Hz idle) -> Increased back to 60Hz per user feedback
+    const baseFreq = 60 + (speedInGear * 7.5) + (effectiveGear * 6); 
+    const targetFreq = isBoosting ? baseFreq * 1.6 : baseFreq;
 
-    // Filter opens up at high speeds / boost for a more aggressive scream
-    const targetFilterFreq = isBoosting ? 4000 : 800 + (absSpeed * 40);
+    // Keep filter relatively closed to muffle the bee-like high frequencies, unless boosting
+    const targetFilterFreq = isBoosting ? 3000 : 300 + (absSpeed * 15);
     
     // Lower volume globally per request.
-    const targetGain = isBoosting ? 0.08 : 0.03 + Math.min(absSpeed / 150, 0.03);
+    const targetGain = isBoosting ? 0.1 : 0.04 + Math.min(absSpeed / 120, 0.04);
 
     const now = audioCtxRef.current.currentTime;
     
-    // Smooth transitions for normal driving, but snap quickly on shifts (which happen naturally via the modulo)
-    oscillatorsRef.current.forEach(osc => {
-      osc.frequency.setTargetAtTime(targetFreq, now, 0.05);
+    // Smooth transitions for normal driving, but snap quickly on shifts
+    oscillatorsRef.current.forEach((osc, i) => {
+      // Triangle sub-bass (index 3) is an octave down
+      const freq = i === 3 ? targetFreq * 0.5 : targetFreq;
+      osc.frequency.setTargetAtTime(freq, now, 0.05);
     });
 
     if (filterNodeRef.current) {
