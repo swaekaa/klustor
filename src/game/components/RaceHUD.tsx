@@ -12,6 +12,7 @@ interface RaceHUDProps {
   currentCheckpoint: number;
   latestSplitDiff?: number | null;
   lapSplits?: number[];
+  isRadioPlaying?: boolean;
 }
 
 function BoostGauge() {
@@ -342,9 +343,11 @@ function ControlsLegend() {
         { key: 'W / ↑', action: 'ACCELERATE' },
         { key: 'S / ↓', action: 'BRAKE / REVERSE' },
         { key: 'A D / ← →', action: 'STEER' },
-        { key: 'SHIFT', action: 'NOS BOOST', color: 'var(--klustor-pink)' },
+        { key: 'SHIFT', action: 'NOS BOOST' },
         { key: 'TAB', action: 'VIEW SPLITS' },
-        { key: 'M', action: 'MAP', color: 'var(--klustor-cyan)' },
+        { key: 'M', action: 'MAP' },
+        { key: 'B', action: 'RADIO' },
+        { key: 'V', action: 'CAMERA VIEW' },
         { key: 'R', action: 'RESET TO TRACK' },
         { key: 'ESC', action: 'PAUSE' }
       ].map(ctrl => (
@@ -366,12 +369,42 @@ function ControlsLegend() {
 }
 
 export default function RaceHUD({ 
-  phase, countdown, lapTimeMs, currentCheckpoint, latestSplitDiff, lapSplits
+  phase, countdown, lapTimeMs, currentCheckpoint, latestSplitDiff, lapSplits, isRadioPlaying
 }: RaceHUDProps) {
   const trackData = useMemo(() => getTrackData(), []);
 
   return (
     <div className="klustor-race-hud">
+      {/* Radio Indicator */}
+      {isRadioPlaying && (
+        <div style={{
+          position: 'absolute', top: '2rem', left: '50%', transform: 'translateX(-50%)',
+          background: 'var(--bg-secondary)', backdropFilter: 'blur(8px)',
+          padding: '0.5rem 1.5rem', borderRadius: '24px', border: '2px solid var(--klustor-cyan)',
+          boxShadow: '0 4px 16px rgba(0,255,255,0.2)',
+          display: 'flex', alignItems: 'center', gap: '0.75rem',
+          zIndex: 50
+        }}>
+          <div className="font-display" style={{ color: 'var(--klustor-cyan)', fontWeight: 'bold', fontSize: '0.9rem', letterSpacing: '0.1em' }}>
+            96.5 FM
+          </div>
+          <div style={{ display: 'flex', gap: '4px', height: '12px', alignItems: 'flex-end' }}>
+            {[1, 2, 3].map(i => (
+              <div key={i} style={{
+                width: '4px', height: '100%', background: 'var(--klustor-pink)', borderRadius: '2px',
+                animation: `eq ${0.5 + i * 0.2}s ease-in-out infinite alternate`
+              }} />
+            ))}
+          </div>
+          <style>{`
+            @keyframes eq {
+              0% { height: 20%; }
+              100% { height: 100%; }
+            }
+          `}</style>
+        </div>
+      )}
+
       {/* Top Left — Main Info */}
       <div style={{ position: 'absolute', top: '2rem', left: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         

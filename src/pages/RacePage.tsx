@@ -9,6 +9,7 @@ import { RACE_REWARDS } from '../game/data/viceCoastCircuit';
 import { formatRaceTime, useRaceState } from '../game/hooks/useRaceState';
 import { useCarPhysics, type CarPhysicsState } from '../game/hooks/useCarPhysics';
 import { useEngineSound } from '../game/hooks/useEngineSound';
+import { useRadio } from '../game/hooks/useRadio';
 import PlayerCar from '../game/components/PlayerCar';
 import Track from '../game/components/Track';
 import ViceCoastEnvironment from '../game/components/ViceCoastEnvironment';
@@ -218,6 +219,9 @@ export default function RacePage() {
 
   // Start engine audio
   useEngineSound(phase);
+  
+  // Start radio hook
+  const { isPlaying: isRadioPlaying } = useRadio(isRacing);
 
   // Start race on mount
   useEffect(() => {
@@ -333,6 +337,7 @@ export default function RacePage() {
           currentCheckpoint={currentCheckpoint}
           latestSplitDiff={latestSplitDiff}
           lapSplits={lapSplits}
+          isRadioPlaying={isRadioPlaying}
         />
       )}
 
