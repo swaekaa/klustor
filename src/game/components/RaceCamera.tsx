@@ -1,6 +1,7 @@
 import { useRef, useEffect, type RefObject } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
+import { getTrackData } from '../data/viceCoastCircuit';
 
 // ============================================================
 // RaceCamera — Smooth lerp chase camera
@@ -24,9 +25,25 @@ export default function RaceCamera({ carRef, isActive }: RaceCameraProps) {
 
   // Initialize camera position on mount
   useEffect(() => {
-    camera.position.set(0, CAMERA_HEIGHT, -CAMERA_DISTANCE);
-    camera.lookAt(0, 0, 0);
+    const { startTransform } = getTrackData();
+    const backward = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), startTransform.rotation);
+    const forward = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), startTransform.rotation);
+    
+    // Snap exactly to where the car will spawn
+    camera.position.set(
+      startTransform.position.x + backward.x * CAMERA_DISTANCE,
+      startTransform.position.y + CAMERA_HEIGHT,
+      startTransform.position.z + backward.z * CAMERA_DISTANCE,
+    );
+    
+    const initialLook = startTransform.position.clone().addScaledVector(forward, LOOK_AHEAD);
+    initialLook.y += 1;
+    
+    lookTarget.current.copy(initialLook);
+    camera.lookAt(lookTarget.current);
   }, [camera]);
+
+  const idealLookTarget = useRef(new THREE.Vector3());
 
   useFrame((_, delta) => {
     if (!carRef.current || !isActive) return;
@@ -49,12 +66,16 @@ export default function RaceCamera({ carRef, isActive }: RaceCameraProps) {
     // Smoothly move camera toward target
     camera.position.lerp(targetPosition.current, dt * CAMERA_SMOOTHING);
 
-    // Look toward car + slightly ahead
-    lookTarget.current.set(
+    // Ideal look target: car + slightly ahead
+    idealLookTarget.current.set(
       carPos.x + forward.x * LOOK_AHEAD,
       carPos.y + 1,
       carPos.z + forward.z * LOOK_AHEAD,
     );
+
+    // Smoothly move the look target as well to prevent snapping
+    lookTarget.current.lerp(idealLookTarget.current, dt * (CAMERA_SMOOTHING * 1.5));
+    
     camera.lookAt(lookTarget.current);
   });
 

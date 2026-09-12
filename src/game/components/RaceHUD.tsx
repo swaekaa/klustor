@@ -1,7 +1,8 @@
-import { TRACK_WAYPOINTS, CHECKPOINTS, REQUIRED_CHECKPOINTS } from '../data/viceCoastCircuit';
+import { getTrackData } from '../data/viceCoastCircuit';
 import { formatRaceTime } from '../hooks/useRaceState';
 import type { RacePhase } from '../hooks/useRaceState';
 import * as THREE from 'three';
+import { useMemo } from 'react';
 
 interface RaceHUDProps {
   phase: RacePhase;
@@ -12,52 +13,44 @@ interface RaceHUDProps {
   carPosition?: THREE.Vector3;
 }
 
-function buildMinimapPath(waypoints: typeof TRACK_WAYPOINTS, width: number, height: number): string {
-  const xs = waypoints.map(p => p.x);
-  const zs = waypoints.map(p => p.z);
-  const minX = Math.min(...xs), maxX = Math.max(...xs);
-  const minZ = Math.min(...zs), maxZ = Math.max(...zs);
+function Minimap({ currentCheckpoint, carPosition }: { currentCheckpoint: number; carPosition?: THREE.Vector3 }) {
+  const trackData = useMemo(() => getTrackData(), []);
+  
+  const W = 150, H = 150;
   const pad = 10;
 
-  const scaleX = (width - pad * 2) / (maxX - minX || 1);
-  const scaleZ = (height - pad * 2) / (maxZ - minZ || 1);
-  const scale = Math.min(scaleX, scaleZ);
+  // Calculate bounds
+  const minX = Math.min(...trackData.samples.map(p => p.position.x));
+  const maxX = Math.max(...trackData.samples.map(p => p.position.x));
+  const minZ = Math.min(...trackData.samples.map(p => p.position.z));
+  const maxZ = Math.max(...trackData.samples.map(p => p.position.z));
+
+  const scale = Math.min((W - pad * 2) / (maxX - minX || 1), (H - pad * 2) / (maxZ - minZ || 1));
 
   const toSVG = (x: number, z: number) => ({
     svgX: (x - minX) * scale + pad,
     svgY: (z - minZ) * scale + pad,
   });
 
-  const pts = [...waypoints, waypoints[0]];
-  return pts.map((p, i) => {
-    const { svgX, svgY } = toSVG(p.x, p.z);
+  const path = trackData.samples.map((p, i) => {
+    const { svgX, svgY } = toSVG(p.position.x, p.position.z);
     return `${i === 0 ? 'M' : 'L'} ${svgX.toFixed(1)} ${svgY.toFixed(1)}`;
   }).join(' ') + ' Z';
-}
 
-function Minimap({ currentCheckpoint, carPosition }: { currentCheckpoint: number; carPosition?: THREE.Vector3 }) {
-  const W = 150, H = 150;
-  const path = buildMinimapPath(TRACK_WAYPOINTS, W, H);
+  const carSVGX = carPosition ? toSVG(carPosition.x, carPosition.z).svgX : W / 2;
+  const carSVGY = carPosition ? toSVG(carPosition.x, carPosition.z).svgY : H / 2;
 
-  const xs = TRACK_WAYPOINTS.map(p => p.x);
-  const zs = TRACK_WAYPOINTS.map(p => p.z);
-  const minX = Math.min(...xs), maxX = Math.max(...xs);
-  const minZ = Math.min(...zs), maxZ = Math.max(...zs);
-  const pad = 10;
-  const scale = Math.min((W - pad * 2) / (maxX - minX || 1), (H - pad * 2) / (maxZ - minZ || 1));
-
-  const carSVGX = carPosition ? (carPosition.x - minX) * scale + pad : W / 2;
-  const carSVGY = carPosition ? (carPosition.z - minZ) * scale + pad : H / 2;
+  const startPt = toSVG(trackData.samples[0].position.x, trackData.samples[0].position.z);
 
   return (
-    <div style={{ position: 'absolute', bottom: '2rem', right: '2rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '16px', border: '3px solid var(--text-primary)', boxShadow: '4px 4px 0px rgba(0,0,0,0.1)' }}>
+    <div style={{ position: 'absolute', bottom: '2rem', right: '2rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '24px', border: '1px solid var(--border-light)', boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
       <svg width={W} height={H} style={{ display: 'block' }}>
         <path d={path} fill="none" stroke="rgba(18,22,25,0.1)" strokeWidth="6" strokeLinejoin="round" />
         <path d={path} fill="none" stroke="var(--klustor-cyan)" strokeWidth="3" strokeLinejoin="round" />
         
-        {CHECKPOINTS.filter(cp => cp.index < REQUIRED_CHECKPOINTS).map((cp) => {
-          const svgX = (cp.position[0] - minX) * scale + pad;
-          const svgY = (cp.position[2] - minZ) * scale + pad;
+        {trackData.checkpoints.map((cp) => {
+          if (cp.index === trackData.totalCheckpoints) return null; // Skip finish line for normal dots
+          const { svgX, svgY } = toSVG(cp.position.x, cp.position.z);
           const done = currentCheckpoint > cp.index;
           return (
             <circle
@@ -72,9 +65,11 @@ function Minimap({ currentCheckpoint, carPosition }: { currentCheckpoint: number
           );
         })}
 
-        <circle cx={(0 - minX) * scale + pad} cy={(0 - minZ) * scale + pad} r={6}
+        {/* Start/Finish Line Indicator */}
+        <circle cx={startPt.svgX} cy={startPt.svgY} r={6}
           fill="var(--klustor-pink)" stroke="var(--text-primary)" strokeWidth={2} />
 
+        {/* Player Car Indicator */}
         <circle cx={carSVGX} cy={carSVGY} r={6} fill="var(--klustor-yellow)" stroke="var(--text-primary)" strokeWidth={2} />
       </svg>
     </div>
@@ -83,6 +78,7 @@ function Minimap({ currentCheckpoint, carPosition }: { currentCheckpoint: number
 
 export default function RaceHUD({ phase, countdown, lapTimeMs, speed, currentCheckpoint, carPosition }: RaceHUDProps) {
   const speedKmh = Math.round(Math.abs(speed) * 3.6);
+  const trackData = useMemo(() => getTrackData(), []);
 
   return (
     <div className="klustor-race-hud">
@@ -98,7 +94,7 @@ export default function RaceHUD({ phase, countdown, lapTimeMs, speed, currentChe
           {String(speedKmh).padStart(3, '0')} KM/H
         </div>
         <div className="font-mono" style={{ fontSize: '1.2rem', marginTop: '0.25rem', color: 'var(--text-muted)', WebkitTextStroke: '1px white' }}>
-          CHECKPOINT {Math.min(currentCheckpoint, REQUIRED_CHECKPOINTS)} / {REQUIRED_CHECKPOINTS}
+          CHECKPOINT {Math.min(currentCheckpoint, trackData.totalCheckpoints)} / {trackData.totalCheckpoints}
         </div>
       </div>
 

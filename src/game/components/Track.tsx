@@ -1,40 +1,34 @@
 import * as THREE from 'three';
 import { useMemo } from 'react';
-import { TRACK_WAYPOINTS, TRACK_WIDTH, CHECKPOINTS, REQUIRED_CHECKPOINTS } from '../data/viceCoastCircuit';
+import { getTrackData, ROAD_WIDTH } from '../data/viceCoastCircuit';
 
 // ============================================================
-// Track.tsx — Vice Coast Circuit road geometry
-// Generated procedurally from track waypoints
+// Track.tsx — Vice Coast Circuit Geometry
+// Derived strictly from the authoritative track centerline
 // ============================================================
 
-function buildRoadGeometry(): THREE.BufferGeometry {
-  const points = [...TRACK_WAYPOINTS, TRACK_WAYPOINTS[0]]; // close the loop
+const CURB_WIDTH = 1.2;
+const WALL_HEIGHT = 1.5;
+const WALL_THICKNESS = 0.5;
+
+function buildRoadGeometry(samples: any[]): THREE.BufferGeometry {
   const vertices: number[] = [];
   const uvs: number[] = [];
   const indices: number[] = [];
 
-  for (let i = 0; i < points.length - 1; i++) {
-    const curr = points[i];
-    const next = points[i + 1];
-
-    // Direction vector
-    const dx = next.x - curr.x;
-    const dz = next.z - curr.z;
-    const len = Math.sqrt(dx * dx + dz * dz);
-    const nx = (-dz / len) * (TRACK_WIDTH / 2);
-    const nz = (dx / len) * (TRACK_WIDTH / 2);
+  for (let i = 0; i < samples.length; i++) {
+    const curr = samples[i];
+    const next = samples[(i + 1) % samples.length];
 
     const base = i * 4;
 
-    // 4 vertices per segment (quad)
-    vertices.push(curr.x - nx, 0.01, curr.z - nz); // left start
-    vertices.push(curr.x + nx, 0.01, curr.z + nz); // right start
-    vertices.push(next.x - nx, 0.01, next.z - nz); // left end
-    vertices.push(next.x + nx, 0.01, next.z + nz); // right end
+    vertices.push(curr.leftEdge.x, 0.01, curr.leftEdge.z);
+    vertices.push(curr.rightEdge.x, 0.01, curr.rightEdge.z);
+    vertices.push(next.leftEdge.x, 0.01, next.leftEdge.z);
+    vertices.push(next.rightEdge.x, 0.01, next.rightEdge.z);
 
     uvs.push(0, 0, 1, 0, 0, 1, 1, 1);
 
-    // Two triangles per quad
     indices.push(base, base + 1, base + 2);
     indices.push(base + 1, base + 3, base + 2);
   }
@@ -47,32 +41,80 @@ function buildRoadGeometry(): THREE.BufferGeometry {
   return geo;
 }
 
-function buildCurbGeometry(side: 'left' | 'right'): THREE.BufferGeometry {
-  const points = [...TRACK_WAYPOINTS, TRACK_WAYPOINTS[0]];
+function buildCurbGeometry(samples: any[], side: 'left' | 'right'): THREE.BufferGeometry {
   const vertices: number[] = [];
   const indices: number[] = [];
-  const CURB_WIDTH = 1.2;
 
-  for (let i = 0; i < points.length - 1; i++) {
-    const curr = points[i];
-    const next = points[i + 1];
+  for (let i = 0; i < samples.length; i++) {
+    const curr = samples[i];
+    const next = samples[(i + 1) % samples.length];
 
-    const dx = next.x - curr.x;
-    const dz = next.z - curr.z;
-    const len = Math.sqrt(dx * dx + dz * dz);
-    const nx = (-dz / len);
-    const nz = (dx / len);
-    const half = TRACK_WIDTH / 2;
+    const cEdge = side === 'left' ? curr.leftEdge : curr.rightEdge;
+    const nEdge = side === 'left' ? next.leftEdge : next.rightEdge;
+    
+    // Normal points RIGHT. If left, subtract from edge. If right, add to edge.
     const sign = side === 'left' ? -1 : 1;
+    
+    const cOuter = cEdge.clone().addScaledVector(curr.normal, sign * CURB_WIDTH);
+    const nOuter = nEdge.clone().addScaledVector(next.normal, sign * CURB_WIDTH);
 
     const base = i * 4;
     vertices.push(
-      curr.x + sign * (half) * nx, 0.01, curr.z + sign * (half) * nz,
-      curr.x + sign * (half + CURB_WIDTH) * nx, 0.02, curr.z + sign * (half + CURB_WIDTH) * nz,
-      next.x + sign * (half) * nx, 0.01, next.z + sign * (half) * nz,
-      next.x + sign * (half + CURB_WIDTH) * nx, 0.02, next.z + sign * (half + CURB_WIDTH) * nz,
+      cEdge.x, 0.01, cEdge.z,
+      cOuter.x, 0.05, cOuter.z,
+      nEdge.x, 0.01, nEdge.z,
+      nOuter.x, 0.05, nOuter.z,
     );
     indices.push(base, base + 1, base + 2, base + 1, base + 3, base + 2);
+  }
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  geo.setIndex(indices);
+  geo.computeVertexNormals();
+  return geo;
+}
+
+function buildWallGeometry(samples: any[], side: 'left' | 'right'): THREE.BufferGeometry {
+  const vertices: number[] = [];
+  const indices: number[] = [];
+
+  for (let i = 0; i < samples.length; i++) {
+    const curr = samples[i];
+    const next = samples[(i + 1) % samples.length];
+
+    const cEdge = side === 'left' ? curr.leftEdge : curr.rightEdge;
+    const nEdge = side === 'left' ? next.leftEdge : next.rightEdge;
+    
+    const sign = side === 'left' ? -1 : 1;
+    
+    const cInner = cEdge.clone().addScaledVector(curr.normal, sign * CURB_WIDTH);
+    const nInner = nEdge.clone().addScaledVector(next.normal, sign * CURB_WIDTH);
+    
+    const cOuter = cInner.clone().addScaledVector(curr.normal, sign * WALL_THICKNESS);
+    const nOuter = nInner.clone().addScaledVector(next.normal, sign * WALL_THICKNESS);
+
+    const base = i * 8; // 8 vertices per segment to build a 3D block
+    
+    // Inner face
+    vertices.push(
+      cInner.x, 0.0, cInner.z,
+      cInner.x, WALL_HEIGHT, cInner.z,
+      nInner.x, 0.0, nInner.z,
+      nInner.x, WALL_HEIGHT, nInner.z,
+    );
+    // Outer face
+    vertices.push(
+      cOuter.x, WALL_HEIGHT, cOuter.z,
+      cOuter.x, 0.0, cOuter.z,
+      nOuter.x, WALL_HEIGHT, nOuter.z,
+      nOuter.x, 0.0, nOuter.z,
+    );
+
+    // Inner Triangles
+    indices.push(base, base + 1, base + 2, base + 1, base + 3, base + 2);
+    // Top Triangles (connecting inner top to outer top)
+    indices.push(base + 1, base + 4, base + 3, base + 4, base + 6, base + 3);
   }
 
   const geo = new THREE.BufferGeometry();
@@ -94,7 +136,7 @@ function buildCurbTexture(colorA: string, colorB: string): THREE.CanvasTexture {
   const tex = new THREE.CanvasTexture(canvas);
   tex.wrapS = THREE.RepeatWrapping;
   tex.wrapT = THREE.RepeatWrapping;
-  tex.repeat.set(1, 20);
+  tex.repeat.set(1, 200); // Higher repeat because the track is long
   return tex;
 }
 
@@ -104,18 +146,16 @@ function buildRoadTexture(): THREE.CanvasTexture {
   canvas.height = 128;
   const ctx = canvas.getContext('2d')!;
   
-  // Dark asphalt
   ctx.fillStyle = '#2A2E35';
   ctx.fillRect(0, 0, 128, 128);
   
-  // Center dashed lane marking
   ctx.fillStyle = '#F2EFE4';
   ctx.fillRect(60, 0, 8, 40);
   
   const tex = new THREE.CanvasTexture(canvas);
   tex.wrapS = THREE.RepeatWrapping;
   tex.wrapT = THREE.RepeatWrapping;
-  tex.repeat.set(1, 30);
+  tex.repeat.set(1, 400); // Scale the dashed line along the entire track
   return tex;
 }
 
@@ -124,36 +164,40 @@ function buildStartLineTexture(): THREE.CanvasTexture {
   canvas.width = 256;
   canvas.height = 64;
   const ctx = canvas.getContext('2d')!;
-  // Checkerboard
   for (let i = 0; i < 16; i++) {
     for (let j = 0; j < 4; j++) {
       ctx.fillStyle = (i + j) % 2 === 0 ? '#fff' : '#222';
       ctx.fillRect(i * 16, j * 16, 16, 16);
     }
   }
-  // KLUSTOR text
   ctx.fillStyle = '#8FD5D1';
   ctx.font = 'bold 18px Trebuchet MS, sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('KLUSTOR', 128, 30);
-  const tex = new THREE.CanvasTexture(canvas);
-  return tex;
+  return new THREE.CanvasTexture(canvas);
 }
 
 export default function Track() {
-  const roadGeo = useMemo(() => buildRoadGeometry(), []);
-  const curbGeoLeft = useMemo(() => buildCurbGeometry('left'), []);
-  const curbGeoRight = useMemo(() => buildCurbGeometry('right'), []);
+  const trackData = useMemo(() => getTrackData(), []);
+  
+  const roadGeo = useMemo(() => buildRoadGeometry(trackData.samples), [trackData]);
+  const curbGeoLeft = useMemo(() => buildCurbGeometry(trackData.samples, 'left'), [trackData]);
+  const curbGeoRight = useMemo(() => buildCurbGeometry(trackData.samples, 'right'), [trackData]);
+  const wallGeoLeft = useMemo(() => buildWallGeometry(trackData.samples, 'left'), [trackData]);
+  const wallGeoRight = useMemo(() => buildWallGeometry(trackData.samples, 'right'), [trackData]);
+
   const roadTex = useMemo(() => buildRoadTexture(), []);
   const curbTex = useMemo(() => buildCurbTexture('#E63946', '#FAF9F3'), []);
   const startTex = useMemo(() => buildStartLineTexture(), []);
+
+  const startPoint = trackData.samples[0];
 
   return (
     <group>
       {/* Ground plane */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 65]}>
-        <planeGeometry args={[350, 220]} />
-        <meshLambertMaterial color="#C8B89A" /> {/* sand/terrain */}
+        <planeGeometry args={[450, 320]} />
+        <meshLambertMaterial color="#C8B89A" />
       </mesh>
 
       {/* Road surface */}
@@ -169,31 +213,51 @@ export default function Track() {
         <meshLambertMaterial map={curbTex} />
       </mesh>
 
+      {/* Continuous Walls */}
+      <mesh geometry={wallGeoLeft}>
+        <meshLambertMaterial color="#E8EAEB" />
+      </mesh>
+      <mesh geometry={wallGeoRight}>
+        <meshLambertMaterial color="#E8EAEB" />
+      </mesh>
+
       {/* Start/Finish Line */}
-      <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[TRACK_WIDTH, 4]} />
+      <mesh 
+        position={[startPoint.position.x, 0.02, startPoint.position.z]} 
+        rotation={[-Math.PI / 2, 0, Math.atan2(-startPoint.tangent.z, startPoint.tangent.x) - Math.PI/2]}
+      >
+        <planeGeometry args={[ROAD_WIDTH, 4]} />
         <meshLambertMaterial map={startTex} />
       </mesh>
 
       {/* Checkpoint Arches */}
-      {CHECKPOINTS.filter(cp => cp.index < REQUIRED_CHECKPOINTS).map((cp, i) => {
+      {trackData.checkpoints.filter(cp => cp.index < trackData.totalCheckpoints).map((cp, i) => {
         const colors = ['#8FD5D1', '#A8C99B', '#E9B58D', '#DCA8B8'];
         const color = colors[i % colors.length];
+        
+        // Compute positions for left and right poles of the arch
+        // cp.leftEdge and rightEdge are exact width, we push them slightly out to not block the road
+        const leftPole = cp.leftEdge.clone().addScaledVector(cp.normal, -0.5);
+        const rightPole = cp.rightEdge.clone().addScaledVector(cp.normal, 0.5);
+
         return (
-          <group key={cp.id} position={cp.position}>
+          <group key={cp.id}>
             {/* Left pole */}
-            <mesh position={[-TRACK_WIDTH / 2 - 0.5, 2, 0]}>
+            <mesh position={[leftPole.x, 2, leftPole.z]}>
               <cylinderGeometry args={[0.3, 0.3, 4, 8]} />
               <meshLambertMaterial color={color} />
             </mesh>
             {/* Right pole */}
-            <mesh position={[TRACK_WIDTH / 2 + 0.5, 2, 0]}>
+            <mesh position={[rightPole.x, 2, rightPole.z]}>
               <cylinderGeometry args={[0.3, 0.3, 4, 8]} />
               <meshLambertMaterial color={color} />
             </mesh>
             {/* Crossbar */}
-            <mesh position={[0, 4.2, 0]}>
-              <boxGeometry args={[TRACK_WIDTH + 2.5, 0.4, 0.4]} />
+            <mesh 
+              position={[cp.position.x, 4.2, cp.position.z]}
+              rotation={[0, Math.atan2(cp.tangent.x, cp.tangent.z) + Math.PI/2, 0]}
+            >
+              <boxGeometry args={[ROAD_WIDTH + 2.5, 0.4, 0.4]} />
               <meshLambertMaterial color={color} />
             </mesh>
           </group>

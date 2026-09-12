@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import * as THREE from 'three';
-import { CHECKPOINTS, REQUIRED_CHECKPOINTS } from '../data/viceCoastCircuit';
+import { getTrackData } from '../data/viceCoastCircuit';
 
 // ============================================================
 // useRaceState — Manages timer, checkpoints, lap, countdown
@@ -26,6 +26,7 @@ export function useRaceState() {
   const pauseStartRef = useRef<number | null>(null);
   const totalPausedRef = useRef(0);
   const countdownStartRef = useRef<number | null>(null);
+  const prevPosRef = useRef<THREE.Vector3 | null>(null);
 
   // Keep phaseRef in sync when phase state changes
   const setPhaseSync = useCallback((p: RacePhase) => {
@@ -50,7 +51,7 @@ export function useRaceState() {
         totalPausedRef.current = 0;
         setPhaseSync('racing');
       }
-    }, 100); // 10 fps is plenty for a countdown
+    }, 100);
 
     return () => clearInterval(interval);
   }, [phase, setPhaseSync]);
@@ -63,7 +64,7 @@ export function useRaceState() {
       if (startTimeRef.current !== null) {
         setLapTimeMs(Date.now() - startTimeRef.current - totalPausedRef.current);
       }
-    }, 50); // ~20 fps for timer
+    }, 50);
 
     return () => clearInterval(interval);
   }, [phase]);
@@ -104,30 +105,52 @@ export function useRaceState() {
     pauseStartRef.current = null;
     totalPausedRef.current = 0;
     countdownStartRef.current = null;
+    prevPosRef.current = null;
   }, [setPhaseSync]);
 
   // ── Checkpoint logic — called each frame from inside Canvas ──
-  // Safe: only reads phaseRef and refs, calls setPhaseSync which is stable.
   const checkCheckpoint = useCallback((carPosition: THREE.Vector3) => {
     if (phaseRef.current !== 'racing' || lapCompletedRef.current) return;
 
+    const prevPos = prevPosRef.current;
+    prevPosRef.current = carPosition.clone();
+    
+    if (!prevPos) return;
+
+    const { checkpoints, totalCheckpoints } = getTrackData();
     const nextIdx = currentCheckpointRef.current;
-    if (nextIdx >= CHECKPOINTS.length) return;
+    
+    if (nextIdx >= totalCheckpoints) return;
 
-    const cp = CHECKPOINTS[nextIdx];
-    const cpPos = new THREE.Vector3(...cp.position);
-    const dist = carPosition.distanceTo(cpPos);
-
-    if (dist < cp.radius) {
-      if (nextIdx < REQUIRED_CHECKPOINTS) {
-        // Normal checkpoint
-        currentCheckpointRef.current = nextIdx + 1;
-        setCurrentCheckpoint(nextIdx + 1);
-      } else if (nextIdx === REQUIRED_CHECKPOINTS) {
-        // Finish line — only counts if all checkpoints passed
-        lapCompletedRef.current = true;
-        setLapComplete(true);
-        setPhaseSync('finished');
+    const cp = checkpoints[nextIdx];
+    
+    // Vector from CP to prev and CP to curr
+    const vPrev = prevPos.clone().sub(cp.position);
+    const vCurr = carPosition.clone().sub(cp.position);
+    
+    // Dot product with tangent (Z-axis forward)
+    const dotPrev = vPrev.dot(cp.tangent);
+    const dotCurr = vCurr.dot(cp.tangent);
+    
+    // Did we cross the plane in the correct direction? (from negative to positive)
+    if (dotPrev < 0 && dotCurr >= 0) {
+      // Check if within road width horizontally along the normal vector
+      const cpNormal = new THREE.Vector3(-cp.tangent.z, 0, cp.tangent.x).normalize();
+      const distFromCenter = Math.abs(vCurr.dot(cpNormal));
+      const cpWidth = cp.leftEdge.distanceTo(cp.rightEdge);
+      
+      // Give a little leeway (+ 2 meters) to prevent missing checkpoints due to physics stepping
+      if (distFromCenter <= (cpWidth / 2) + 2) {
+        if (nextIdx < totalCheckpoints - 1) {
+          // Normal checkpoint cleared
+          currentCheckpointRef.current = nextIdx + 1;
+          setCurrentCheckpoint(nextIdx + 1);
+        } else {
+          // Finish line cleared
+          lapCompletedRef.current = true;
+          setLapComplete(true);
+          setPhaseSync('finished');
+        }
       }
     }
   }, [setPhaseSync]);

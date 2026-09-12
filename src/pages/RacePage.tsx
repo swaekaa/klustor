@@ -44,9 +44,13 @@ interface RaceSceneProps {
 }
 
 function RaceScene({ textures, stats, isRacing, carRef, onSpeedUpdate, onPositionUpdate, checkCheckpoint }: RaceSceneProps) {
-  const { speedRef, steeringRef } = useCarPhysics(carRef, isRacing, stats, (state) => {
+  const { speedRef, steeringRef, resetToStart } = useCarPhysics(carRef, isRacing, stats, (state) => {
     onSpeedUpdate(state.speed);
   });
+
+  useEffect(() => {
+    resetToStart();
+  }, [resetToStart]);
 
   useFrame(() => {
     if (carRef.current) {
