@@ -85,17 +85,22 @@ export function useCarPhysics(
   const { isAnyPressed } = useKeyboardControls(isRacing);
   const lastNearestIdxRef = useRef<number>(-1);
 
-  // Stat scaling
-  const speedMult = stats ? (stats.topSpeed      - 100) / 40 * 0.8  + 1.0 : 1.0;
-  const accelMult = stats ? (stats.acceleration  - 3)   / 7  * 0.9  + 0.7 : 1.0;
-  const steerMult = stats ? (stats.handling      - 3)   / 7  * 0.9  + 0.7 : 1.0;
+  // Stat scaling (with aggressive fallback to prevent NaN crashes)
+  const safeTopSpeed = Number.isNaN(stats?.topSpeed) || !stats?.topSpeed ? 100 : stats.topSpeed;
+  const safeAccel = Number.isNaN(stats?.acceleration) || !stats?.acceleration ? 3 : stats.acceleration;
+  const safeHandling = Number.isNaN(stats?.handling) || !stats?.handling ? 3 : stats.handling;
+  const safeDesign = Number.isNaN(stats?.designScore) || stats?.designScore === undefined ? 0 : stats.designScore;
+
+  const speedMult = stats ? (safeTopSpeed - 100) / 40 * 0.8  + 1.0 : 1.0;
+  const accelMult = stats ? (safeAccel  - 3)   / 7  * 0.9  + 0.7 : 1.0;
+  const steerMult = stats ? (safeHandling      - 3)   / 7  * 0.9  + 0.7 : 1.0;
 
   const MAX_SPEED         = BASE_MAX_SPEED    * speedMult;
   const ACCELERATION      = BASE_ACCELERATION * accelMult;
   const STEERING_STRENGTH = BASE_STEERING     * steerMult;
 
   // Max boost capacity depends on design score (10 = 100%, 0 = 0%)
-  const maxBoostCapacity = Math.max(0, Math.min(1.0, (stats?.designScore ?? 0) / 10));
+  const maxBoostCapacity = Math.max(0, Math.min(1.0, safeDesign / 10));
 
   const speedRef    = useRef(0);
   const steeringRef = useRef(0);

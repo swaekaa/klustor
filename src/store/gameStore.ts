@@ -16,11 +16,16 @@ const DEFAULT_PLAYER: Partial<GameState['player']> & { cash: number, rep: number
 };
 
 function computeOverallRating(stats: CarStats): number {
+  const ts = Number.isNaN(stats.topSpeed) || !stats.topSpeed ? 100 : stats.topSpeed;
+  const ac = Number.isNaN(stats.acceleration) || !stats.acceleration ? 3 : stats.acceleration;
+  const hn = Number.isNaN(stats.handling) || !stats.handling ? 3 : stats.handling;
+  const ds = Number.isNaN(stats.designScore) || stats.designScore === undefined ? 0 : stats.designScore;
+
   return parseFloat(
-    ((stats.topSpeed / 140 * 10 * 0.3) +
-     (stats.acceleration * 0.25) +
-     (stats.handling * 0.25) +
-     (stats.designScore * 0.2)).toFixed(1)
+    ((ts / 140 * 10 * 0.3) +
+     (ac * 0.25) +
+     (hn * 0.25) +
+     (ds * 0.2)).toFixed(1)
   );
 }
 
@@ -103,7 +108,7 @@ export const useGameStore = create<GameState>()(
         }));
       },
 
-      // ── Reset ─────────────────────────────────────────────
+      // ── Hard reset game state ───────────────────────────────
       resetGame: () => {
         set({
           player: { ...DEFAULT_PLAYER },
@@ -112,6 +117,19 @@ export const useGameStore = create<GameState>()(
           raceRecords: [],
         });
       },
+
+      // ── Clear Leaderboard (Records only) ────────────────────
+      clearLeaderboard: () => {
+        set((s) => ({
+          raceRecords: [],
+          bestLivery: null,
+          player: {
+            ...s.player,
+            bestTime: null,
+            bestSplits: [],
+          }
+        }));
+      }
     }),
     {
       name: 'klustor-racing-v2',

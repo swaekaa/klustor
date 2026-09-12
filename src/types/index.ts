@@ -57,4 +57,5 @@ export interface GameState {
   recordRaceResult: (time: number, topSpeed: number, splits: number[]) => void;
   resetLivery: () => void;
   resetGame: () => void;
+  clearLeaderboard: () => void;
 }

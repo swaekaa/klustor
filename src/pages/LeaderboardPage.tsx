@@ -25,6 +25,17 @@ export default function LeaderboardPage() {
           <h1 style={{ fontSize: '3rem', lineHeight: 1 }}>LEADERBOARD</h1>
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
+          <button 
+            className="btn-retro" 
+            style={{ color: '#FF4444', borderColor: '#FF4444' }}
+            onClick={() => {
+              if(window.confirm('Are you sure you want to clear all race records?')) {
+                useGameStore.getState().clearLeaderboard();
+              }
+            }}
+          >
+            CLEAR RECORDS
+          </button>
           <button className="btn-retro" onClick={() => navigate('/design')}>
             DESIGN CAR
           </button>
