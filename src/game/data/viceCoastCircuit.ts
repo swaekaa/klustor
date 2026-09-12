@@ -55,33 +55,49 @@ export interface TrackData {
 
 const WAYPOINTS: THREE.Vector3[] = [
   // Start / City Straight
-  new THREE.Vector3(   0, 0,    0), // P0
-  new THREE.Vector3( 150, 0,    0), // P1
-  new THREE.Vector3( 300, 0,   20), // P2
+  new THREE.Vector3(   0, 0,    0),
+  new THREE.Vector3( 150, 0,    0),
   
-  // Outer Coast Sweep
-  new THREE.Vector3( 450, 0,   80), // P3
-  new THREE.Vector3( 550, 0,  200), // P4
-  new THREE.Vector3( 600, 0,  350), // P5
-  new THREE.Vector3( 550, 0,  550), // P6
+  // Twist 1: Chicane right after start
+  new THREE.Vector3( 250, 0,   40),
+  new THREE.Vector3( 300, 0,  -20),
+  new THREE.Vector3( 400, 0,   20),
   
-  // Deep Corner
-  new THREE.Vector3( 400, 0,  700), // P7
-  new THREE.Vector3( 200, 0,  780), // P8
-  new THREE.Vector3(   0, 0,  800), // P9
+  // Hairpin 1 (Outer Coast)
+  new THREE.Vector3( 550, 0,   50),
+  new THREE.Vector3( 650, 0,  150), // swing out
+  new THREE.Vector3( 450, 0,  200), // cut back hard
+  new THREE.Vector3( 550, 0,  300), // swing out again
   
-  // Technical section (cuts inward then outward)
-  new THREE.Vector3(-150, 0,  750), // P10
-  new THREE.Vector3(-250, 0,  650), // P11
-  new THREE.Vector3(-200, 0,  500), // P12  
-  new THREE.Vector3(-250, 0,  350), // P13  
-  new THREE.Vector3(-400, 0,  300), // P14
+  // Sweep
+  new THREE.Vector3( 650, 0,  450),
+  new THREE.Vector3( 600, 0,  600),
   
-  // Return Sweep
-  new THREE.Vector3(-500, 0,  150), // P15
-  new THREE.Vector3(-400, 0,   50), // P16
-  new THREE.Vector3(-200, 0,   -5), // P17
-  new THREE.Vector3(-100, 0,    0), // P18
+  // Hairpin 2 (Deep Corner)
+  new THREE.Vector3( 450, 0,  750),
+  new THREE.Vector3( 350, 0,  850),
+  new THREE.Vector3( 250, 0,  750), // cut back inward
+  new THREE.Vector3( 150, 0,  850),
+  new THREE.Vector3(   0, 0,  800),
+  
+  // Technical section (Serpentine)
+  new THREE.Vector3(-100, 0,  750),
+  new THREE.Vector3(-150, 0,  600),
+  new THREE.Vector3(-250, 0,  650),
+  new THREE.Vector3(-300, 0,  500),
+  new THREE.Vector3(-200, 0,  450),
+  new THREE.Vector3(-250, 0,  300),
+  
+  // Hairpin 3 (Return)
+  new THREE.Vector3(-450, 0,  350),
+  new THREE.Vector3(-550, 0,  250),
+  new THREE.Vector3(-400, 0,  150),
+  new THREE.Vector3(-500, 0,   50),
+  
+  // Final Kinks
+  new THREE.Vector3(-300, 0,  -50),
+  new THREE.Vector3(-150, 0,   30),
+  new THREE.Vector3( -50, 0,    0),
 ];
 
 // ── Lazy singleton ────────────────────────────────────────────

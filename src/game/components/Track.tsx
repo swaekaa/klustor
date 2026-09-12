@@ -103,6 +103,29 @@ function sidewalkGeo(samples: Samples, side: 'left'|'right'): THREE.BufferGeomet
   return g;
 }
 
+function beachGeo(samples: Samples, width: number): THREE.BufferGeometry {
+  const v: number[] = [], idx: number[] = [];
+  const n = samples.length;
+  for (let i = 0; i < n; i++) {
+    const c = samples[i], nx = samples[(i + 1) % n];
+    // Beach starts at the curb
+    const ci = c.rightEdge.clone().addScaledVector(c.normal, CURB_W);
+    const ni = nx.rightEdge.clone().addScaledVector(nx.normal, CURB_W);
+    const co = ci.clone().addScaledVector(c.normal, width);
+    const no = ni.clone().addScaledVector(nx.normal, width);
+    const b  = i * 4;
+    // Beach slopes down to water level
+    v.push(ci.x, SIDEWALK_H, ci.z, co.x, -0.05, co.z, ni.x, SIDEWALK_H, ni.z, no.x, -0.05, no.z);
+    pushQuad(idx, b, b+1, b+2, b+3, false);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  return g;
+}
+
+
 function guardrailBaseGeo(samples: Samples, side: 'left'|'right'): THREE.BufferGeometry {
   const sign = side === 'right' ? 1 : -1;
   const v: number[] = [], idx: number[] = [];
@@ -314,11 +337,23 @@ function makeStartTex(): THREE.CanvasTexture {
 
 function lakeGeo(samples: Samples): THREE.BufferGeometry {
   const shape = new THREE.Shape();
-  // The right edge forms the inside of the counter-clockwise loop
-  samples.forEach((s, i) => {
-    if (i === 0) shape.moveTo(s.rightEdge.x, -s.rightEdge.z);
-    else shape.lineTo(s.rightEdge.x, -s.rightEdge.z);
+  
+  // Extract points
+  // By using s.position (centerline), we guarantee the polygon won't have swallowtails
+  // at tight hairpins, which was causing the triangulation to fail.
+  const points = samples.map(s => {
+    return s.position.clone();
   });
+  
+  // Three.js ShapeGeometry treats clockwise polygons as holes (invisible).
+  // Our track loop is clockwise, so we MUST reverse the points to make it counter-clockwise.
+  points.reverse();
+  
+  points.forEach((pt, i) => {
+    if (i === 0) shape.moveTo(pt.x, pt.z);
+    else shape.lineTo(pt.x, pt.z);
+  });
+  
   shape.closePath();
   const g = new THREE.ShapeGeometry(shape);
   // ShapeGeometry creates faces in XY plane; we must rotate to XZ
@@ -333,13 +368,12 @@ export default function Track() {
   const gCurbL     = useMemo(() => curbGeo(td.samples, 'left'),      [td]);
   const gCurbR     = useMemo(() => curbGeo(td.samples, 'right'),     [td]);
   const gSidewalkL = useMemo(() => sidewalkGeo(td.samples, 'left'),  [td]);
-  const gSidewalkR = useMemo(() => sidewalkGeo(td.samples, 'right'), [td]);
+  
   const gBaseL     = useMemo(() => guardrailBaseGeo(td.samples, 'left'),  [td]);
-  const gBaseR     = useMemo(() => guardrailBaseGeo(td.samples, 'right'), [td]);
   const gBeamL     = useMemo(() => guardrailBeamGeo(td.samples, 'left'),  [td]);
-  const gBeamR     = useMemo(() => guardrailBeamGeo(td.samples, 'right'), [td]);
   const gPostsL    = useMemo(() => guardrailPostsGeo(td.samples, 'left'),  [td]);
-  const gPostsR    = useMemo(() => guardrailPostsGeo(td.samples, 'right'), [td]);
+  
+  const gBeach     = useMemo(() => beachGeo(td.samples, 18),         [td]);
   const gLake      = useMemo(() => lakeGeo(td.samples),              [td]);
 
   const tRoad     = useMemo(() => makeRoadTex(),     []);
@@ -353,14 +387,14 @@ export default function Track() {
   return (
     <group>
       {/* ── Ground base (large world plane) ── */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.04, 0]}>
-        <planeGeometry args={[2000, 2000]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.06, 0]}>
+        <planeGeometry args={[4000, 4000]} />
         <meshLambertMaterial color="#A8B882" />
       </mesh>
 
       {/* ── Central Lake ── */}
-      <mesh geometry={gLake} position={[0, -0.02, 0]}>
-        <meshLambertMaterial color="#38A8CC" transparent opacity={0.9} />
+      <mesh geometry={gLake} position={[0, -0.04, 0]}>
+        <meshLambertMaterial color="#1A85FF" side={THREE.DoubleSide} transparent opacity={0.9} />
       </mesh>
 
       {/* ── Road ── */}
@@ -372,20 +406,22 @@ export default function Track() {
       <mesh geometry={gCurbL}><meshLambertMaterial map={tCurb} /></mesh>
       <mesh geometry={gCurbR}><meshLambertMaterial map={tCurb} /></mesh>
 
-      {/* ── Sidewalks ── */}
+      {/* ── Sidewalks (City side) ── */}
       <mesh geometry={gSidewalkL}><meshLambertMaterial map={tSidewalk} /></mesh>
-      <mesh geometry={gSidewalkR}><meshLambertMaterial map={tSidewalk} /></mesh>
 
-      {/* ── Continuous Guardrails ── */}
+      {/* ── Beach (Lake side) ── */}
+      <mesh geometry={gBeach}>
+        <meshLambertMaterial color="#D4C89A" />
+      </mesh>
+
+
+      {/* ── Continuous Guardrails (City side) ── */}
       {/* Bases */}
       <mesh geometry={gBaseL}><meshLambertMaterial color="#E2DDD6" /></mesh>
-      <mesh geometry={gBaseR}><meshLambertMaterial color="#E2DDD6" /></mesh>
       {/* Beams */}
       <mesh geometry={gBeamL}><meshLambertMaterial color="#8FA0B0" /></mesh>
-      <mesh geometry={gBeamR}><meshLambertMaterial color="#8FA0B0" /></mesh>
       {/* Posts */}
       <mesh geometry={gPostsL}><meshLambertMaterial color="#5C6B7A" /></mesh>
-      <mesh geometry={gPostsR}><meshLambertMaterial color="#5C6B7A" /></mesh>
 
       {/* ── Start / Finish line ── */}
       <mesh
