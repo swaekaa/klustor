@@ -48,18 +48,68 @@ function TargetCamera({ view }: { view: TemplateView }) {
   return null;
 }
 
+function StylizedTree({ position, scale = 1 }: { position: [number, number, number], scale?: number }) {
+  return (
+    <group position={position} scale={scale}>
+      <mesh position={[0, 1, 0]}>
+        <cylinderGeometry args={[0.2, 0.3, 2]} />
+        <meshStandardMaterial color="#6B4E31" roughness={0.9} />
+      </mesh>
+      <mesh position={[0, 2.5, 0]}>
+        <coneGeometry args={[1.2, 2, 5]} />
+        <meshStandardMaterial color="#4A7C59" roughness={0.8} />
+      </mesh>
+      <mesh position={[0, 3.5, 0]}>
+        <coneGeometry args={[1.0, 1.8, 5]} />
+        <meshStandardMaterial color="#558C66" roughness={0.8} />
+      </mesh>
+    </group>
+  );
+}
+
+function StylizedMountain({ position, scale = 1, color = "#5A7A60" }: { position: [number, number, number], scale?: number, color?: string }) {
+  return (
+    <mesh position={position} scale={scale}>
+      <coneGeometry args={[10, 20, 5]} />
+      <meshStandardMaterial color={color} roughness={1.0} flatShading />
+    </mesh>
+  );
+}
+
 // ── 3D preview scene ─────────────────────────────────────────
 function PreviewScene({ textures, view }: { textures: Partial<Record<TemplateView, string>>; view: TemplateView }) {
   const groupRef = useRef<THREE.Group>(null!);
   return (
     <>
-      <ambientLight intensity={1.0} color="#FFF5EE" />
-      <directionalLight position={[4, 8, 4]} intensity={1.5} color="#FFE8CC" />
-      <hemisphereLight color="#87CEEB" groundColor="#F2EFE4" intensity={0.5} />
+      <fog attach="fog" args={['#87CEEB', 10, 80]} />
+      <ambientLight intensity={1.2} color="#FFFFFF" />
+      <directionalLight position={[10, 15, 10]} intensity={1.8} color="#FFFFEE" castShadow />
+      <hemisphereLight color="#87CEEB" groundColor="#6B8E23" intensity={0.6} />
+      
+      {/* Soft Grass Floor */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
-        <circleGeometry args={[5, 32]} />
-        <meshLambertMaterial color="#E8E4D8" />
+        <planeGeometry args={[300, 300]} />
+        <meshStandardMaterial color="#88AA66" roughness={1.0} metalness={0.0} />
       </mesh>
+
+      {/* Background Mountains */}
+      <StylizedMountain position={[-30, -5, -40]} scale={1.5} color="#4A6A50" />
+      <StylizedMountain position={[15, -2, -50]} scale={2.2} color="#55755A" />
+      <StylizedMountain position={[40, -10, -35]} scale={1.8} color="#65856A" />
+      <StylizedMountain position={[-50, -5, 20]} scale={1.2} color="#4A6A50" />
+      
+      {/* Decorative Trees */}
+      <StylizedTree position={[-4, 0, -4]} scale={1.2} />
+      <StylizedTree position={[5, 0, -3]} scale={1.5} />
+      <StylizedTree position={[4, 0, 4]} scale={1.0} />
+      <StylizedTree position={[-5, 0, 3]} scale={1.3} />
+
+      {/* Subtle dirt/gravel display pad */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.0, 0]}>
+        <circleGeometry args={[4.0, 32]} />
+        <meshStandardMaterial color="#A99B85" roughness={1.0} metalness={0.0} />
+      </mesh>
+
       <PlayerCar groupRef={groupRef} textures={textures} speed={0} steering={0} />
       <TargetCamera view={view} />
     </>

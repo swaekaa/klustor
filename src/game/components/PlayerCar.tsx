@@ -127,7 +127,7 @@ export default function PlayerCar({ groupRef, textures, speed = 0, steering = 0,
       </mesh>
       
       {/* Wheel Wells (dark boxes to hide the internal body where wheels sit) */}
-      {[ [0.85, 0.1, 1.5], [-0.85, 0.1, 1.5], [0.85, 0.1, -1.45], [-0.85, 0.1, -1.45] ].map((pos, i) => (
+      {[ [0.75, 0.1, 1.5], [-0.75, 0.1, 1.5], [0.75, 0.1, -1.45], [-0.75, 0.1, -1.45] ].map((pos, i) => (
         <mesh key={`well-${i}`} position={pos as [number,number,number]} material={chassisMat}>
           <boxGeometry args={[0.3, 0.5, 0.9]} />
         </mesh>
@@ -159,21 +159,21 @@ export default function PlayerCar({ groupRef, textures, speed = 0, steering = 0,
 
       {/* === FRONT FASCIA DETAILS === */}
       {/* Grille Base */}
-      <mesh position={[0, 0.32, 2.22]} material={darkMat}>
+      <mesh position={[0, 0.32, 2.28]} material={darkMat}>
         <boxGeometry args={[1.2, 0.18, 0.05]} />
       </mesh>
       {/* Headlights */}
-      <mesh position={[0.7, 0.32, 2.22]} material={lightMat}>
+      <mesh position={[0.7, 0.32, 2.28]} material={lightMat}>
         <boxGeometry args={[0.25, 0.15, 0.06]} />
       </mesh>
-      <mesh position={[-0.7, 0.32, 2.22]} material={lightMat}>
+      <mesh position={[-0.7, 0.32, 2.28]} material={lightMat}>
         <boxGeometry args={[0.25, 0.15, 0.06]} />
       </mesh>
       {/* Front Turn Signals */}
-      <mesh position={[0.9, 0.32, 2.22]} material={orangeLightMat}>
+      <mesh position={[0.9, 0.32, 2.28]} material={orangeLightMat}>
         <boxGeometry args={[0.1, 0.15, 0.06]} />
       </mesh>
-      <mesh position={[-0.9, 0.32, 2.22]} material={orangeLightMat}>
+      <mesh position={[-0.9, 0.32, 2.28]} material={orangeLightMat}>
         <boxGeometry args={[0.1, 0.15, 0.06]} />
       </mesh>
       {/* Front License Plate */}
@@ -183,25 +183,25 @@ export default function PlayerCar({ groupRef, textures, speed = 0, steering = 0,
 
       {/* === REAR FASCIA DETAILS === */}
       {/* Taillight Assembly Base */}
-      <mesh position={[0, 0.35, -2.03]} material={darkMat}>
+      <mesh position={[0, 0.35, -2.07]} material={darkMat}>
         <boxGeometry args={[1.8, 0.18, 0.05]} />
       </mesh>
       {/* Main Red Taillights */}
-      <mesh position={[0.65, 0.35, -2.04]} material={redLightMat}>
+      <mesh position={[0.65, 0.35, -2.08]} material={redLightMat}>
         <boxGeometry args={[0.45, 0.14, 0.06]} />
       </mesh>
-      <mesh position={[-0.65, 0.35, -2.04]} material={redLightMat}>
+      <mesh position={[-0.65, 0.35, -2.08]} material={redLightMat}>
         <boxGeometry args={[0.45, 0.14, 0.06]} />
       </mesh>
       {/* Rear Turn Signals */}
-      <mesh position={[0.3, 0.35, -2.04]} material={orangeLightMat}>
+      <mesh position={[0.3, 0.35, -2.08]} material={orangeLightMat}>
         <boxGeometry args={[0.15, 0.14, 0.06]} />
       </mesh>
-      <mesh position={[-0.3, 0.35, -2.04]} material={orangeLightMat}>
+      <mesh position={[-0.3, 0.35, -2.08]} material={orangeLightMat}>
         <boxGeometry args={[0.15, 0.14, 0.06]} />
       </mesh>
       {/* Rear License Plate */}
-      <mesh position={[0, 0.35, -2.04]} material={whiteMat}>
+      <mesh position={[0, 0.35, -2.08]} material={whiteMat}>
         <boxGeometry args={[0.35, 0.12, 0.06]} />
       </mesh>
       {/* Exhaust Pipe */}

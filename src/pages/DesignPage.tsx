@@ -11,6 +11,34 @@ import type { CarStats, TemplateView } from '../types';
 import { useThree } from '@react-three/fiber';
 
 // Custom lightweight drag controls for the showcase
+function StylizedTree({ position, scale = 1 }: { position: [number, number, number], scale?: number }) {
+  return (
+    <group position={position} scale={scale}>
+      <mesh position={[0, 1, 0]}>
+        <cylinderGeometry args={[0.2, 0.3, 2]} />
+        <meshStandardMaterial color="#6B4E31" roughness={0.9} />
+      </mesh>
+      <mesh position={[0, 2.5, 0]}>
+        <coneGeometry args={[1.2, 2, 5]} />
+        <meshStandardMaterial color="#4A7C59" roughness={0.8} />
+      </mesh>
+      <mesh position={[0, 3.5, 0]}>
+        <coneGeometry args={[1.0, 1.8, 5]} />
+        <meshStandardMaterial color="#558C66" roughness={0.8} />
+      </mesh>
+    </group>
+  );
+}
+
+function StylizedMountain({ position, scale = 1, color = "#5A7A60" }: { position: [number, number, number], scale?: number, color?: string }) {
+  return (
+    <mesh position={position} scale={scale}>
+      <coneGeometry args={[10, 20, 5]} />
+      <meshStandardMaterial color={color} roughness={1.0} flatShading />
+    </mesh>
+  );
+}
+
 function DragToRotate() {
   const { gl, camera } = useThree();
   
@@ -192,14 +220,33 @@ export default function DesignPage() {
           
           <div style={{ flex: 1, background: 'var(--bg-secondary)', borderRadius: '24px', overflow: 'hidden', position: 'relative', boxShadow: '0 8px 24px rgba(0,0,0,0.05)', minHeight: '500px', border: '1px solid var(--border-light)' }}>
             <Canvas camera={{ position: [0, 1.8, 5], fov: 45 }} gl={{ antialias: true, toneMapping: 1, toneMappingExposure: 1.2 }}>
-              <ambientLight intensity={1.5} color="#FFFFFF" />
-              <directionalLight position={[5, 8, 5]} intensity={2.0} color="#FFF5E6" castShadow />
-              <directionalLight position={[-5, 5, -5]} intensity={1.0} color="#E6F0FF" />
-              <hemisphereLight color="#FFFFFF" groundColor="#EAF2B6" intensity={0.8} />
+              <fog attach="fog" args={['#87CEEB', 10, 80]} />
+              <ambientLight intensity={1.2} color="#FFFFFF" />
+              <directionalLight position={[10, 15, 10]} intensity={1.8} color="#FFFFEE" castShadow />
+              <hemisphereLight color="#87CEEB" groundColor="#6B8E23" intensity={0.6} />
               
-              <mesh position={[0, -0.4, 0]} rotation={[-Math.PI/2, 0, 0]}>
-                <ringGeometry args={[2, 6, 32]} />
-                <meshBasicMaterial color="#E0E8E8" transparent opacity={0.3} />
+              {/* Soft Grass Floor */}
+              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.4, 0]}>
+                <planeGeometry args={[300, 300]} />
+                <meshStandardMaterial color="#88AA66" roughness={1.0} metalness={0.0} />
+              </mesh>
+
+              {/* Background Mountains */}
+              <StylizedMountain position={[-30, -5, -40]} scale={1.5} color="#4A6A50" />
+              <StylizedMountain position={[15, -2, -50]} scale={2.2} color="#55755A" />
+              <StylizedMountain position={[40, -10, -35]} scale={1.8} color="#65856A" />
+              <StylizedMountain position={[-50, -5, 20]} scale={1.2} color="#4A6A50" />
+
+              {/* Decorative Trees */}
+              <StylizedTree position={[-4, -0.4, -4]} scale={1.2} />
+              <StylizedTree position={[5, -0.4, -3]} scale={1.5} />
+              <StylizedTree position={[4, -0.4, 4]} scale={1.0} />
+              <StylizedTree position={[-5, -0.4, 3]} scale={1.3} />
+
+              {/* Subtle dirt/gravel display pad */}
+              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.39, 0]}>
+                <circleGeometry args={[4.2, 32]} />
+                <meshStandardMaterial color="#A99B85" roughness={1.0} metalness={0.0} />
               </mesh>
               
               <Suspense fallback={null}>
