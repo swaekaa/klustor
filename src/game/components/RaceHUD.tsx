@@ -2,7 +2,7 @@ import { getTrackData } from '../data/viceCoastCircuit';
 import { formatRaceTime } from '../hooks/useRaceState';
 import type { RacePhase } from '../hooks/useRaceState';
 import * as THREE from 'three';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 interface RaceHUDProps {
   phase: RacePhase;
@@ -15,6 +15,7 @@ interface RaceHUDProps {
   boost?: number;
   maxBoost?: number;
   isBoosting?: boolean;
+  lapSplits?: number[];
 }
 
 function BoostGauge({ boost = 1, maxBoost = 1, isBoosting = false }: { boost?: number, maxBoost?: number, isBoosting?: boolean }) {
@@ -62,9 +63,22 @@ function BoostGauge({ boost = 1, maxBoost = 1, isBoosting = false }: { boost?: n
 
 function Minimap({ currentCheckpoint, carPosition }: { currentCheckpoint: number; carPosition?: THREE.Vector3 }) {
   const trackData = useMemo(() => getTrackData(), []);
+  const [isExpanded, setIsExpanded] = useState(false);
   
-  const W = 150, H = 150;
-  const pad = 10;
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === 'm') setIsExpanded(prev => !prev);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  const W = isExpanded ? 600 : 180;
+  const H = isExpanded ? 600 : 180;
+  // Increase padding so it doesn't overlap the "TRACK MAP" title at the top left
+  const pad = isExpanded ? 80 : 15;
 
   // Calculate bounds
   const minX = Math.min(...trackData.samples.map(p => p.position.x));
@@ -74,9 +88,15 @@ function Minimap({ currentCheckpoint, carPosition }: { currentCheckpoint: number
 
   const scale = Math.min((W - pad * 2) / (maxX - minX || 1), (H - pad * 2) / (maxZ - minZ || 1));
 
+  // To center perfectly, calculate the actual SVG size of the track and offset it
+  const trackW = (maxX - minX) * scale;
+  const trackH = (maxZ - minZ) * scale;
+  const offsetX = (W - trackW) / 2;
+  const offsetY = (H - trackH) / 2;
+
   const toSVG = (x: number, z: number) => ({
-    svgX: (x - minX) * scale + pad,
-    svgY: (z - minZ) * scale + pad,
+    svgX: (x - minX) * scale + offsetX,
+    svgY: (z - minZ) * scale + offsetY,
   });
 
   const path = trackData.samples.map((p, i) => {
@@ -89,11 +109,50 @@ function Minimap({ currentCheckpoint, carPosition }: { currentCheckpoint: number
 
   const startPt = toSVG(trackData.samples[0].position.x, trackData.samples[0].position.z);
 
+  const containerStyle = isExpanded 
+    ? {
+        position: 'absolute' as const, top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+        background: 'var(--bg-secondary)', padding: '2rem', borderRadius: '32px',
+        border: '3px solid var(--klustor-cyan)', boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+        zIndex: 1000
+      }
+    : {
+        position: 'absolute' as const, bottom: '2rem', right: '2rem', 
+        background: 'var(--bg-secondary)', backdropFilter: 'blur(12px)',
+        padding: '1rem', borderRadius: '24px', 
+        border: '2px solid var(--border-light)', boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
+        zIndex: 10
+      };
+
   return (
-    <div style={{ position: 'absolute', bottom: '2rem', right: '2rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '24px', border: '1px solid var(--border-light)', boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
-      <svg width={W} height={H} style={{ display: 'block' }}>
-        <path d={path} fill="none" stroke="rgba(18,22,25,0.1)" strokeWidth="6" strokeLinejoin="round" />
-        <path d={path} fill="none" stroke="var(--klustor-cyan)" strokeWidth="3" strokeLinejoin="round" />
+    <div style={containerStyle}>
+      {isExpanded && (
+        <div className="font-display" style={{ position: 'absolute', top: '1.5rem', left: '2rem', fontSize: '1.5rem', color: 'var(--text-primary)' }}>
+          TRACK MAP
+        </div>
+      )}
+      <svg width={W} height={H} style={{ display: 'block', borderRadius: isExpanded ? '16px' : '12px', background: '#e0ecd3' /* Soft Green Land */ }}>
+        
+        {/* Water Inside the Track */}
+        <path d={path} fill="#cce8f4" /* Soft Blue Lake */ />
+
+        {/* Grid lines */}
+        {isExpanded && (
+          <g opacity={0.3}>
+            {Array.from({length: 10}).map((_, i) => (
+              <line key={`h${i}`} x1={0} y1={i * 60} x2={W} y2={i * 60} stroke="rgba(0,0,0,0.1)" strokeWidth={1} />
+            ))}
+            {Array.from({length: 10}).map((_, i) => (
+              <line key={`v${i}`} x1={i * 60} y1={0} x2={i * 60} y2={H} stroke="rgba(0,0,0,0.1)" strokeWidth={1} />
+            ))}
+          </g>
+        )}
+        
+        {/* Track Outline Base (Wide) */}
+        <path d={path} fill="none" stroke="rgba(0,0,0,0.1)" strokeWidth={isExpanded ? 16 : 8} strokeLinejoin="round" />
+        
+        {/* Track Core Line */}
+        <path d={path} fill="none" stroke="var(--klustor-cyan)" strokeWidth={isExpanded ? 4 : 2} strokeLinejoin="round" />
         
         {trackData.checkpoints.map((cp) => {
           if (cp.index === trackData.totalCheckpoints) return null; // Skip finish line for normal dots
@@ -104,21 +163,27 @@ function Minimap({ currentCheckpoint, carPosition }: { currentCheckpoint: number
               key={cp.id}
               cx={svgX}
               cy={svgY}
-              r={4}
-              fill={done ? 'var(--klustor-green)' : 'var(--bg-secondary)'}
-              stroke="var(--text-primary)"
+              r={isExpanded ? 6 : 4}
+              fill={done ? 'var(--klustor-green)' : 'var(--bg-primary)'}
+              stroke={done ? 'var(--klustor-green)' : 'var(--klustor-cyan)'}
               strokeWidth={2}
             />
           );
         })}
 
         {/* Start/Finish Line Indicator */}
-        <circle cx={startPt.svgX} cy={startPt.svgY} r={6}
-          fill="var(--klustor-pink)" stroke="var(--text-primary)" strokeWidth={2} />
+        <circle cx={startPt.svgX} cy={startPt.svgY} r={isExpanded ? 10 : 6}
+          fill="var(--klustor-pink)" stroke="var(--bg-secondary)" strokeWidth={isExpanded ? 3 : 2} />
 
         {/* Player Car Indicator */}
-        <circle cx={carSVGX} cy={carSVGY} r={6} fill="var(--klustor-yellow)" stroke="var(--text-primary)" strokeWidth={2} />
+        <circle cx={carSVGX} cy={carSVGY} r={isExpanded ? 10 : 6} fill="var(--klustor-yellow)" stroke="var(--text-primary)" strokeWidth={isExpanded ? 3 : 2} />
       </svg>
+      
+      {!isExpanded && (
+        <div className="font-mono" style={{ position: 'absolute', bottom: '1rem', right: '1rem', fontSize: '0.6rem', color: 'var(--text-muted)' }}>
+          PRESS 'M'
+        </div>
+      )}
     </div>
   );
 }
@@ -194,6 +259,67 @@ function AnalogSpeedometer({ speedKmh }: { speedKmh: number }) {
   );
 }
 
+function SplitsOverlay({ lapSplits = [] }: { lapSplits?: number[] }) {
+  const [showSplits, setShowSplits] = useState(false);
+  const trackData = useMemo(() => getTrackData(), []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        setShowSplits(true);
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        setShowSplits(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
+  if (!showSplits) return null;
+
+  return (
+    <div style={{
+      position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+      background: 'var(--bg-secondary)', backdropFilter: 'blur(8px)',
+      padding: '2rem', borderRadius: '32px', 
+      border: '2px solid var(--border-light)',
+      boxShadow: '0 16px 64px rgba(0,0,0,0.1)',
+      display: 'flex', flexDirection: 'column', gap: '1rem',
+      minWidth: '300px', zIndex: 500
+    }}>
+      <div className="font-display" style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text-primary)', letterSpacing: '0.1em', textAlign: 'center', marginBottom: '1rem' }}>
+        SECTOR TIMES
+      </div>
+      
+      {Array.from({ length: trackData.totalCheckpoints }).map((_, i) => {
+        const timeMs = lapSplits[i];
+        const prevTimeMs = i > 0 ? (lapSplits[i-1] || 0) : 0;
+        const sectorTime = timeMs ? timeMs - prevTimeMs : null;
+        
+        return (
+          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 1rem', background: 'var(--bg-primary)', borderRadius: '12px' }}>
+            <div className="font-mono" style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>
+              SECTOR {i + 1}
+            </div>
+            <div className="font-mono" style={{ fontSize: '1.2rem', fontWeight: 'bold', color: sectorTime ? 'var(--text-primary)' : 'rgba(0,0,0,0.2)' }}>
+              {sectorTime ? formatRaceTime(sectorTime) : '--:--.--'}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function ControlsLegend() {
   return (
     <div style={{ 
@@ -214,6 +340,8 @@ function ControlsLegend() {
         { key: 'S / ↓', action: 'BRAKE / REVERSE' },
         { key: 'A D / ← →', action: 'STEER' },
         { key: 'SHIFT', action: 'NOS BOOST', color: 'var(--klustor-pink)' },
+        { key: 'TAB', action: 'VIEW SPLITS' },
+        { key: 'M', action: 'MAP', color: 'var(--klustor-cyan)' },
         { key: 'R', action: 'RESET TO TRACK' },
         { key: 'ESC', action: 'PAUSE' }
       ].map(ctrl => (
@@ -236,7 +364,7 @@ function ControlsLegend() {
 
 export default function RaceHUD({ 
   phase, countdown, lapTimeMs, speed, currentCheckpoint, latestSplitDiff, carPosition,
-  boost, maxBoost, isBoosting
+  boost, maxBoost, isBoosting, lapSplits
 }: RaceHUDProps) {
   const speedKmh = Math.round(Math.abs(speed) * 3.6);
   const trackData = useMemo(() => getTrackData(), []);
@@ -330,6 +458,7 @@ export default function RaceHUD({
         </div>
       </div>
 
+      <SplitsOverlay lapSplits={lapSplits} />
       <ControlsLegend />
 
       <Minimap currentCheckpoint={currentCheckpoint} carPosition={carPosition} />

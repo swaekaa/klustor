@@ -11,6 +11,7 @@ export function useEngineSound(speed: number, isBoosting: boolean, phase: string
   const filterNodeRef = useRef<BiquadFilterNode | null>(null);
   
   const initialized = useRef(false);
+  const fakeSpeedRef = useRef(0);
 
   useEffect(() => {
     // Only init when race starts or countdown begins
@@ -75,16 +76,27 @@ export function useEngineSound(speed: number, isBoosting: boolean, phase: string
 
     const absSpeed = Math.abs(speed);
     
+    // Artificially accumulate speed when at top speed to force extra shifts
+    if (absSpeed > 20) {
+      // Max 4 extra shifts (48 units) over time
+      fakeSpeedRef.current = Math.min(fakeSpeedRef.current + 0.05, 48); 
+    } else {
+      // Decay quickly when braking/slowing down to simulate downshifts
+      fakeSpeedRef.current = Math.max(0, fakeSpeedRef.current - 0.2);
+    }
+    
+    const effectiveSpeed = absSpeed + fakeSpeedRef.current;
+
     // Simulate gears
     // Max speed is roughly 60 m/s. Let's make gears every 12 m/s.
     const GEAR_RATIO = 12;
-    const speedInGear = absSpeed % GEAR_RATIO;
-    const gear = Math.floor(absSpeed / GEAR_RATIO) + 1;
+    const speedInGear = effectiveSpeed % GEAR_RATIO;
+    const gear = Math.floor(effectiveSpeed / GEAR_RATIO) + 1;
     
     // Base frequency for idle is around 50Hz.
     // Speed adds to the frequency linearly within the current gear.
     // When boosting, we multiply the frequency to simulate high RPMs.
-    const baseFreq = 50 + (speedInGear * 6) + (gear * 5); 
+    const baseFreq = 50 + (speedInGear * 6) + (gear * 3); 
     const targetFreq = isBoosting ? baseFreq * 1.5 : baseFreq;
 
     // Filter opens up at high speeds / boost for a more aggressive scream

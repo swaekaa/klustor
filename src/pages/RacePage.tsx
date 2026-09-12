@@ -350,6 +350,7 @@ export default function RacePage() {
           isBoosting={physicsState.isBoosting}
           currentCheckpoint={currentCheckpoint}
           latestSplitDiff={latestSplitDiff}
+          lapSplits={lapSplits}
           carPosition={carPosition}
         />
       )}
