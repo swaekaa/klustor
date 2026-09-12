@@ -221,7 +221,7 @@ export default function RacePage() {
   useEngineSound(phase);
   
   // Start radio hook
-  const { isPlaying: isRadioPlaying } = useRadio(isRacing);
+  const { isPlaying: isRadioPlaying } = useRadio(isRacing || phase === 'countdown');
 
   // Start race on mount
   useEffect(() => {

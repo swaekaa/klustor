@@ -1,22 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
 
-// Using Nightride FM - an ad-free 24/7 synthwave internet radio (perfect for a Miami racing game)
-const RADIO_URL = 'https://stream.nightride.fm/nightride.m4a';
+// Using a reliable test MP3 stream to verify playback, as the previous stream may have been dead
+const RADIO_URL = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
 
 export function useRadio(isActive: boolean) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const isPlayingRef = useRef(false);
 
   // Initialize the audio element once
   useEffect(() => {
-    const audio = new Audio(RADIO_URL);
-    audio.crossOrigin = "anonymous";
-    audio.loop = false; // Internet radio stream doesn't need to loop
-    audio.volume = 0.4;
+    const audio = new Audio();
+    audio.src = RADIO_URL;
+    audio.loop = false;
+    audio.volume = 0.5;
     audioRef.current = audio;
 
     return () => {
       audio.pause();
+      audio.src = '';
       audioRef.current = null;
     };
   }, []);
@@ -32,17 +34,28 @@ export function useRadio(isActive: boolean) {
       }
 
       if (e.key.toLowerCase() === 'b') {
-        setIsPlaying(prev => {
-          const next = !prev;
-          if (next && audioRef.current) {
-            // When turning back on, it's best to reload the stream so it doesn't play old buffered audio
-            audioRef.current.load();
-            audioRef.current.play().catch(err => console.warn('[KLUSTOR] Radio play failed', err));
-          } else if (audioRef.current) {
-            audioRef.current.pause();
+        const audio = audioRef.current;
+        if (!audio) return;
+
+        // Perform audio logic DIRECTLY in the event listener (critical for browser autoplay policies)
+        if (!isPlayingRef.current) {
+          // Play
+          const playPromise = audio.play();
+          if (playPromise !== undefined) {
+            playPromise.then(() => {
+              isPlayingRef.current = true;
+              setIsPlaying(true);
+            }).catch(err => {
+              console.error('[KLUSTOR] Radio play blocked by browser:', err);
+              setIsPlaying(false);
+            });
           }
-          return next;
-        });
+        } else {
+          // Pause
+          audio.pause();
+          isPlayingRef.current = false;
+          setIsPlaying(false);
+        }
       }
     };
 
@@ -52,11 +65,12 @@ export function useRadio(isActive: boolean) {
 
   // Pause if game is paused/not active
   useEffect(() => {
-    if (!isActive && isPlaying && audioRef.current) {
+    if (!isActive && isPlayingRef.current && audioRef.current) {
       audioRef.current.pause();
+      isPlayingRef.current = false;
       setIsPlaying(false);
     }
-  }, [isActive, isPlaying]);
+  }, [isActive]);
 
   return { isPlaying };
 }
