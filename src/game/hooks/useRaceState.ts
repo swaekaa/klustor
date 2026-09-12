@@ -37,14 +37,43 @@ export function useRaceState(bestSplits: number[] = []) {
   }, []);
 
   // ── Countdown interval ──────────────────────────────────────
+  const lastBeepRef = useRef<number | null>(null);
+
   useEffect(() => {
-    if (phase !== 'countdown') return;
+    if (phase !== 'countdown') {
+      lastBeepRef.current = null;
+      return;
+    }
+
+    const playBeep = (isGo: boolean) => {
+      try {
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine'; // Soft, smooth tone without harsh buzzing
+        osc.frequency.setValueAtTime(isGo ? 880 : 440, ctx.currentTime);
+        // Very soft volume
+        gain.gain.setValueAtTime(0.02, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (isGo ? 0.6 : 0.15));
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + (isGo ? 0.8 : 0.2));
+      } catch (e) {}
+    };
 
     const interval = setInterval(() => {
       if (countdownStartRef.current === null) return;
       const elapsed = (Date.now() - countdownStartRef.current) / 1000;
       const remaining = Math.max(0, 3 - Math.floor(elapsed));
       setCountdown(remaining);
+
+      if (lastBeepRef.current !== remaining) {
+        lastBeepRef.current = remaining;
+        // 3, 2, 1 -> short beep, 0 -> long beep
+        if (remaining > 0) playBeep(false);
+        else if (remaining === 0 && elapsed < 4) playBeep(true);
+      }
 
       if (elapsed >= 4) {
         clearInterval(interval);

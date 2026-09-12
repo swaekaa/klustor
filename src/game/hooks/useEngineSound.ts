@@ -26,7 +26,7 @@ export function useEngineSound(phase: string) {
 
           // Master Gain (Volume)
           const masterGain = ctx.createGain();
-          masterGain.gain.value = 0.15; // Base volume
+          masterGain.gain.value = 0; // Start completely muted!
           masterGain.connect(ctx.destination);
           gainNodeRef.current = masterGain;
 
@@ -141,8 +141,8 @@ export function useEngineSound(phase: string) {
       }
 
       if (gainNodeRef.current) {
-        // Mute completely if paused/finished
-        if (phase !== 'racing' && phase !== 'countdown') {
+        // Mute completely if not actively racing (e.g. paused, finished, or countdown)
+        if (phase !== 'racing') {
           gainNodeRef.current.gain.setTargetAtTime(0, now, 0.1);
         } else {
           gainNodeRef.current.gain.setTargetAtTime(targetGain, now, 0.1);
