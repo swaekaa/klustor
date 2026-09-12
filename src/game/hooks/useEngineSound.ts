@@ -121,8 +121,11 @@ export function useEngineSound(phase: string) {
       // Keep filter relatively closed to muffle the bee-like high frequencies, unless boosting
       const targetFilterFreq = isBoosting ? 3000 : 300 + (absSpeed * 15);
       
-      // Lower volume globally per request.
-      const targetGain = isBoosting ? 0.1 : 0.04 + Math.min(absSpeed / 120, 0.04);
+      // Lower volume globally per request, and make it very quiet when idling
+      let targetGain = isBoosting ? 0.1 : 0.04 + Math.min(absSpeed / 120, 0.04);
+      if (absSpeed < 1 && !isBoosting) {
+        targetGain = 0.005; // Drop volume significantly when at zero
+      }
 
       const now = audioCtxRef.current.currentTime;
       
