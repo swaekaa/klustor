@@ -241,7 +241,7 @@ export default function DesignPage() {
           </div>
           
           <div style={{ flex: 1, background: 'var(--bg-secondary)', borderRadius: '24px', overflow: 'hidden', position: 'relative', boxShadow: '0 8px 24px rgba(0,0,0,0.05)', minHeight: '500px', border: '1px solid var(--border-light)' }}>
-            <Canvas camera={{ position: [0, 1.8, 5], fov: 45 }} gl={{ antialias: true, toneMapping: 1, toneMappingExposure: 1.2 }}>
+            <Canvas camera={{ position: [0, 2.2, 7.5], fov: 45 }} gl={{ antialias: true, toneMapping: 1, toneMappingExposure: 1.2 }}>
               <fog attach="fog" args={['#87CEEB', 10, 80]} />
               <ambientLight intensity={1.2} color="#FFFFFF" />
               <directionalLight position={[10, 15, 10]} intensity={1.8} color="#FFFFEE" castShadow />
