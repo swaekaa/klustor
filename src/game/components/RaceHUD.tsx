@@ -3,22 +3,22 @@ import { formatRaceTime } from '../hooks/useRaceState';
 import type { RacePhase } from '../hooks/useRaceState';
 import * as THREE from 'three';
 import { useMemo, useState, useEffect } from 'react';
+import { useTelemetryStore } from '../../store/telemetryStore';
 
 interface RaceHUDProps {
   phase: RacePhase;
   countdown: number;
   lapTimeMs: number;
-  speed: number;
   currentCheckpoint: number;
   latestSplitDiff?: number | null;
-  carPosition?: THREE.Vector3;
-  boost?: number;
-  maxBoost?: number;
-  isBoosting?: boolean;
   lapSplits?: number[];
 }
 
-function BoostGauge({ boost = 1, maxBoost = 1, isBoosting = false }: { boost?: number, maxBoost?: number, isBoosting?: boolean }) {
+function BoostGauge() {
+  const boost = useTelemetryStore(s => s.boost);
+  const maxBoost = useTelemetryStore(s => s.maxBoost);
+  const isBoosting = useTelemetryStore(s => s.isBoosting);
+
   // Boost is scaled relative to maxBoost capacity.
   // We'll show the actual fill compared to the total bar size (which represents 1.0 = perfect score).
   const pct = Math.min(100, Math.max(0, boost * 100));
@@ -61,9 +61,10 @@ function BoostGauge({ boost = 1, maxBoost = 1, isBoosting = false }: { boost?: n
   );
 }
 
-function Minimap({ currentCheckpoint, carPosition }: { currentCheckpoint: number; carPosition?: THREE.Vector3 }) {
+function Minimap({ currentCheckpoint }: { currentCheckpoint: number }) {
   const trackData = useMemo(() => getTrackData(), []);
   const [isExpanded, setIsExpanded] = useState(false);
+  const carPosition = useTelemetryStore(s => s.carPosition);
   
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -188,7 +189,9 @@ function Minimap({ currentCheckpoint, carPosition }: { currentCheckpoint: number
   );
 }
 
-function AnalogSpeedometer({ speedKmh }: { speedKmh: number }) {
+function AnalogSpeedometer() {
+  const speed = useTelemetryStore(s => s.speed);
+  const speedKmh = Math.round(Math.abs(speed) * 3.6);
   const maxSpeed = 300;
   const clampedSpeed = Math.min(Math.max(speedKmh, 0), maxSpeed);
   const angle = -120 + (clampedSpeed / maxSpeed) * 240;
@@ -363,10 +366,8 @@ function ControlsLegend() {
 }
 
 export default function RaceHUD({ 
-  phase, countdown, lapTimeMs, speed, currentCheckpoint, latestSplitDiff, carPosition,
-  boost, maxBoost, isBoosting, lapSplits
+  phase, countdown, lapTimeMs, currentCheckpoint, latestSplitDiff, lapSplits
 }: RaceHUDProps) {
-  const speedKmh = Math.round(Math.abs(speed) * 3.6);
   const trackData = useMemo(() => getTrackData(), []);
 
   return (
@@ -419,8 +420,8 @@ export default function RaceHUD({
           alignItems: 'center',
           width: '280px'
         }}>
-          <AnalogSpeedometer speedKmh={speedKmh} />
-          <BoostGauge boost={boost} maxBoost={maxBoost} isBoosting={isBoosting} />
+          <AnalogSpeedometer />
+          <BoostGauge />
         </div>
 
         {/* Checkpoint Panel */}
@@ -461,7 +462,7 @@ export default function RaceHUD({
       <SplitsOverlay lapSplits={lapSplits} />
       <ControlsLegend />
 
-      <Minimap currentCheckpoint={currentCheckpoint} carPosition={carPosition} />
+      <Minimap currentCheckpoint={currentCheckpoint} />
 
       {/* Countdown overlay */}
       {phase === 'countdown' && (

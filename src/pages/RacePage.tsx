@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 import { useGameStore } from '../store/gameStore';
+import { useTelemetryStore } from '../store/telemetryStore';
 import { RACE_REWARDS } from '../game/data/viceCoastCircuit';
 import { formatRaceTime, useRaceState } from '../game/hooks/useRaceState';
 import { useCarPhysics, type CarPhysicsState } from '../game/hooks/useCarPhysics';
@@ -39,8 +40,6 @@ interface RaceSceneProps {
   stats?: CarStats;
   phase: RacePhase;
   carRef: RefObject<THREE.Group>;
-  onSpeedUpdate: (s: number) => void;
-  onPositionUpdate: (p: THREE.Vector3) => void;
   checkCheckpoint: (pos: THREE.Vector3) => void;
 }
 
@@ -76,11 +75,9 @@ function FollowSun({ carRef }: { carRef: RefObject<THREE.Group> }) {
   );
 }
 
-function RaceScene({ textures, stats, phase, carRef, onPhysicsUpdate, onPositionUpdate, checkCheckpoint }: RaceSceneProps) {
+function RaceScene({ textures, stats, phase, carRef, checkCheckpoint }: RaceSceneProps) {
   const isRacing = phase === 'racing';
-  const { speedRef, steeringRef, resetToStart } = useCarPhysics(carRef, isRacing, stats, (state) => {
-    onPhysicsUpdate(state);
-  });
+  const { speedRef, steeringRef, resetToStart } = useCarPhysics(carRef, isRacing, stats);
 
   useEffect(() => {
     if (phase === 'countdown' || phase === 'prerace') {
@@ -90,7 +87,6 @@ function RaceScene({ textures, stats, phase, carRef, onPhysicsUpdate, onPosition
 
   useFrame(() => {
     if (carRef.current) {
-      onPositionUpdate(carRef.current.position.clone());
       checkCheckpoint(carRef.current.position);
     }
   });
@@ -209,9 +205,6 @@ export default function RacePage() {
 
   const carRef = useRef<THREE.Group>(null!);
   const [webglError, setWebglError] = useState(false);
-  const [physicsState, setPhysicsState] = useState<CarPhysicsState>({ speed: 0, steering: 0, boost: 1.0, maxBoost: 1.0, isBoosting: false });
-  const [maxSpeedSeen, setMaxSpeedSeen] = useState(0);
-  const [carPosition, setCarPosition] = useState<THREE.Vector3 | undefined>();
   const [raceStarted, setRaceStarted] = useState(false);
 
   const {
@@ -221,28 +214,23 @@ export default function RacePage() {
 
   const isRacing = phase === 'racing';
   const prevBestTime = player.bestTime;
+  const maxSpeedSeen = useTelemetryStore(s => s.maxSpeedSeen);
 
   // Start engine audio
-  useEngineSound(physicsState.speed, physicsState.isBoosting, phase);
+  useEngineSound(phase);
 
   // Start race on mount
   useEffect(() => {
     if (!raceStarted && phase === 'prerace') {
       setRaceStarted(true);
-      setMaxSpeedSeen(0);
+      useTelemetryStore.getState().setTelemetry({ speed: 0, boost: 1.0, isBoosting: false, maxSpeedSeen: 0 });
       startCountdown();
     }
   }, [raceStarted, phase, startCountdown]);
 
-  // Track max speed
-  useEffect(() => {
-    if (isRacing) setMaxSpeedSeen(prev => Math.max(prev, Math.abs(physicsState.speed)));
-  }, [physicsState.speed, isRacing]);
-
   const handleRestart = useCallback(() => {
     restartRace();
-    setPhysicsState(prev => ({ ...prev, speed: 0, isBoosting: false }));
-    setMaxSpeedSeen(0);
+    useTelemetryStore.getState().setTelemetry({ speed: 0, isBoosting: false, maxSpeedSeen: 0 });
     startCountdown();
   }, [restartRace, startCountdown]);
 
@@ -293,8 +281,6 @@ export default function RacePage() {
             stats={stats}
             phase={phase}
             carRef={carRef}
-            onPhysicsUpdate={setPhysicsState}
-            onPositionUpdate={setCarPosition}
             checkCheckpoint={checkCheckpoint}
           />
         </Canvas>
@@ -344,14 +330,9 @@ export default function RacePage() {
           phase={phase}
           countdown={countdown}
           lapTimeMs={lapTimeMs}
-          speed={physicsState.speed}
-          boost={physicsState.boost}
-          maxBoost={physicsState.maxBoost}
-          isBoosting={physicsState.isBoosting}
           currentCheckpoint={currentCheckpoint}
           latestSplitDiff={latestSplitDiff}
           lapSplits={lapSplits}
-          carPosition={carPosition}
         />
       )}
 

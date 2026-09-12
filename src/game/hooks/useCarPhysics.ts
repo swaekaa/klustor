@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useKeyboardControls } from './useKeyboardControls';
 import { getTrackData, ROAD_WIDTH } from '../data/viceCoastCircuit';
+import { useTelemetryStore } from '../../store/telemetryStore';
 import type { CarStats } from '../../types';
 
 // ============================================================
@@ -80,7 +81,6 @@ export function useCarPhysics(
   carRef:    RefObject<THREE.Group>,
   isRacing:  boolean,
   stats?:    CarStats,
-  onUpdate?: (state: CarPhysicsState) => void,
 ) {
   const { isAnyPressed } = useKeyboardControls(isRacing);
   const lastNearestIdxRef = useRef<number>(-1);
@@ -228,12 +228,13 @@ export function useCarPhysics(
     }
 
     carRef.current.position.y = 0;
-    onUpdate?.({ 
+    
+    useTelemetryStore.getState().setTelemetry({ 
       speed: speedRef.current, 
-      steering: steeringRef.current,
       boost: boostRef.current,
       maxBoost: maxBoostCapacity,
-      isBoosting
+      isBoosting,
+      carPosition: carRef.current.position.clone()
     });
   });
 

@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react';
+import { useTelemetryStore } from '../../store/telemetryStore';
 
 // ============================================================
 // Synthetic V12 Engine Sound via Web Audio API
 // ============================================================
 
-export function useEngineSound(speed: number, isBoosting: boolean, phase: string) {
+export function useEngineSound(phase: string) {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const oscillatorsRef = useRef<OscillatorNode[]>([]);
   const gainNodeRef = useRef<GainNode | null>(null);
@@ -83,66 +84,69 @@ export function useEngineSound(speed: number, isBoosting: boolean, phase: string
     }
   }, [phase]);
 
-  // Update pitch and volume based on speed and boost
+  // Subscribe to telemetry store for high-frequency pitch and volume updates
   useEffect(() => {
-    if (!audioCtxRef.current || !initialized.current) return;
-    if (audioCtxRef.current.state === 'suspended') {
-      audioCtxRef.current.resume();
-    }
-
-    const absSpeed = Math.abs(speed);
-    
-    // Artificially accumulate speed when at top speed to force extra shifts indefinitely
-    if (absSpeed > 20) {
-      fakeSpeedRef.current += 0.05; 
-    } else {
-      // Decay quickly when braking/slowing down to simulate downshifts
-      fakeSpeedRef.current = Math.max(0, fakeSpeedRef.current - 0.2);
-    }
-    
-    const effectiveSpeed = absSpeed + fakeSpeedRef.current;
-
-    // Simulate gears
-    const GEAR_RATIO = 12;
-    const speedInGear = effectiveSpeed % GEAR_RATIO;
-    const gear = Math.floor(effectiveSpeed / GEAR_RATIO) + 1;
-    
-    // Cap the overall pitch addition from gears so it doesn't squeak infinitely, 
-    // but the speedInGear will keep wrapping around (shifting) forever!
-    const effectiveGear = Math.min(gear, 6); 
-    
-    // Lower base frequency to give it a heavier motor sound (35Hz idle) -> Increased back to 60Hz per user feedback
-    const baseFreq = 60 + (speedInGear * 7.5) + (effectiveGear * 6); 
-    const targetFreq = isBoosting ? baseFreq * 1.6 : baseFreq;
-
-    // Keep filter relatively closed to muffle the bee-like high frequencies, unless boosting
-    const targetFilterFreq = isBoosting ? 3000 : 300 + (absSpeed * 15);
-    
-    // Lower volume globally per request.
-    const targetGain = isBoosting ? 0.1 : 0.04 + Math.min(absSpeed / 120, 0.04);
-
-    const now = audioCtxRef.current.currentTime;
-    
-    // Smooth transitions for normal driving, but snap quickly on shifts
-    oscillatorsRef.current.forEach((osc, i) => {
-      // Triangle sub-bass (index 3) is an octave down
-      const freq = i === 3 ? targetFreq * 0.5 : targetFreq;
-      osc.frequency.setTargetAtTime(freq, now, 0.05);
-    });
-
-    if (filterNodeRef.current) {
-      filterNodeRef.current.frequency.setTargetAtTime(targetFilterFreq, now, 0.1);
-    }
-
-    if (gainNodeRef.current) {
-      // Mute completely if paused/finished
-      if (phase !== 'racing' && phase !== 'countdown') {
-        gainNodeRef.current.gain.setTargetAtTime(0, now, 0.1);
-      } else {
-        gainNodeRef.current.gain.setTargetAtTime(targetGain, now, 0.1);
+    return useTelemetryStore.subscribe((state) => {
+      if (!audioCtxRef.current || !initialized.current) return;
+      if (audioCtxRef.current.state === 'suspended') {
+        audioCtxRef.current.resume();
       }
-    }
-  }, [speed, isBoosting, phase]);
+
+      const { speed, isBoosting } = state;
+      const absSpeed = Math.abs(speed);
+      
+      // Artificially accumulate speed when at top speed to force extra shifts indefinitely
+      if (absSpeed > 20) {
+        fakeSpeedRef.current += 0.05; 
+      } else {
+        // Decay quickly when braking/slowing down to simulate downshifts
+        fakeSpeedRef.current = Math.max(0, fakeSpeedRef.current - 0.2);
+      }
+      
+      const effectiveSpeed = absSpeed + fakeSpeedRef.current;
+
+      // Simulate gears
+      const GEAR_RATIO = 12;
+      const speedInGear = effectiveSpeed % GEAR_RATIO;
+      const gear = Math.floor(effectiveSpeed / GEAR_RATIO) + 1;
+      
+      // Cap the overall pitch addition from gears so it doesn't squeak infinitely, 
+      // but the speedInGear will keep wrapping around (shifting) forever!
+      const effectiveGear = Math.min(gear, 6); 
+      
+      // Lower base frequency to give it a heavier motor sound (35Hz idle) -> Increased back to 60Hz per user feedback
+      const baseFreq = 60 + (speedInGear * 7.5) + (effectiveGear * 6); 
+      const targetFreq = isBoosting ? baseFreq * 1.6 : baseFreq;
+
+      // Keep filter relatively closed to muffle the bee-like high frequencies, unless boosting
+      const targetFilterFreq = isBoosting ? 3000 : 300 + (absSpeed * 15);
+      
+      // Lower volume globally per request.
+      const targetGain = isBoosting ? 0.1 : 0.04 + Math.min(absSpeed / 120, 0.04);
+
+      const now = audioCtxRef.current.currentTime;
+      
+      // Smooth transitions for normal driving, but snap quickly on shifts
+      oscillatorsRef.current.forEach((osc, i) => {
+        // Triangle sub-bass (index 3) is an octave down
+        const freq = i === 3 ? targetFreq * 0.5 : targetFreq;
+        osc.frequency.setTargetAtTime(freq, now, 0.05);
+      });
+
+      if (filterNodeRef.current) {
+        filterNodeRef.current.frequency.setTargetAtTime(targetFilterFreq, now, 0.1);
+      }
+
+      if (gainNodeRef.current) {
+        // Mute completely if paused/finished
+        if (phase !== 'racing' && phase !== 'countdown') {
+          gainNodeRef.current.gain.setTargetAtTime(0, now, 0.1);
+        } else {
+          gainNodeRef.current.gain.setTargetAtTime(targetGain, now, 0.1);
+        }
+      }
+    });
+  }, [phase]);
 
   // Cleanup on unmount
   useEffect(() => {
