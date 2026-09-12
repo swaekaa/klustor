@@ -42,12 +42,18 @@ export function useKeyboardControls(isActive: boolean) {
       pressedKeys.current.delete(e.code);
     };
 
+    const handleBlur = () => {
+      pressedKeys.current.clear();
+    };
+
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleBlur);
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleBlur);
       pressedKeys.current.clear();
     };
   }, []); // Empty deps: register once, use ref for isActive

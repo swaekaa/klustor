@@ -2,7 +2,6 @@ import { useRef, useState, useCallback, useEffect, Component, type ErrorInfo, ty
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import * as THREE from 'three';
 
 import { useGameStore } from '../store/gameStore';
 import { RACE_REWARDS } from '../game/data/viceCoastCircuit';
@@ -10,7 +9,8 @@ import { formatRaceTime, useRaceState } from '../game/hooks/useRaceState';
 import { useCarPhysics } from '../game/hooks/useCarPhysics';
 import PlayerCar from '../game/components/PlayerCar';
 import Track from '../game/components/Track';
-import MiamiEnvironment from '../game/components/MiamiEnvironment';
+import ViceCoastEnvironment from '../game/components/ViceCoastEnvironment';
+import { getTrackData } from '../game/data/viceCoastCircuit';
 import RaceCamera from '../game/components/RaceCamera';
 import RaceHUD from '../game/components/RaceHUD';
 import type { CarStats, TemplateView } from '../types';
@@ -59,28 +59,34 @@ function RaceScene({ textures, stats, isRacing, carRef, onSpeedUpdate, onPositio
     }
   });
 
+
+  // Player start position derived from authoritative track data
+  const { startTransform } = getTrackData();
+  const { position: sPos } = startTransform;
+
   return (
     <>
-      <ambientLight intensity={1.0} color="#FFFFFF" />
-      <directionalLight position={[-50, 80, -50]} intensity={1.2} color="#FFFFFF" castShadow={false} />
-      <hemisphereLight color="#FFFFFF" groundColor="#EAF2B6" intensity={0.6} />
-      <fog attach="fog" args={['#EAF2B6', 80, 300]} />
+      {/* Warm golden-hour ambient */}
+      <ambientLight intensity={0.75} color="#FFF0D8" />
+      {/* Main sun — low angle from west (side-lighting for depth) */}
+      <directionalLight position={[80, 60, -40]} intensity={1.6} color="#FFE8B8" castShadow={false} />
+      {/* Fill from opposite side — cooler */}
+      <directionalLight position={[-60, 30, 40]} intensity={0.4} color="#B8D8FF" castShadow={false} />
+      {/* Hemisphere sky/ground */}
+      <hemisphereLight color="#E8F4FF" groundColor="#C8B880" intensity={0.55} />
+      {/* Warm fog matching beach grass color */}
+      <fog attach="fog" args={['#D5E8C0', 120, 380]} />
 
       <Track />
-      <MiamiEnvironment />
+      <ViceCoastEnvironment />
 
-      {/* Starting Grid: Opponents */}
-      <PlayerCar position={[-3.5, 0, 10]} color="#FF9999" />
-      <PlayerCar position={[3.5, 0, 6]} color="#9999FF" />
-      <PlayerCar position={[-3.5, 0, 2]} color="#99FF99" />
-
-      {/* Player Car */}
+      {/* Player Car — initial position matches resetToStart() */}
       <PlayerCar
         groupRef={carRef}
         textures={textures}
         speed={speedRef.current}
         steering={steeringRef.current}
-        position={[0, 0, 10]} // Start at front of grid
+        position={[sPos.x, 0, sPos.z]}
       />
 
       <RaceCamera carRef={carRef} isActive={isRacing} />

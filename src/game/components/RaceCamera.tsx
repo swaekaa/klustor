@@ -13,10 +13,10 @@ interface RaceCameraProps {
   isActive: boolean;
 }
 
-const CAMERA_DISTANCE = 9;
-const CAMERA_HEIGHT = 5;
-const CAMERA_SMOOTHING = 4.5; // higher = snappier
-const LOOK_AHEAD = 6; // how far ahead of car camera looks
+const CAMERA_DISTANCE  = 12;   // further back to show more environment
+const CAMERA_HEIGHT    = 6;    // slightly higher — shows road ahead
+const CAMERA_SMOOTHING = 5;    // snappier following
+const LOOK_AHEAD       = 8;    // look further ahead for readability
 
 export default function RaceCamera({ carRef, isActive }: RaceCameraProps) {
   const { camera } = useThree();
