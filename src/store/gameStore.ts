@@ -104,7 +104,7 @@ export const useGameStore = create<GameState>()(
       },
     }),
     {
-      name: 'klustor-racing-v1',
+      name: 'klustor-racing-v2',
       storage: {
         getItem: (name) => {
           const str = localStorage.getItem(name);

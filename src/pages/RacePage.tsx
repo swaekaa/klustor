@@ -181,7 +181,7 @@ export default function RacePage() {
 
   const {
     phase, countdown, lapTimeMs, currentCheckpoint,
-    startCountdown, restartRace, checkCheckpoint,
+    startCountdown, restartRace, checkCheckpoint, pauseRace, resumeRace
   } = useRaceState();
 
   const isRacing = phase === 'racing';
@@ -207,6 +207,18 @@ export default function RacePage() {
     setMaxSpeedSeen(0);
     startCountdown();
   }, [restartRace, startCountdown]);
+
+  // Handle Escape key to pause
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (phase === 'racing' || phase === 'countdown') pauseRace();
+        else if (phase === 'paused') resumeRace();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [phase, pauseRace, resumeRace]);
 
   const handleRedesign = useCallback(() => navigate('/design'), [navigate]);
 
@@ -248,6 +260,45 @@ export default function RacePage() {
             checkCheckpoint={checkCheckpoint}
           />
         </Canvas>
+
+        {phase === 'paused' && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            style={{ 
+              position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', zIndex: 50 
+            }}
+          >
+            <div className="panel" style={{ width: '400px', textAlign: 'center', background: 'var(--bg-secondary)', padding: '3rem', borderRadius: '24px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+              <h2 className="font-display" style={{ fontSize: '2.5rem', marginBottom: '2rem' }}>PAUSED</h2>
+              
+              <button 
+                className="btn-retro" 
+                onClick={resumeRace}
+                style={{ width: '100%', marginBottom: '1rem' }}
+              >
+                RESUME
+              </button>
+              
+              <button 
+                className="btn-retro" 
+                onClick={handleRestart}
+                style={{ width: '100%', marginBottom: '1rem' }}
+              >
+                RESTART RACE
+              </button>
+              
+              <button 
+                className="btn-retro" 
+                onClick={() => navigate('/')}
+                style={{ width: '100%', background: 'transparent', color: 'var(--text-primary)', border: '2px solid var(--border-color)' }}
+              >
+                QUIT TO GARAGE
+              </button>
+            </div>
+          </motion.div>
+        )}
       </RaceErrorBoundary>
 
       {(phase === 'racing' || phase === 'countdown') && (
