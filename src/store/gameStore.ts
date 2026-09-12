@@ -89,6 +89,14 @@ export const useGameStore = create<GameState>()(
         set({ currentLivery: livery });
       },
 
+      updateLiveryName: (name: string) => {
+        set((state) => ({
+          currentLivery: state.currentLivery 
+            ? { ...state.currentLivery, name }
+            : { name, textures: {}, stats: defaultStats(), createdAt: new Date().toISOString() }
+        }));
+      },
+
       // ── Record a completed race ───────────────────────────
       recordRaceResult: (time: number, topSpeed: number, splits: number[]) => {
         const state = get();

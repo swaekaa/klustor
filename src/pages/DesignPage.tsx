@@ -103,6 +103,7 @@ export default function DesignPage() {
   const [selectedView, setSelectedView] = useState<TemplateView>('left');
   const [templateUrl, setTemplateUrl] = useState<string>('');
   
+  const [liveryName, setLiveryName] = useState<string>(currentLivery?.name || 'MY RIDE');
   const [textures, setTextures] = useState<Partial<Record<TemplateView, string>>>(currentLivery?.textures ?? {});
   const [stats, setStats] = useState<CarStats>(currentLivery?.stats ?? defaultStats());
   const [isSaving, setIsSaving] = useState(false);
@@ -119,13 +120,13 @@ export default function DesignPage() {
       
       const computed = await analyzeAllFaces(newTextures, getCarTemplateUrl);
       setStats(computed);
-      saveLiveryFace(dataUrl, selectedView, computed, 'MY RIDE');
+      saveLiveryFace(dataUrl, selectedView, computed, liveryName);
     } catch (err) {
       console.error('Save failed:', err);
     } finally {
       setIsSaving(false);
     }
-  }, [selectedView, textures, saveLiveryFace]);
+  }, [selectedView, textures, saveLiveryFace, liveryName]);
 
   const VIEWS: { id: TemplateView; label: string }[] = [
     { id: 'left', label: 'LEFT SIDE' },
@@ -141,7 +142,7 @@ export default function DesignPage() {
     : '--:--.--';
 
   return (
-    <div className="page" style={{ padding: '2rem 4rem', background: 'var(--bg-primary)', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+    <div className="page" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       
       {/* 1. MINIMAL HEADER & NAV */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '3rem', width: '100%' }}>
@@ -165,7 +166,40 @@ export default function DesignPage() {
         {/* LEFT: LIVERY STUDIO */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
-            <h2 className="font-display" style={{ fontSize: '2rem', marginBottom: '0.2rem' }}>LIVERY STUDIO</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 className="font-display" style={{ fontSize: '2rem', marginBottom: '0.2rem' }}>LIVERY STUDIO</h2>
+              <input 
+                type="text" 
+                value={liveryName}
+                onChange={(e) => {
+                  const val = e.target.value.toUpperCase();
+                  setLiveryName(val);
+                  useGameStore.getState().updateLiveryName(val);
+                }}
+                placeholder="NAME YOUR RIDE..."
+                maxLength={16}
+                className="font-display"
+                style={{ 
+                  background: 'var(--klustor-pink)', border: 'none', borderRadius: '999px', 
+                  padding: '0.5rem 1.5rem', fontSize: '1.2rem', textAlign: 'center', outline: 'none', color: '#fff',
+                  boxShadow: '0 4px 12px rgba(255,105,180,0.4)',
+                  transition: 'all 0.2s ease',
+                  letterSpacing: '0.05em'
+                }} 
+                onFocus={(e) => {
+                  e.target.style.transform = 'scale(1.05)';
+                  e.target.style.boxShadow = '0 6px 16px rgba(255,105,180,0.6)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.transform = 'scale(1)';
+                  e.target.style.boxShadow = '0 4px 12px rgba(255,105,180,0.4)';
+                  if (!e.target.value.trim()) {
+                    setLiveryName('MY RIDE');
+                    useGameStore.getState().updateLiveryName('MY RIDE');
+                  }
+                }}
+              />
+            </div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Design your ride. More style = more speed.</div>
           </div>
           

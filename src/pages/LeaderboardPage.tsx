@@ -77,8 +77,10 @@ export default function LeaderboardPage() {
                     ) : (
                       <div style={{ width: '80px', height: '40px', background: 'white', borderRadius: '8px', border: '2px solid var(--text-primary)' }} />
                     )}
-                    <div className="font-display" style={{ fontSize: '1.25rem', fontWeight: 700 }}>
-                      {record.driverName}
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <div className="font-display" style={{ fontSize: '1.25rem', fontWeight: 700 }}>
+                        {record.liveryName || 'MY RIDE'}
+                      </div>
                     </div>
                   </div>
 
