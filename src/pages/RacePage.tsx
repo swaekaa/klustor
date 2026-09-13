@@ -223,7 +223,7 @@ export default function RacePage() {
   } = useRaceState(player.bestSplits);
 
   const isRacing = phase === 'racing';
-  const prevBestTime = player.bestTime;
+  const frozenBestTime = useRef(player.bestTime);
   const maxSpeedSeen = useTelemetryStore(s => s.maxSpeedSeen);
 
   // Start engine audio
@@ -236,16 +236,20 @@ export default function RacePage() {
   useEffect(() => {
     if (!raceStarted && phase === 'prerace') {
       setRaceStarted(true);
+      frozenBestTime.current = player.bestTime;
       useTelemetryStore.getState().setTelemetry({ speed: 0, boost: 1.0, isBoosting: false, maxSpeedSeen: 0 });
       startCountdown();
     }
-  }, [raceStarted, phase, startCountdown]);
+  }, [raceStarted, phase, startCountdown, player.bestTime]);
 
   const handleRestart = useCallback(() => {
     restartRace();
+    frozenBestTime.current = player.bestTime;
     useTelemetryStore.getState().setTelemetry({ speed: 0, isBoosting: false, maxSpeedSeen: 0 });
     startCountdown();
-  }, [restartRace, startCountdown]);
+  }, [restartRace, startCountdown, player.bestTime]);
+
+  const prevBestTime = frozenBestTime.current;
 
   // Handle Escape key to pause
   useEffect(() => {
