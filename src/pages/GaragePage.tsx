@@ -112,8 +112,8 @@ export default function GaragePage() {
     return `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}.${String(cs).padStart(2,'0')}`;
   };
 
-  // Top 3 race records sorted by time
-  const topRecords = [...raceRecords].sort((a, b) => a.time - b.time).slice(0, 3);
+  // Top 10 race records sorted by time
+  const topRecords = [...raceRecords].sort((a, b) => a.time - b.time).slice(0, 10);
 
   return (
     <div className="page" style={{ display: 'flex', flexDirection: 'column', height: '100vh', padding: '1rem', background: 'var(--bg-primary)', overflow: 'hidden' }}>
@@ -290,30 +290,32 @@ export default function GaragePage() {
         </div>
 
         {/* Mini leaderboard */}
-        <div className="panel" style={{ flex: '1', minHeight: 0, overflow: 'hidden' }}>
-          <div style={{ fontFamily: 'Trebuchet MS,sans-serif', fontWeight: 'bold', fontSize: '0.9rem', letterSpacing: '0.08em', color: 'var(--text-primary)', marginBottom: '0.75rem' }}>
+        <div className="panel" style={{ flex: '1', minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ fontFamily: 'Trebuchet MS,sans-serif', fontWeight: 'bold', fontSize: '0.9rem', letterSpacing: '0.08em', color: 'var(--text-primary)', marginBottom: '0.75rem', flexShrink: 0 }}>
             LEADERBOARD
           </div>
-          {topRecords.length === 0 ? (
-            <div style={{ fontFamily: 'Consolas,monospace', fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>
-              NO RECORDS YET.<br/>BE THE FIRST.
-            </div>
-          ) : (
-            topRecords.map((r, i) => (
-              <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', padding: '0.4rem 0.5rem', background: !r.isNPC ? 'rgba(143,213,209,0.15)' : 'transparent', borderRadius: '8px' }}>
-                <span style={{ fontFamily: 'Trebuchet MS,sans-serif', fontWeight: 'bold', fontSize: '0.8rem', color: i === 0 ? '#FFD700' : 'var(--text-muted)', minWidth: '16px' }}>{i + 1}</span>
-                {r.liveryTextures?.left ? (
-                  <img src={r.liveryTextures.left} alt="" style={{ width: '32px', height: '20px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border-light)' }} />
-                ) : (
-                  <div style={{ width: '32px', height: '20px', background: 'var(--bg-secondary)', borderRadius: '4px', border: '1px solid var(--border-light)' }} />
-                )}
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: 'Trebuchet MS,sans-serif', fontWeight: 'bold', fontSize: '0.72rem', color: 'var(--text-primary)' }}>{r.driverName}</div>
-                </div>
-                <span style={{ fontFamily: 'Consolas,monospace', fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{formatTime(r.time)}</span>
+          <div style={{ flex: 1, overflowY: 'auto', paddingRight: '0.5rem' }}>
+            {topRecords.length === 0 ? (
+              <div style={{ fontFamily: 'Consolas,monospace', fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>
+                NO RECORDS YET.<br/>BE THE FIRST.
               </div>
-            ))
-          )}
+            ) : (
+              topRecords.map((r, i) => (
+                <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', padding: '0.4rem 0.5rem', background: !r.isNPC ? 'rgba(143,213,209,0.15)' : 'transparent', borderRadius: '8px' }}>
+                  <span style={{ fontFamily: 'Trebuchet MS,sans-serif', fontWeight: 'bold', fontSize: '0.8rem', color: i === 0 ? '#FFD700' : 'var(--text-muted)', minWidth: '16px' }}>{i + 1}</span>
+                  {r.liveryTextures?.left ? (
+                    <img src={r.liveryTextures.left} alt="" style={{ width: '32px', height: '20px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border-light)' }} />
+                  ) : (
+                    <div style={{ width: '32px', height: '20px', background: 'var(--bg-secondary)', borderRadius: '4px', border: '1px solid var(--border-light)' }} />
+                  )}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontFamily: 'Trebuchet MS,sans-serif', fontWeight: 'bold', fontSize: '0.72rem', color: 'var(--text-primary)' }}>{r.driverName}</div>
+                  </div>
+                  <span style={{ fontFamily: 'Consolas,monospace', fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{formatTime(r.time)}</span>
+                </div>
+              ))
+            )}
+          </div>
           <button
             onClick={() => navigate('/leaderboard')}
             style={{ width: '100%', marginTop: '0.5rem', padding: '0.5rem', background: 'transparent', border: '1px solid var(--border-light)', borderRadius: '8px', fontFamily: 'Consolas,monospace', fontSize: '0.7rem', color: 'var(--text-muted)', cursor: 'pointer', letterSpacing: '0.05em' }}
