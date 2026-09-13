@@ -1,212 +1,175 @@
-# THE PHOTO NEVER LIES
+# 🏎️ KLUSTOR
 
-> One photo. Multiple stories. Your choices change what happens next.
+> **Design your ride. Hit the track. More style = more speed.**
 
-**THE PHOTO NEVER LIES** is an interactive narrative investigation game set in the fictional neon-coastal city of Vice City. Built for the **Build with React Image Editor Challenge**.
-
----
-
-## 🎮 Concept
-
-You play an independent investigator who receives mysterious photographs connected to crimes, scandals, and disappearances. The twist: **the image editor IS the gameplay.**
-
-Instead of simply uploading and downloading an image, you **inspect evidence** using the Unlayer React Image Editor:
-- Crop suspicious regions to isolate details
-- Draw circles around objects of interest
-- Add arrows and text as investigator notes
-- Apply filters to reveal hidden information
-- The results of your investigation unlock clues, suspects, locations, and story progression
+**KLUSTOR** is a next-generation, web-based 3D arcade racing game and livery design studio. Built entirely in the browser using **React Three Fiber**, **Three.js**, and the **Unlayer React Image Editor**, it bridges the gap between creative visual expression and high-speed gameplay.
 
 ---
 
-## ✨ Features
+## 🎮 The Core Mechanic: "Edit Images to Go Faster"
 
-- 🔍 **5 original evidence photographs** — neon-noir coastal city scenes
-- 🎨 **Unlayer React Image Editor** integrated as the core investigation mechanic
-- 🗺️ **Evidence Board** — visual node graph of discovered connections
-- 📖 **Branching narrative** — 4 decisions, 4 different endings
-- 🏆 **Player progression** — Reputation and Heat stats
-- 💾 **Persistent edits** — your annotated images appear on the final results screen
-- 🎬 **Cinematic UI** — neon-noir design, film grain, CRT scanlines, Framer Motion animations
+In most racing games, car customization is purely cosmetic. **In KLUSTOR, your design dictates your performance.**
+
+We built an algorithmic analyzer that reads the 2D canvas data of your custom livery. The more complex, vibrant, and detailed your design is, the higher your **Design Score**.
+
+- **Top Speed** scales with color variance and brightness.
+- **Acceleration** improves based on the density of stickers and text.
+- **Handling** tightens when you paint over the default template.
+
+**You can't just pick a fast car; you have to *design* a fast car.**
 
 ---
 
-## 🖼️ Why React Image Editor?
+## 🧩 How Unlayer Powers the Gameplay
 
-The [Unlayer React Image Editor](https://github.com/unlayer/react-image-editor) is central to the experience, not a secondary feature:
+The [Unlayer React Image Editor](https://github.com/unlayer/react-image-editor) isn't just an add-on; it is the core progression engine of the game. We repurpose a powerful image editor into a **3D Texture Painting Studio**.
 
-```
-RAW EVIDENCE PHOTO
-        ↓
-USER OPENS UNLAYER REACT IMAGE EDITOR
-        ↓
-USER CROPS / DRAWS / ANNOTATES THE PHOTO
-        ↓
-USER CLICKS SAVE
-        ↓
-THE GAME RESPONDS — CLUE DISCOVERY ANIMATION
-        ↓
-EVIDENCE BOARD UPDATES WITH NEW CONNECTIONS
-        ↓
-EDITED IMAGE PERSISTS TO THE FINAL RESULTS SCREEN
+### The Texture Pipeline
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Unlayer as Unlayer React Image Editor
+    participant Engine as KLUSTOR Analysis Engine
+    participant R3F as React Three Fiber (3D)
+    
+    User->>Unlayer: Adds decals, text, and paint to 2D car template
+    Unlayer-->>User: Provides rich UI (shapes, drawing, filters)
+    User->>Unlayer: Clicks "Save Design"
+    Unlayer->>Engine: Exports Base64 Image Data (Data URL)
+    Engine->>Engine: Analyzes pixels for Complexity, Color Variance, Edge Density
+    Engine-->>R3F: Calculates Car Stats (Speed/Handling) based on analysis
+    Engine->>R3F: Applies Base64 Image as a dynamic 3D Material Texture
+    R3F->>User: Renders the custom car on the 3D Race Track instantly!
 ```
 
-This creates the sensation of a real detective investigation tool, not a generic photo editor.
+### Detailed Breakdown of the Editor Integration:
+1. **Multi-Faced Projection**: The game provides 5 distinct 2D unwrapped templates (Left, Right, Top, Front, Rear).
+2. **Unlayer Initialization**: When a user selects a face, the corresponding blank template is loaded into the `<ReactImageEditor>` component as the background.
+3. **Creative Freedom**: Users utilize Unlayer's native tools—drawing, adding text, slapping on stickers, and applying filters—to create their livery.
+4. **Extraction**: On save, Unlayer exports a high-resolution base64 data URL.
+5. **3D Application**: Three.js takes this data URL, converts it into a `Texture`, and applies it to the corresponding face of the `PlayerCar` 3D mesh.
+
+---
+
+## 🏗️ System Architecture
+
+KLUSTOR is built on a modern, fully client-side React stack.
+
+```mermaid
+graph TD
+    A[React Application] --> B(Zustand Global Store)
+    
+    subgraph Design Phase
+    C[DesignPage.tsx] --> D[Unlayer Image Editor]
+    D --> |Base64 Output| E[designAnalysis.ts]
+    E --> |Stats & Textures| B
+    end
+    
+    subgraph Racing Phase
+    F[RacePage.tsx] --> G[React Three Fiber Canvas]
+    B --> |Car Stats & Textures| G
+    G --> H[useCarPhysics.ts]
+    G --> I[Vice Coast Circuit]
+    end
+    
+    subgraph Meta Phase
+    J[GaragePage.tsx] --> B
+    K[LeaderboardPage.tsx] --> B
+    end
+```
+
+---
+
+## ✨ Feature Deep Dive
+
+### 🎨 The Livery Studio
+- Seamlessly switch between 5 different camera angles/faces.
+- Live 3D Preview: As you save a face in the 2D editor, the 3D car model rotating next to you updates instantly.
+
+### 🏎️ The Racing Engine
+- **Vice Coast Circuit**: A fully realized 3.4km 3D track featuring sweeping turns, tight hairpins, and ocean views.
+- **Physics**: Custom-built ray-cast suspension and arcade drifting physics (`useCarPhysics.ts`).
+- **HUD & Telemetry**: Dynamic speedometer, RPM gauge, gear shifting logic, and checkpoint split-timing.
+
+### 🏆 Persistent Garage & Leaderboards
+- Your best times, designs, and stats are saved locally using Zustand's `persist` middleware.
+- Compete on the **Leaderboard** against your own previous ghosts and dummy times.
+- **Name Your Ride**: From the Garage, give your custom livery a name that appears on the global time-attack leaderboard.
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | React 18 + TypeScript |
-| Build Tool | Vite |
-| Routing | React Router v6 |
-| Animations | Framer Motion |
-| State | Zustand (with localStorage persistence) |
-| **Image Editor** | **@unlayer/react-image-editor (official)** |
-| Styling | Vanilla CSS with custom design tokens |
-
----
-
-## 🎭 Gameplay Flow
-
-1. **Landing** — cinematic intro with animated city silhouette
-2. **Case Dashboard** — evidence grid, investigation stats, player progression
-3. **Evidence Viewer** — cinematic photo display with metadata and clue hints
-4. **Investigation** — **Unlayer Image Editor** opens; crop, annotate, save
-5. **Clue Discovery** — save triggers clue selection + cinematic reveal animation
-6. **Evidence Board** — growing node graph of discovered connections
-7. **Decision** — choose: Report / Publish / Sell / Dig Deeper
-8. **Results** — outcome narrative, score, and your annotated photos
+- **Core**: React 18, TypeScript, Vite
+- **3D Rendering**: Three.js, React Three Fiber, React Three Drei
+- **Image Editor**: `@unlayer/react-image-editor`
+- **State Management**: Zustand
+- **Routing**: React Router v6
+- **Analytics**: Vercel Analytics
 
 ---
 
 ## 🚀 Running Locally
 
 ```bash
-# Clone
-git clone https://github.com/your-username/the-photo-never-lies
-cd the-photo-never-lies
+# 1. Clone the repository
+git clone https://github.com/your-username/klustor.git
+cd klustor
 
-# Install dependencies
+# 2. Install dependencies
 npm install
 
-# Add evidence images (see below)
-# Copy the 5 evidence photos to /public/evidence/
-
-# Start dev server
+# 3. Start the Vite development server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+Open [http://localhost:5173](http://localhost:5173) in your browser. The app runs 100% locally with no backend required.
 
 ---
 
-## 🖼️ Evidence Images
+## 🕹️ Game Controls
 
-Place the following images in `/public/evidence/`:
-
-| Filename | Scene |
-|---|---|
-| `ocean-drive.jpg` | Ocean Drive night street (Evidence 01) |
-| `parking-garage.jpg` | Harbor Street parking garage (Evidence 02) |
-| `nightclub.jpg` | The Velvet Pier nightclub entrance (Evidence 03) |
-| `alley.jpg` | Santeria Lane alley (Evidence 04) |
-| `security-cam.jpg` | Security camera still (Evidence 05) |
-
-> If images are missing, the app falls back to `picsum.photos` placeholder images automatically.
-
----
-
-## ⚙️ Environment Variables
-
-Copy `.env.example` to `.env`:
-
-```bash
-cp .env.example .env
-```
-
-| Variable | Required | Description |
-|---|---|---|
-| `VITE_AI_API_KEY` | No | Optional AI assistant API key |
-| `VITE_AI_PROVIDER` | No | AI provider (`gemini` or `openai`) |
-
-The app works **fully without any AI credentials**. The AI assistant feature uses deterministic fallback responses if no key is provided.
-
----
-
-## 📦 Build & Deploy
-
-```bash
-# Production build
-npm run build
-
-# Preview production build
-npm run preview
-```
-
-### Deploy to Vercel
-```bash
-npm install -g vercel
-vercel --prod
-```
-
-### Deploy to Netlify
-```bash
-npm run build
-# Drag /dist folder to app.netlify.com
-```
+| Action | Keyboard |
+|--------|----------|
+| **Throttle (Gas)** | `W` or `Up Arrow` |
+| **Brake / Reverse** | `S` or `Down Arrow` |
+| **Steer Left** | `A` or `Left Arrow` |
+| **Steer Right** | `D` or `Right Arrow` |
+| **Editor** | Full Mouse / Touch support for drawing & dragging |
 
 ---
 
 ## 🗂️ Project Structure
 
-```
+```text
 src/
 ├── components/
-│   ├── ui/           # NavBar, buttons, badges
-│   ├── evidence/     # EvidenceCard
-│   ├── editor/       # InvestigationEditor (Unlayer wrapper)
-│   ├── board/        # Evidence board nodes
-│   └── clues/        # ClueReveal animation
+│   ├── editor/       # LiveryEditor.tsx (Wraps the Unlayer React Image Editor)
+│   ├── ui/           # Buttons, Navbar, Modals
+│   └── RaceHUD.tsx   # Speedometer, Timer, and Checkpoints
+├── game/
+│   ├── components/   # 3D meshes: PlayerCar, ViceCoastEnvironment
+│   ├── data/         # viceCoastCircuit.ts (Mathematical spline data for the track)
+│   ├── hooks/        # useCarPhysics.ts (Arcade physics), useRaceLogic.ts
+│   └── utils/        # designAnalysis.ts (Algorithm converting images to stats)
 ├── pages/
-│   ├── LandingPage
-│   ├── CasePage
-│   ├── EvidencePage
-│   ├── EditorPage    ← Core: Unlayer editor here
-│   ├── BoardPage
-│   ├── DecisionPage
-│   └── ResultsPage
-├── data/
-│   └── cases/case017.ts   ← Full case configuration
+│   ├── DesignPage.tsx    # Livery Studio + Live 3D Preview
+│   ├── RacePage.tsx      # The 3D racing viewport
+│   ├── GaragePage.tsx    # Manage car names and view past records
+│   └── LeaderboardPage.tsx # View top times
 ├── store/
-│   └── gameStore.ts       ← Zustand global state
-└── types/index.ts
+│   ├── gameStore.ts      # Zustand state for persisting textures/stats
+│   └── telemetryStore.ts # High-frequency store for physics frame-rates
+└── types/
+    └── index.ts          # Global interfaces
 ```
 
 ---
 
-## 🖊️ Adding New Cases
+## 🔗 Credits & Attributions
 
-The data model is designed for extensibility. Add a new file at `src/data/cases/case018.ts` following the same structure as `case017.ts`. No application code needs to change — just register it in the store.
-
----
-
-## 🔗 Credits
-
-- **Image Editor:** [Unlayer React Image Editor](https://github.com/unlayer/react-image-editor) — [Documentation](https://docs.unlayer.com/builder/latest/images/image-editor)
-- **Animations:** [Framer Motion](https://www.framer.com/motion/)
+- **Image Editor:** [Unlayer React Image Editor](https://github.com/unlayer/react-image-editor)
+- **3D Framework:** [React Three Fiber](https://docs.pmnd.rs/react-three-fiber/)
 - **State:** [Zustand](https://github.com/pmndrs/zustand)
-- **Fonts:** [Bebas Neue](https://fonts.google.com/specimen/Bebas+Neue) · [JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono) · [Inter](https://fonts.google.com/specimen/Inter)
-- **Built for:** [Build with React Image Editor Challenge](https://github.com/unlayer/react-image-editor)
-
----
-
-## ⚠️ Legal Notice
-
-This project is an original creative work inspired by the **neon-noir coastal thriller** genre. It does not use, reproduce, or reference any assets, characters, logos, maps, or copyrighted material from Rockstar Games or the Grand Theft Auto franchise. All fictional branding (Vice City Investigations, The Velvet Pier, Ocean Drive, etc.) is original.
-
----
-
-*THE PHOTO NEVER LIES — Vice City Investigations — Case 017*
+- **Fonts:** Trebuchet MS, Consolas.
