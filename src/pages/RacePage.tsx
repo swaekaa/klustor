@@ -161,7 +161,7 @@ function ResultsScreen({
         </div>
         
         {prevBestTime !== null && (
-          <div className="font-mono" style={{ fontSize: '1.2rem', color: isPersonalBest ? 'var(--klustor-green)' : 'var(--text-muted)', marginBottom: '1rem' }}>
+          <div className="font-mono" style={{ fontSize: '1.2rem', color: isPersonalBest ? 'var(--klustor-green)' : 'var(--klustor-red)', marginBottom: '1rem' }}>
             {isPersonalBest ? '-' : '+'}{formatRaceTime(Math.abs(lapTimeMs - prevBestTime))}
           </div>
         )}
