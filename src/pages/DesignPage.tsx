@@ -160,6 +160,38 @@ export default function DesignPage() {
         </div>
       </div>
 
+      {/* 1.5 LIVERY NAME SECTION */}
+      <div style={{ width: '100%', maxWidth: '1400px', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '1.5rem 2rem', borderRadius: '16px', border: '1px solid var(--border-light)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+        <h2 className="font-display" style={{ fontSize: '1.5rem', color: 'var(--text-primary)', margin: 0, letterSpacing: '0.05em' }}>
+          ENTER YOUR LIVERY NAME
+        </h2>
+        <input 
+          type="text" 
+          value={liveryName}
+          onChange={(e) => {
+            const val = e.target.value.toUpperCase();
+            setLiveryName(val);
+            useGameStore.getState().updateLiveryName(val);
+          }}
+          placeholder="MY RIDE"
+          maxLength={16}
+          className="font-display"
+          style={{ 
+            background: 'var(--bg-primary)', border: '2px solid var(--border-light)', borderRadius: '8px', 
+            padding: '0.75rem 1.5rem', fontSize: '1.2rem', textAlign: 'right', outline: 'none', color: 'var(--text-primary)',
+            minWidth: '300px', transition: 'border-color 0.2s ease'
+          }} 
+          onFocus={(e) => e.target.style.borderColor = 'var(--klustor-pink)'}
+          onBlur={(e) => {
+            e.target.style.borderColor = 'var(--border-light)';
+            if (!e.target.value.trim()) {
+              setLiveryName('MY RIDE');
+              useGameStore.getState().updateLiveryName('MY RIDE');
+            }
+          }}
+        />
+      </div>
+
       {/* 2. MAIN GRID (EDITOR & 3D CAR) */}
       <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '3rem', width: '100%', maxWidth: '1400px', marginBottom: '4rem' }}>
         
@@ -168,37 +200,6 @@ export default function DesignPage() {
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h2 className="font-display" style={{ fontSize: '2rem', marginBottom: '0.2rem' }}>LIVERY STUDIO</h2>
-              <input 
-                type="text" 
-                value={liveryName}
-                onChange={(e) => {
-                  const val = e.target.value.toUpperCase();
-                  setLiveryName(val);
-                  useGameStore.getState().updateLiveryName(val);
-                }}
-                placeholder="NAME YOUR RIDE..."
-                maxLength={16}
-                className="font-display"
-                style={{ 
-                  background: 'var(--klustor-pink)', border: 'none', borderRadius: '999px', 
-                  padding: '0.5rem 1.5rem', fontSize: '1.2rem', textAlign: 'center', outline: 'none', color: '#fff',
-                  boxShadow: '0 4px 12px rgba(255,105,180,0.4)',
-                  transition: 'all 0.2s ease',
-                  letterSpacing: '0.05em'
-                }} 
-                onFocus={(e) => {
-                  e.target.style.transform = 'scale(1.05)';
-                  e.target.style.boxShadow = '0 6px 16px rgba(255,105,180,0.6)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.transform = 'scale(1)';
-                  e.target.style.boxShadow = '0 4px 12px rgba(255,105,180,0.4)';
-                  if (!e.target.value.trim()) {
-                    setLiveryName('MY RIDE');
-                    useGameStore.getState().updateLiveryName('MY RIDE');
-                  }
-                }}
-              />
             </div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Design your ride. More style = more speed.</div>
           </div>
@@ -380,7 +381,7 @@ export default function DesignPage() {
                   ) : (
                     <div style={{ width: '64px', height: '32px', background: 'var(--bg-primary)', borderRadius: '4px', border: '1px solid var(--border-light)' }} />
                   )}
-                  <div className="font-display" style={{ flex: 1, fontSize: '1.1rem' }}>{r.driverName}</div>
+                  <div className="font-display" style={{ flex: 1, fontSize: '1.1rem' }}>{r.liveryName || 'MY RIDE'}</div>
                   <div className="font-mono" style={{ fontWeight: 'bold' }}>{String(Math.floor(r.time/60000)).padStart(2,'0')}:{String(Math.floor(r.time/1000)%60).padStart(2,'0')}.{String(Math.floor((r.time%1000)/10)).padStart(2,'0')}</div>
                 </div>
               ))
