@@ -128,10 +128,10 @@ function RaceScene({ textures, stats, phase, carRef, checkCheckpoint }: RaceScen
 
 // ── Results Screen ────────────────────────────────────────────
 function ResultsScreen({
-  lapTimeMs, topSpeed, designScore, lapSplits, onRaceAgain, onRedesign, isPersonalBest,
+  lapTimeMs, topSpeed, designScore, lapSplits, onRaceAgain, onRedesign, onGoToLeaderboard, isPersonalBest, prevBestTime
 }: {
   lapTimeMs: number; topSpeed: number; designScore: number; lapSplits: number[];
-  onRaceAgain: () => void; onRedesign: () => void; isPersonalBest: boolean;
+  onRaceAgain: () => void; onRedesign: () => void; onGoToLeaderboard: () => void; isPersonalBest: boolean; prevBestTime: number | null;
 }) {
   const { recordRaceResult } = useGameStore();
   const claimed = useRef(false);
@@ -160,6 +160,12 @@ function ResultsScreen({
           {formatRaceTime(lapTimeMs)}
         </div>
         
+        {prevBestTime !== null && (
+          <div className="font-mono" style={{ fontSize: '1.2rem', color: isPersonalBest ? 'var(--klustor-green)' : 'var(--text-muted)', marginBottom: '1rem' }}>
+            {isPersonalBest ? '-' : '+'}{formatRaceTime(Math.abs(lapTimeMs - prevBestTime))}
+          </div>
+        )}
+
         {isPersonalBest && (
           <div className="font-display" style={{ fontSize: '1.2rem', color: 'var(--klustor-pink)', marginBottom: '1rem', fontWeight: 900 }}>
             ★ NEW BEST TIME! ★
@@ -186,6 +192,9 @@ function ResultsScreen({
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '1rem' }}>
           <button className="btn" onClick={onRedesign} style={{ padding: '1rem 2rem', background: 'transparent', border: '1px solid var(--border-light)', boxShadow: 'none' }}>
             REDESIGN
+          </button>
+          <button className="btn" onClick={onGoToLeaderboard} style={{ padding: '1rem 2rem', background: 'transparent', border: '1px solid var(--border-light)', boxShadow: 'none' }}>
+            LEADERBOARD
           </button>
           <button className="btn" onClick={onRaceAgain} style={{ padding: '1rem 2rem', background: 'var(--klustor-pink)', border: 'none', boxShadow: 'none' }}>
             RACE AGAIN →
@@ -349,8 +358,10 @@ export default function RacePage() {
           designScore={stats?.designScore ?? 0}
           lapSplits={lapSplits}
           isPersonalBest={prevBestTime === null || lapTimeMs < prevBestTime}
+          prevBestTime={prevBestTime}
           onRaceAgain={handleRestart}
           onRedesign={() => navigate('/case')}
+          onGoToLeaderboard={() => navigate('/leaderboard')}
         />
       )}
     </div>
