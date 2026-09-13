@@ -309,7 +309,7 @@ export default function GaragePage() {
                     <div style={{ width: '32px', height: '20px', background: 'var(--bg-secondary)', borderRadius: '4px', border: '1px solid var(--border-light)' }} />
                   )}
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: 'Trebuchet MS,sans-serif', fontWeight: 'bold', fontSize: '0.72rem', color: 'var(--text-primary)' }}>{r.driverName}</div>
+                    <div style={{ fontFamily: 'Trebuchet MS,sans-serif', fontWeight: 'bold', fontSize: '0.72rem', color: 'var(--text-primary)' }}>{r.liveryName || 'MY RIDE'}</div>
                   </div>
                   <span style={{ fontFamily: 'Consolas,monospace', fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{formatTime(r.time)}</span>
                 </div>
