@@ -1,5 +1,6 @@
 import React, { Component, type ReactNode, type ErrorInfo } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import LandingPage from './pages/LandingPage';
 import DesignPage from './pages/DesignPage';
 import RacePage from './pages/RacePage';
@@ -70,6 +71,7 @@ export default function App() {
     <BrowserRouter>
       <GlobalErrorBoundary>
         <AppRoutes />
+        <Analytics />
       </GlobalErrorBoundary>
     </BrowserRouter>
   );
