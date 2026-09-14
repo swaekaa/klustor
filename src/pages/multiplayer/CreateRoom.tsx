@@ -10,7 +10,6 @@ export default function CreateRoom() {
 
   const [leaderName, setLeaderName] = useState(player.driverName === 'KLUSTOR_07' ? '' : player.driverName);
   const [name, setName] = useState('');
-  const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [duration, setDuration] = useState(60); // 1 min
   const [maxPlayers, setMaxPlayers] = useState(8);
@@ -26,12 +25,11 @@ export default function CreateRoom() {
     clearError();
     if (!leaderName.trim()) { setError('Please enter a LEADER NAME.'); return; }
     if (!name.trim()) { setError('Please enter a ROOM NAME.'); return; }
-    if (!title.trim()) { setError('Please enter a CHALLENGE TITLE.'); return; }
     setIsSubmitting(true);
     try {
       const room = await createRoom(leaderName, {
         name,
-        title,
+        title: name,
         description,
         editingDurationSeconds: duration,
         maxPlayers,
@@ -83,11 +81,6 @@ export default function CreateRoom() {
           <div>
             <label className="font-mono" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>ROOM NAME</label>
             <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Midnight Run" style={inputStyle} />
-          </div>
-          
-          <div>
-            <label className="font-mono" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>CHALLENGE TITLE</label>
-            <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Neon Cyberpunk" style={inputStyle} />
           </div>
 
           <div>
