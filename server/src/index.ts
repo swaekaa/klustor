@@ -113,9 +113,9 @@ io.on('connection', (socket) => {
   socket.on('submit_race_result', (payload, callback) => {
     try {
       if (!currentRoomId || !currentPlayerId) throw new Error('Not in a room');
-      const { raceTime, raceScore } = payload;
+      const { raceTime, raceScore, topSpeed } = payload;
       
-      const room = roomManager.submitRaceResult(currentRoomId, currentPlayerId, raceTime, raceScore);
+      const room = roomManager.submitRaceResult(currentRoomId, currentPlayerId, raceTime, raceScore, topSpeed);
       
       io.to(room.id).emit('leaderboard_updated', roomManager.sanitizeRoom(room));
       callback({ success: true });
