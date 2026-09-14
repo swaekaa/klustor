@@ -157,6 +157,9 @@ export default function DesignPage() {
           <button className="btn" onClick={() => navigate('/leaderboard')} style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>
              LEADERBOARD
           </button>
+          <button className="btn" onClick={() => navigate('/multiplayer')} style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>
+             MULTIPLAYER
+          </button>
         </div>
       </div>
 
