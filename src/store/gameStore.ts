@@ -12,7 +12,7 @@ const DEFAULT_PLAYER: Partial<GameState['player']> & { cash: number, rep: number
   racesWon: 0,
   bestTime: null,
   bestSplits: [],
-  driverName: 'KLUSTOR_07',
+  driverName: '',
 };
 
 export const defaultStats = (): CarStats => ({

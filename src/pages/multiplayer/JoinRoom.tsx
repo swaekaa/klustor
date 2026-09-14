@@ -9,7 +9,7 @@ export default function JoinRoom() {
   const { player } = useGameStore();
 
   const [roomCode, setRoomCode] = useState('');
-  const [displayName, setDisplayName] = useState(player.driverName);
+  const [displayName, setDisplayName] = useState(player.driverName === 'KLUSTOR_07' ? '' : player.driverName);
   const [isJoining, setIsJoining] = useState(false);
 
   useEffect(() => {
@@ -18,7 +18,9 @@ export default function JoinRoom() {
   }, [connect, clearError]);
 
   const handleJoin = async () => {
-    if (!roomCode.trim() || !displayName.trim()) return;
+    clearError();
+    if (!roomCode.trim()) { setError('Please enter a ROOM CODE.'); return; }
+    if (!displayName.trim()) { setError('Please enter a DISPLAY NAME.'); return; }
     setIsJoining(true);
     try {
       const room = await joinRoom(roomCode.toUpperCase(), displayName.toUpperCase());
@@ -78,7 +80,7 @@ export default function JoinRoom() {
               type="text" 
               value={displayName} 
               onChange={e => setDisplayName(e.target.value.toUpperCase())} 
-              placeholder="e.g. KLUSTOR_07" 
+              placeholder="ENTER NAME" 
               maxLength={16}
               style={{ ...inputStyle, textAlign: 'center' }} 
             />
@@ -86,7 +88,7 @@ export default function JoinRoom() {
 
           <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
             <button className="btn" onClick={() => navigate('/multiplayer')} style={{ flex: 1, padding: '1rem', background: 'transparent', border: '1px solid var(--border-light)' }}>CANCEL</button>
-            <button className="btn" onClick={handleJoin} disabled={isJoining || !roomCode.trim() || !displayName.trim()} style={{ flex: 2, padding: '1rem', background: 'var(--klustor-pink)', color: '#FFF', border: 'none' }}>
+            <button className="btn" onClick={handleJoin} disabled={isJoining} style={{ flex: 2, padding: '1rem', background: 'var(--klustor-pink)', color: '#FFF', border: 'none' }}>
               {isJoining ? 'JOINING...' : 'JOIN ROOM'}
             </button>
           </div>

@@ -8,7 +8,7 @@ export default function CreateRoom() {
   const { createRoom, connect, error, clearError } = useMultiplayerStore();
   const { player } = useGameStore();
 
-  const [leaderName, setLeaderName] = useState(player.driverName);
+  const [leaderName, setLeaderName] = useState(player.driverName === 'KLUSTOR_07' ? '' : player.driverName);
   const [name, setName] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -23,7 +23,10 @@ export default function CreateRoom() {
   }, [connect, clearError]);
 
   const handleCreate = async () => {
-    if (!name.trim() || !title.trim()) return;
+    clearError();
+    if (!leaderName.trim()) { setError('Please enter a LEADER NAME.'); return; }
+    if (!name.trim()) { setError('Please enter a ROOM NAME.'); return; }
+    if (!title.trim()) { setError('Please enter a CHALLENGE TITLE.'); return; }
     setIsSubmitting(true);
     try {
       const room = await createRoom(leaderName, {
@@ -74,7 +77,7 @@ export default function CreateRoom() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div>
             <label className="font-mono" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>LEADER NAME</label>
-            <input type="text" value={leaderName} onChange={e => setLeaderName(e.target.value.toUpperCase())} placeholder="e.g. KLUSTOR_07" maxLength={16} style={inputStyle} />
+            <input type="text" value={leaderName} onChange={e => setLeaderName(e.target.value.toUpperCase())} placeholder="ENTER NAME" maxLength={16} style={inputStyle} />
           </div>
 
           <div>
@@ -121,7 +124,7 @@ export default function CreateRoom() {
 
           <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
             <button className="btn" onClick={() => navigate('/multiplayer')} style={{ flex: 1, padding: '1rem', background: 'transparent', border: '1px solid var(--border-light)' }}>CANCEL</button>
-            <button className="btn" onClick={handleCreate} disabled={isSubmitting || !name.trim() || !title.trim()} style={{ flex: 2, padding: '1rem', background: 'var(--klustor-cyan)', color: 'var(--text-primary)', border: 'none' }}>
+            <button className="btn" onClick={handleCreate} disabled={isSubmitting} style={{ flex: 2, padding: '1rem', background: 'var(--klustor-cyan)', color: 'var(--text-primary)', border: 'none' }}>
               {isSubmitting ? 'CREATING...' : 'CREATE ROOM'}
             </button>
           </div>
