@@ -25,12 +25,15 @@ export default function LeaderboardPage() {
           KLUSTOR
         </h1>
         
-        <div style={{ display: 'flex', gap: '1rem', background: 'var(--bg-secondary)', padding: '0.5rem', borderRadius: '999px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+        <div style={{ display: 'flex', gap: '1rem', background: 'var(--bg-primary)', padding: '0.5rem', borderRadius: '999px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
           <button className="btn" onClick={() => navigate('/')} style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>
              GARAGE
           </button>
           <button className="btn" onClick={() => navigate('/leaderboard')} style={{ background: 'var(--klustor-pink)', border: 'none', boxShadow: 'none' }}>
              LEADERBOARD
+          </button>
+          <button className="btn" onClick={() => navigate('/multiplayer')} style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>
+             MULTIPLAYER
           </button>
         </div>
       </div>

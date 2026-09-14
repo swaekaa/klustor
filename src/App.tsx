@@ -5,6 +5,13 @@ import LandingPage from './pages/LandingPage';
 import DesignPage from './pages/DesignPage';
 import RacePage from './pages/RacePage';
 import LeaderboardPage from './pages/LeaderboardPage';
+import MultiplayerMenu from './pages/multiplayer/MultiplayerMenu';
+import CreateRoom from './pages/multiplayer/CreateRoom';
+import JoinRoom from './pages/multiplayer/JoinRoom';
+import Lobby from './pages/multiplayer/Lobby';
+import ChallengePage from './pages/multiplayer/ChallengePage';
+import MultiplayerRace from './pages/multiplayer/MultiplayerRace';
+import Results from './pages/multiplayer/Results';
 
 function AppRoutes() {
   const location = useLocation();
@@ -16,6 +23,15 @@ function AppRoutes() {
       <Route path="/race" element={<RacePage />} />
       <Route path="/leaderboard" element={<LeaderboardPage />} />
       <Route path="/garage" element={<Navigate to="/" replace />} />
+      
+      {/* Multiplayer Routes */}
+      <Route path="/multiplayer" element={<MultiplayerMenu />} />
+      <Route path="/multiplayer/create" element={<CreateRoom />} />
+      <Route path="/multiplayer/join" element={<JoinRoom />} />
+      <Route path="/multiplayer/room/:roomCode" element={<Lobby />} />
+      <Route path="/multiplayer/challenge/:roomCode" element={<ChallengePage />} />
+      <Route path="/multiplayer/race/:roomCode" element={<MultiplayerRace />} />
+      <Route path="/multiplayer/results/:roomCode" element={<Results />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

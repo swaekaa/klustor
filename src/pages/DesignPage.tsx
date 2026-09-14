@@ -103,16 +103,23 @@ export default function DesignPage() {
   const [selectedView, setSelectedView] = useState<TemplateView>('left');
   const [templateUrl, setTemplateUrl] = useState<string>('');
   
-  const [liveryName, setLiveryName] = useState<string>(currentLivery?.name || 'MY RIDE');
+  const defaultName = currentLivery?.name === 'MY RIDE' || currentLivery?.name === 'MULTIPLAYER RIDE' ? '' : (currentLivery?.name || '');
+  const [liveryName, setLiveryName] = useState<string>(defaultName);
   const [textures, setTextures] = useState<Partial<Record<TemplateView, string>>>(currentLivery?.textures ?? {});
   const [stats, setStats] = useState<CarStats>(currentLivery?.stats ?? defaultStats());
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     getCarTemplateUrl(selectedView).then(setTemplateUrl);
   }, [selectedView]);
 
   const handleEditorSave = useCallback(async (dataUrl: string) => {
+    if (!liveryName.trim()) {
+      setError('Please enter your livery name before saving!');
+      return;
+    }
+    setError('');
     setIsSaving(true);
     try {
       const newTextures = { ...textures, [selectedView]: dataUrl };
@@ -157,6 +164,9 @@ export default function DesignPage() {
           <button className="btn" onClick={() => navigate('/leaderboard')} style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>
              LEADERBOARD
           </button>
+          <button className="btn" onClick={() => navigate('/multiplayer')} style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>
+             MULTIPLAYER
+          </button>
         </div>
       </div>
 
@@ -172,8 +182,9 @@ export default function DesignPage() {
             const val = e.target.value.toUpperCase();
             setLiveryName(val);
             useGameStore.getState().updateLiveryName(val);
+            if (val.trim()) setError('');
           }}
-          placeholder="MY RIDE"
+          placeholder="ENTER NAME"
           maxLength={16}
           className="font-display"
           style={{ 
@@ -402,10 +413,23 @@ export default function DesignPage() {
           background: 'var(--klustor-pink)', color: 'var(--text-primary)', 
           border: 'none', boxShadow: '0 8px 24px rgba(255, 160, 214, 0.4)' 
         }} 
-        onClick={() => navigate('/race')}
+        onClick={() => {
+          if (!liveryName.trim()) {
+            setError('Please enter your livery name before racing!');
+            return;
+          }
+          setError('');
+          navigate('/race');
+        }}
       >
         RACE NOW
       </button>
+
+      {error && (
+        <div style={{ width: '100%', maxWidth: '1400px', background: '#FF4D4D', color: '#FFF', padding: '1rem', borderRadius: '12px', marginTop: '2rem', fontFamily: 'var(--font-mono)', fontSize: '1.2rem', textAlign: 'center', boxShadow: '0 4px 12px rgba(255, 77, 77, 0.3)' }}>
+          {error}
+        </div>
+      )}
 
     </div>
   );
