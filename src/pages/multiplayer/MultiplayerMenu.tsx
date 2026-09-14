@@ -34,39 +34,39 @@ export default function MultiplayerMenu() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
           <button 
-            className="btn" 
+            className="btn font-display" 
             onClick={() => navigate('/multiplayer/create')}
             style={{ 
-              padding: '1.5rem', fontSize: '1.5rem', borderRadius: '16px', 
+              padding: '1.5rem', fontSize: '1.5rem', borderRadius: '999px', 
               background: 'var(--klustor-cyan)', color: 'var(--text-primary)', 
-              border: 'none', boxShadow: '0 8px 24px rgba(0, 255, 255, 0.2)',
-              width: '100%'
+              border: '3px solid var(--text-primary)', boxShadow: '6px 6px 0px var(--text-primary)',
+              fontWeight: 900, width: '100%', cursor: 'pointer', transition: 'all 0.2s ease'
             }}
           >
             CREATE ROOM
           </button>
           
           <button 
-            className="btn" 
+            className="btn font-display" 
             onClick={() => navigate('/multiplayer/join')}
             style={{ 
-              padding: '1.5rem', fontSize: '1.5rem', borderRadius: '16px', 
-              background: 'var(--klustor-pink)', color: '#fff', 
-              border: 'none', boxShadow: '0 8px 24px rgba(255, 105, 180, 0.4)',
-              width: '100%'
+              padding: '1.5rem', fontSize: '1.5rem', borderRadius: '999px', 
+              background: 'var(--klustor-pink)', color: 'var(--text-primary)', 
+              border: '3px solid var(--text-primary)', boxShadow: '6px 6px 0px var(--text-primary)',
+              fontWeight: 900, width: '100%', cursor: 'pointer', transition: 'all 0.2s ease'
             }}
           >
             JOIN ROOM
           </button>
           
           <button 
-            className="btn" 
+            className="btn font-display" 
             onClick={() => navigate('/')}
             style={{ 
-              padding: '1rem', fontSize: '1.2rem', borderRadius: '16px', 
+              padding: '1.2rem', fontSize: '1.2rem', borderRadius: '999px', 
               background: 'var(--bg-secondary)', color: 'var(--text-primary)', 
-              border: '1px solid var(--border-light)', marginTop: '1rem',
-              width: '100%'
+              border: '3px solid var(--text-primary)', boxShadow: '4px 4px 0px var(--text-primary)',
+              fontWeight: 900, marginTop: '1rem', width: '100%', cursor: 'pointer', transition: 'all 0.2s ease'
             }}
           >
             BACK TO GARAGE
