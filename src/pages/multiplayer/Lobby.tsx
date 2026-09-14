@@ -159,9 +159,9 @@ export default function Lobby() {
             {room.players.map(p => (
               <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: p.id === myId ? 'rgba(0, 255, 255, 0.1)' : 'var(--bg-primary)', borderRadius: '12px', border: '1px solid var(--border-light)', opacity: p.status === 'disconnected' ? 0.5 : 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <span className="font-display" style={{ fontSize: '1.2rem' }}>
-                    {p.displayName} {(p as any).wins > 0 && Array((p as any).wins).fill('👑').join('')}
-                  </span>
+                  <div className="font-display" style={{ fontSize: '1.2rem', color: p.id === socket?.id ? 'var(--klustor-pink)' : 'var(--text-primary)' }}>
+                    {(p as any).avatar || '🚗'} {p.displayName} {(p as any).wins > 0 && Array((p as any).wins).fill('👑').join('')}
+                  </div>
                   {p.id === myId && <span className="font-mono" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>(YOU)</span>}
                   {p.status === 'disconnected' && <span className="font-mono" style={{ fontSize: '0.8rem', color: '#FF4D4D' }}>DISCONNECTED</span>}
                 </div>

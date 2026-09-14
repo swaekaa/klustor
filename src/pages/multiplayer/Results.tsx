@@ -91,8 +91,8 @@ export default function Results() {
         {winner && (
           <div style={{ background: 'var(--bg-secondary)', padding: '3rem', borderRadius: '24px', textAlign: 'center', border: '2px solid var(--klustor-pink)', boxShadow: '0 8px 32px rgba(255,107,152,0.15)' }}>
             <h2 className="font-display" style={{ fontSize: '1.2rem', color: 'var(--klustor-pink)', letterSpacing: '0.2em', marginBottom: '1rem' }}>OVERALL WINNER</h2>
-            <div className="font-display" style={{ fontSize: '4rem', marginBottom: '2rem' }}>
-              {winner.displayName} {winner.wins > 0 && Array(winner.wins).fill('👑').join('')}
+            <div className="font-display" style={{ fontSize: '3rem', margin: '1rem 0', color: 'var(--text-primary)', textShadow: '2px 2px 0px rgba(0,0,0,0.5)' }}>
+              {winner.avatar || '🚗'} {winner.displayName} {winner.wins > 0 && Array(winner.wins).fill('👑').join('')}
             </div>
             
             <div style={{ display: 'flex', justifyContent: 'center', gap: '4rem' }}>
@@ -123,9 +123,9 @@ export default function Results() {
                     {index + 1}
                   </div>
                   <div>
-                    <div className="font-display" style={{ fontSize: '1.2rem', display: 'flex', gap: '0.5rem' }}>
-                      {p.displayName} {p.id === socket?.id && <span className="font-mono" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>(YOU)</span>}
-                      {p.wins > 0 && <span style={{ fontSize: '1rem' }}>{Array(p.wins).fill('👑').join('')}</span>}
+                    <div className="font-display" style={{ fontSize: '1.5rem', color: p.id === socket?.id ? 'var(--klustor-pink)' : 'var(--text-primary)' }}>
+                      {p.avatar || '🚗'} {p.displayName} {p.id === socket?.id && <span className="font-mono" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>(YOU)</span>}
+                      {p.wins > 0 && <span style={{ marginLeft: '0.5rem' }}>{Array(p.wins).fill('👑').join('')}</span>}
                     </div>
                     <div className="font-mono" style={{ fontSize: '0.8rem', color: 'var(--klustor-green)' }}>
                       {p.status === 'finished' ? 'FINISHED' : 'SUBMITTED'}

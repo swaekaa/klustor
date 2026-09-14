@@ -19,6 +19,7 @@ export type MultiplayerPlayerStatus =
 export interface MultiplayerPlayer {
   id: string; // Socket ID or stable ID
   displayName: string;
+  avatar: string;
   isLeader: boolean;
   isReady: boolean;
   hasSubmitted: boolean;

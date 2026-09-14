@@ -3,12 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { useMultiplayerStore } from '../../store/multiplayerStore';
 import { useGameStore } from '../../store/gameStore';
 
+const CAR_AVATARS = ['🚗', '🚕', '🚙', '🚌', '🏎️', '🚓', '🚑', '🚒', '🚐', '🛻', '🚚', '🚛', '🚜', '🛵', '🏍️', '🛺'];
+
 export default function CreateRoom() {
   const navigate = useNavigate();
   const { createRoom, connect, error, clearError } = useMultiplayerStore();
-  const { player } = useGameStore();
+  const player = useGameStore(s => s.player);
+  const updateDriverAvatar = useGameStore(s => s.updateDriverAvatar);
 
   const [leaderName, setLeaderName] = useState(player.driverName === 'KLUSTOR_07' ? '' : player.driverName);
+  const [avatar, setAvatar] = useState(player.driverAvatar || '🚗');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [duration, setDuration] = useState(60); // 1 min
@@ -26,8 +30,9 @@ export default function CreateRoom() {
     if (!leaderName.trim()) { setError('Please enter a LEADER NAME.'); return; }
     if (!name.trim()) { setError('Please enter a ROOM NAME.'); return; }
     setIsSubmitting(true);
+    updateDriverAvatar(avatar);
     try {
-      const room = await createRoom(leaderName, {
+      const room = await createRoom(leaderName, avatar, {
         name,
         title: name,
         description,
@@ -76,6 +81,30 @@ export default function CreateRoom() {
           <div>
             <label className="font-mono" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>LEADER NAME</label>
             <input type="text" value={leaderName} onChange={e => setLeaderName(e.target.value.toUpperCase())} placeholder="ENTER NAME" maxLength={16} style={inputStyle} />
+          </div>
+
+          <div>
+            <label className="font-mono" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>SELECT AVATAR</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: '0.5rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
+              {CAR_AVATARS.map(emoji => (
+                <button
+                  key={emoji}
+                  onClick={() => setAvatar(emoji)}
+                  style={{
+                    fontSize: '1.5rem',
+                    background: avatar === emoji ? 'var(--klustor-cyan)' : 'transparent',
+                    border: avatar === emoji ? '2px solid var(--text-primary)' : '2px solid transparent',
+                    borderRadius: '8px',
+                    padding: '0.25rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    boxShadow: avatar === emoji ? '2px 2px 0px var(--text-primary)' : 'none'
+                  }}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div>

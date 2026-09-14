@@ -6,13 +6,14 @@ import type { GameState, LiveryData, CarStats, TemplateView } from '../types';
 // KLUSTOR // VICE COAST RACING — Zustand Game Store
 // ============================================================
 
-const DEFAULT_PLAYER: Partial<GameState['player']> & { cash: number, rep: number, racesWon: number, bestTime: number | null, driverName: string } = {
+const DEFAULT_PLAYER: Partial<GameState['player']> & { cash: number, rep: number, racesWon: number, bestTime: number | null, driverName: string, driverAvatar: string } = {
   cash: 1000,
   rep: 0,
   racesWon: 0,
   bestTime: null,
   bestSplits: [],
   driverName: '',
+  driverAvatar: '🚗',
 };
 
 export const defaultStats = (): CarStats => ({
@@ -89,6 +90,14 @@ export const useGameStore = create<GameState>()(
         set({ currentLivery: livery });
       },
 
+      updateDriverAvatar: (avatar: string) => {
+        set(state => ({
+          player: {
+            ...state.player,
+            driverAvatar: avatar
+          }
+        }));
+      },
       updateLiveryName: (name: string) => {
         set((state) => ({
           currentLivery: state.currentLivery 

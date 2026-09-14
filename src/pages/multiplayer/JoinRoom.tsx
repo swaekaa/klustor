@@ -3,13 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { useMultiplayerStore } from '../../store/multiplayerStore';
 import { useGameStore } from '../../store/gameStore';
 
+const CAR_AVATARS = ['🚗', '🚕', '🚙', '🚌', '🏎️', '🚓', '🚑', '🚒', '🚐', '🛻', '🚚', '🚛', '🚜', '🛵', '🏍️', '🛺'];
+
 export default function JoinRoom() {
   const navigate = useNavigate();
   const { joinRoom, connect, error, clearError } = useMultiplayerStore();
-  const { player } = useGameStore();
+  const player = useGameStore(s => s.player);
+  const updateDriverAvatar = useGameStore(s => s.updateDriverAvatar);
 
   const [roomCode, setRoomCode] = useState('');
   const [displayName, setDisplayName] = useState(player.driverName === 'KLUSTOR_07' ? '' : player.driverName);
+  const [avatar, setAvatar] = useState(player.driverAvatar || '🚗');
   const [isJoining, setIsJoining] = useState(false);
 
   useEffect(() => {
@@ -22,8 +26,9 @@ export default function JoinRoom() {
     if (!roomCode.trim()) { setError('Please enter a ROOM CODE.'); return; }
     if (!displayName.trim()) { setError('Please enter a DISPLAY NAME.'); return; }
     setIsJoining(true);
+    updateDriverAvatar(avatar);
     try {
-      const room = await joinRoom(roomCode.toUpperCase(), displayName.toUpperCase());
+      const room = await joinRoom(roomCode.toUpperCase(), displayName.toUpperCase(), avatar);
       navigate(`/multiplayer/room/${room.code}`);
     } catch (e) {
       console.error(e);
@@ -84,6 +89,30 @@ export default function JoinRoom() {
               maxLength={16}
               style={{ ...inputStyle, textAlign: 'center' }} 
             />
+          </div>
+
+          <div>
+            <label className="font-mono" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>SELECT AVATAR</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: '0.5rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
+              {CAR_AVATARS.map(emoji => (
+                <button
+                  key={emoji}
+                  onClick={() => setAvatar(emoji)}
+                  style={{
+                    fontSize: '1.5rem',
+                    background: avatar === emoji ? 'var(--klustor-pink)' : 'transparent',
+                    border: avatar === emoji ? '2px solid var(--text-primary)' : '2px solid transparent',
+                    borderRadius: '8px',
+                    padding: '0.25rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    boxShadow: avatar === emoji ? '2px 2px 0px var(--text-primary)' : 'none'
+                  }}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>

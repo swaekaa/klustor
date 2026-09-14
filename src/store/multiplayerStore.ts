@@ -11,8 +11,8 @@ interface MultiplayerState {
   // Actions
   connect: () => void;
   disconnect: () => void;
-  createRoom: (displayName: string, config: any) => Promise<ChallengeRoom>;
-  joinRoom: (roomCode: string, displayName: string) => Promise<ChallengeRoom>;
+  createRoom: (displayName: string, avatar: string, config: any) => Promise<ChallengeRoom>;
+  joinRoom: (roomCode: string, displayName: string, avatar: string) => Promise<ChallengeRoom>;
   leaveRoom: () => void;
   setReady: (isReady: boolean) => Promise<void>;
   startChallenge: () => Promise<void>;
@@ -62,12 +62,12 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
     }
   },
 
-  createRoom: (displayName, config) => {
+  createRoom: (displayName, avatar, config) => {
     return new Promise((resolve, reject) => {
       const { socket } = get();
       if (!socket) return reject('No socket connection');
       
-      socket.emit('create_room', { displayName, config }, (res: any) => {
+      socket.emit('create_room', { displayName, avatar, config }, (res: any) => {
         if (res.success) {
           set({ room: res.room, error: null });
           resolve(res.room);
@@ -79,12 +79,12 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
     });
   },
 
-  joinRoom: (roomCode, displayName) => {
+  joinRoom: (roomCode, displayName, avatar) => {
     return new Promise((resolve, reject) => {
       const { socket } = get();
       if (!socket) return reject('No socket connection');
       
-      socket.emit('join_room', { roomCode, displayName }, (res: any) => {
+      socket.emit('join_room', { roomCode, displayName, avatar }, (res: any) => {
         if (res.success) {
           set({ room: res.room, error: null });
           resolve(res.room);

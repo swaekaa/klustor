@@ -17,6 +17,7 @@ function generateRoomCode(): string {
 export function createRoom(
   leaderId: string,
   leaderName: string,
+  avatar: string,
   config: {
     name: string;
     title: string;
@@ -32,6 +33,7 @@ export function createRoom(
   const leader: MultiplayerPlayer = {
     id: leaderId,
     displayName: leaderName,
+    avatar,
     isLeader: true,
     isReady: true,
     hasSubmitted: false,
@@ -71,7 +73,7 @@ export function getRoomById(id: string): ChallengeRoom | undefined {
   return rooms.get(id);
 }
 
-export function joinRoom(roomId: string, playerId: string, displayName: string): ChallengeRoom | null {
+export function joinRoom(roomId: string, playerId: string, displayName: string, avatar: string): ChallengeRoom | null {
   const room = rooms.get(roomId);
   if (!room) return null;
 
@@ -82,6 +84,7 @@ export function joinRoom(roomId: string, playerId: string, displayName: string):
   const player: MultiplayerPlayer = {
     id: playerId,
     displayName,
+    avatar,
     isLeader: false,
     isReady: false,
     hasSubmitted: false,

@@ -25,8 +25,8 @@ io.on('connection', (socket) => {
 
   socket.on('create_room', (payload, callback) => {
     try {
-      const { displayName, config } = payload;
-      const room = roomManager.createRoom(socket.id, displayName, config);
+      const { displayName, avatar, config } = payload;
+      const room = roomManager.createRoom(socket.id, displayName, avatar, config);
       
       socket.join(room.id);
       currentRoomId = room.id;
