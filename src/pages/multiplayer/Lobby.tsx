@@ -89,7 +89,7 @@ export default function Lobby() {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '2rem', width: '100%', maxWidth: '900px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', width: '100%', maxWidth: '1200px' }}>
         
         {/* LEFT PANEL: ROOM INFO */}
         <div style={{ background: 'var(--bg-secondary)', padding: '2rem', borderRadius: '24px', border: '1px solid var(--border-light)', display: 'flex', flexDirection: 'column' }}>
