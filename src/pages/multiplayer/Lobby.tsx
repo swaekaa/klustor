@@ -89,7 +89,7 @@ export default function Lobby() {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '2rem', width: '100%', maxWidth: '900px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '2rem', width: '100%', maxWidth: '900px' }}>
         
         {/* LEFT PANEL: ROOM INFO */}
         <div style={{ background: 'var(--bg-secondary)', padding: '2rem', borderRadius: '24px', border: '1px solid var(--border-light)', display: 'flex', flexDirection: 'column' }}>
@@ -105,8 +105,23 @@ export default function Lobby() {
             <h3 className="font-display" style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{room.title}</h3>
             {room.description && <p className="font-mono" style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>{room.description}</p>}
             
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: '0.9rem', borderBottom: '1px solid var(--border-light)', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>
-              <span>TIME LIMIT</span> <span>{room.editingDurationSeconds < 60 ? `${room.editingDurationSeconds} SEC` : `${room.editingDurationSeconds / 60} MIN`}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.9rem', borderBottom: '1px solid var(--border-light)', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>
+              <span>TIME LIMIT</span> 
+              {isLeader ? (
+                <select 
+                  value={room.editingDurationSeconds} 
+                  onChange={(e) => useMultiplayerStore.getState().updateRoomConfig({ editingDurationSeconds: Number(e.target.value) })}
+                  style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-light)', borderRadius: '4px', padding: '2px 5px', fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}
+                >
+                  <option value={20}>20 SEC</option>
+                  <option value={30}>30 SEC</option>
+                  <option value={45}>45 SEC</option>
+                  <option value={60}>1 MIN</option>
+                  <option value={120}>2 MIN</option>
+                </select>
+              ) : (
+                <span>{room.editingDurationSeconds < 60 ? `${room.editingDurationSeconds} SEC` : `${room.editingDurationSeconds / 60} MIN`}</span>
+              )}
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: '0.9rem', borderBottom: '1px solid var(--border-light)', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>
               <span>RACING</span> <span>{room.racingEnabled ? 'ENABLED' : 'DISABLED'}</span>
@@ -120,10 +135,10 @@ export default function Lobby() {
             <button 
               className="btn" 
               onClick={handleStart} 
-              disabled={room.players.length < 1} // Can start solo for MVP testing
-              style={{ padding: '1rem', marginTop: '2rem', background: 'var(--klustor-cyan)', border: 'none', width: '100%' }}
+              disabled={!allReady}
+              style={{ padding: '1rem', marginTop: '2rem', background: allReady ? 'var(--klustor-cyan)' : 'var(--bg-primary)', opacity: allReady ? 1 : 0.5, border: 'none', width: '100%' }}
             >
-              START CHALLENGE
+              {allReady ? 'START CHALLENGE' : 'WAITING FOR PLAYERS'}
             </button>
           ) : (
             <button 
@@ -144,8 +159,9 @@ export default function Lobby() {
             {room.players.map(p => (
               <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: p.id === myId ? 'rgba(0, 255, 255, 0.1)' : 'var(--bg-primary)', borderRadius: '12px', border: '1px solid var(--border-light)', opacity: p.status === 'disconnected' ? 0.5 : 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  {p.isLeader && <span title="Room Leader">👑</span>}
-                  <span className="font-display" style={{ fontSize: '1.2rem' }}>{p.displayName}</span>
+                  <span className="font-display" style={{ fontSize: '1.2rem' }}>
+                    {p.displayName} {(p as any).wins > 0 && Array((p as any).wins).fill('👑').join('')}
+                  </span>
                   {p.id === myId && <span className="font-mono" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>(YOU)</span>}
                   {p.status === 'disconnected' && <span className="font-mono" style={{ fontSize: '0.8rem', color: '#FF4D4D' }}>DISCONNECTED</span>}
                 </div>

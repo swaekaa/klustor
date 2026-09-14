@@ -41,7 +41,9 @@ export function createRoom(
     designScore: null,
     raceTime: null,
     raceScore: null,
+    topSpeed: null,
     totalScore: null,
+    wins: 0,
     status: 'joined',
   };
 
@@ -89,7 +91,9 @@ export function joinRoom(roomId: string, playerId: string, displayName: string):
     designScore: null,
     raceTime: null,
     raceScore: null,
+    topSpeed: null,
     totalScore: null,
+    wins: 0,
     status: 'joined',
   };
 
@@ -161,7 +165,8 @@ export function submitRaceResult(
   roomId: string,
   playerId: string,
   raceTime: number,
-  raceScore: number
+  raceScore: number,
+  topSpeed: number
 ) {
   const room = rooms.get(roomId);
   if (!room) throw new Error('Room not found');
@@ -174,6 +179,7 @@ export function submitRaceResult(
 
   player.raceTime = raceTime;
   player.raceScore = raceScore;
+  player.topSpeed = topSpeed;
   
   // Calculate total score (70% design, 30% race)
   if (player.designScore !== null) {
@@ -245,6 +251,25 @@ export function restartRoom(roomId: string, leaderId: string) {
   if (!room) throw new Error('Room not found');
   if (room.leaderId !== leaderId) throw new Error('Only the leader can restart the room');
 
+  // Award crown to the winner of the current phase
+  const eligible = room.players.filter(p => p.hasSubmitted && p.status !== 'disconnected');
+  if (eligible.length > 0) {
+    eligible.sort((a, b) => {
+      if (room.racingEnabled) {
+        const aTime = a.raceTime || Infinity;
+        const bTime = b.raceTime || Infinity;
+        return aTime - bTime;
+      } else {
+        const aTime = a.submittedAt || Infinity;
+        const bTime = b.submittedAt || Infinity;
+        return aTime - bTime;
+      }
+    });
+    // The winner is the first element
+    const winner = eligible[0];
+    winner.wins += 1;
+  }
+
   room.status = 'lobby';
   room.startedAt = null;
   room.endsAt = null;
@@ -259,9 +284,23 @@ export function restartRoom(roomId: string, leaderId: string) {
     p.designScore = null;
     p.raceTime = null;
     p.raceScore = null;
+    p.topSpeed = null;
     p.totalScore = null;
     p.isReady = p.isLeader; // Leader auto ready
   });
 
   return room;
 }
+
+export function updateRoomConfig(roomId: string, leaderId: string, updates: { editingDurationSeconds?: number }) {
+  const room = rooms.get(roomId);
+  if (!room) throw new Error('Room not found');
+  if (room.leaderId !== leaderId) throw new Error('Only the leader can change config');
+  if (room.status !== 'lobby') throw new Error('Cannot change config after start');
+
+  if (updates.editingDurationSeconds !== undefined) {
+    room.editingDurationSeconds = updates.editingDurationSeconds;
+  }
+  return room;
+}
+

@@ -100,8 +100,9 @@ function MultiplayerResultsScreen({ lapTimeMs, topSpeed, designScore, onGoToLead
       // Shorter time = higher score. Say par time is 2:30 (150000ms) = 50 score.
       const parMs = 150000;
       let rScore = Math.max(0, Math.min(100, 100 - ((lapTimeMs - parMs) / 1000)));
+      const topSpeed = useTelemetryStore.getState().maxSpeedSeen;
       
-      submitRaceResult(lapTimeMs, rScore)
+      submitRaceResult(lapTimeMs, rScore, topSpeed)
         .then(() => setIsSubmitting(false))
         .catch(console.error);
     }

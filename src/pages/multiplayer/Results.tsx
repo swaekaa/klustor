@@ -12,26 +12,7 @@ export default function Results() {
     return <div className="page" style={{ padding: '2rem' }}>LOADING RESULTS...</div>;
   }
 
-  // Sort players deterministically as per instructions
-  // 1. Higher total score
-  // 2. Higher design score
-  // 3. Earlier valid submission time
-  // 4. Stable player ID
-  const sortedPlayers = [...room.players].sort((a, b) => {
-    const aTotal = a.totalScore ?? 0;
-    const bTotal = b.totalScore ?? 0;
-    if (aTotal !== bTotal) return bTotal - aTotal;
 
-    const aDesign = a.designScore ?? 0;
-    const bDesign = b.designScore ?? 0;
-    if (aDesign !== bDesign) return bDesign - aDesign;
-
-    const aTime = a.submittedAt ?? Infinity;
-    const bTime = b.submittedAt ?? Infinity;
-    if (aTime !== bTime) return aTime - bTime;
-
-    return a.id.localeCompare(b.id);
-  });
 
   const handleLeave = () => {
     leaveRoom();
@@ -54,6 +35,19 @@ export default function Results() {
       navigate(`/multiplayer/room/${room.code}`);
     }
   }, [room?.status, navigate, room?.code]);
+
+  const sortedPlayers = [...room.players].filter(p => p.hasSubmitted).sort((a, b) => {
+    if (room.racingEnabled) {
+      const aTime = a.raceTime || Infinity;
+      const bTime = b.raceTime || Infinity;
+      if (aTime !== bTime) return aTime - bTime;
+    } else {
+      const aTime = a.submittedAt || Infinity;
+      const bTime = b.submittedAt || Infinity;
+      if (aTime !== bTime) return aTime - bTime;
+    }
+    return a.id.localeCompare(b.id);
+  });
 
   const winner = sortedPlayers[0];
   const isLeader = room.leaderId === socket?.id;
@@ -94,67 +88,63 @@ export default function Results() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%', maxWidth: '1000px' }}>
         
-        {/* WINNER CARD */}
-        {winner && winner.hasSubmitted && (
-          <div style={{ background: 'var(--bg-secondary)', padding: '3rem', borderRadius: '24px', border: '2px solid var(--klustor-pink)', boxShadow: '0 8px 32px rgba(255, 105, 180, 0.2)', textAlign: 'center' }}>
-            <h2 className="font-display" style={{ fontSize: '1.5rem', color: 'var(--klustor-pink)', letterSpacing: '0.2em', marginBottom: '0.5rem' }}>OVERALL WINNER</h2>
-            <div className="font-display" style={{ fontSize: '4rem', marginBottom: '1rem' }}>{winner.displayName}</div>
+        {winner && (
+          <div style={{ background: 'var(--bg-secondary)', padding: '3rem', borderRadius: '24px', textAlign: 'center', border: '2px solid var(--klustor-pink)', boxShadow: '0 8px 32px rgba(255,107,152,0.15)' }}>
+            <h2 className="font-display" style={{ fontSize: '1.2rem', color: 'var(--klustor-pink)', letterSpacing: '0.2em', marginBottom: '1rem' }}>OVERALL WINNER</h2>
+            <div className="font-display" style={{ fontSize: '4rem', marginBottom: '2rem' }}>
+              {winner.displayName} {winner.wins > 0 && Array(winner.wins).fill('👑').join('')}
+            </div>
             
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '3rem', marginTop: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '4rem' }}>
               <div>
-                <div className="font-mono" style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>DESIGN SCORE</div>
-                <div className="font-display" style={{ fontSize: '2rem' }}>{winner.designScore?.toFixed(1) || '0.0'}</div>
+                <div className="font-mono" style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>RACE TIME</div>
+                <div className="font-display" style={{ fontSize: '2.5rem' }}>{winner.raceTime ? formatRaceTime(winner.raceTime) : 'N/A'}</div>
               </div>
-              {room.racingEnabled && (
-                <>
-                  <div>
-                    <div className="font-mono" style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>RACE TIME</div>
-                    <div className="font-display" style={{ fontSize: '2rem' }}>{winner.raceTime ? formatRaceTime(winner.raceTime) : '--'}</div>
-                  </div>
-                </>
-              )}
               <div>
-                <div className="font-mono" style={{ fontSize: '0.9rem', color: 'var(--klustor-pink)' }}>TOTAL SCORE</div>
-                <div className="font-display" style={{ fontSize: '2rem', color: 'var(--klustor-pink)' }}>{winner.totalScore?.toFixed(1) || '0.0'}</div>
+                <div className="font-mono" style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>TOP SPEED</div>
+                <div className="font-display" style={{ fontSize: '2.5rem', color: 'var(--klustor-cyan)' }}>{winner.topSpeed ? winner.topSpeed.toFixed(0) : '0'} MPH</div>
+              </div>
+              <div>
+                <div className="font-mono" style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>DESIGN SCORE</div>
+                <div className="font-display" style={{ fontSize: '2.5rem', color: 'var(--text-primary)' }}>{winner.designScore?.toFixed(1) || '0.0'}</div>
               </div>
             </div>
           </div>
         )}
 
-        {/* FULL LEADERBOARD */}
         <div style={{ background: 'var(--bg-secondary)', padding: '2rem', borderRadius: '24px', border: '1px solid var(--border-light)' }}>
-          <h3 className="font-display" style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>FULL LEADERBOARD</h3>
+          <h2 className="font-display" style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>FULL LEADERBOARD</h2>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {sortedPlayers.map((p, index) => (
-              <div key={p.id} style={{ display: 'flex', alignItems: 'center', padding: '1rem', background: p.id === socket?.id ? 'rgba(0, 255, 255, 0.1)' : 'var(--bg-primary)', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
-                <div className="font-display" style={{ fontSize: '1.5rem', width: '40px', color: index === 0 ? 'var(--klustor-yellow)' : 'var(--text-muted)' }}>
-                  {index + 1}
+              <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: 'var(--bg-primary)', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+                  <div className="font-display" style={{ fontSize: '2rem', width: '40px', color: index === 0 ? 'var(--klustor-yellow)' : 'var(--text-muted)' }}>
+                    {index + 1}
+                  </div>
+                  <div>
+                    <div className="font-display" style={{ fontSize: '1.2rem', display: 'flex', gap: '0.5rem' }}>
+                      {p.displayName} {p.id === socket?.id && <span className="font-mono" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>(YOU)</span>}
+                      {p.wins > 0 && <span style={{ fontSize: '1rem' }}>{Array(p.wins).fill('👑').join('')}</span>}
+                    </div>
+                    <div className="font-mono" style={{ fontSize: '0.8rem', color: 'var(--klustor-green)' }}>
+                      {p.status === 'finished' ? 'FINISHED' : 'SUBMITTED'}
+                    </div>
+                  </div>
                 </div>
                 
-                <div style={{ flex: 1 }}>
-                  <div className="font-display" style={{ fontSize: '1.2rem' }}>{p.displayName} {p.id === socket?.id && '(YOU)'}</div>
-                  <div className="font-mono" style={{ fontSize: '0.8rem', color: p.hasSubmitted ? 'var(--klustor-green)' : '#FF4D4D' }}>
-                    {p.hasSubmitted ? 'SUBMITTED' : 'INCOMPLETE'}
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '2rem', textAlign: 'right' }}>
+                <div style={{ display: 'flex', gap: '3rem', textAlign: 'right' }}>
                   <div>
                     <div className="font-mono" style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>DESIGN</div>
-                    <div className="font-mono" style={{ fontWeight: 'bold' }}>{p.designScore?.toFixed(1) ?? '--'}</div>
+                    <div className="font-display" style={{ fontSize: '1.2rem' }}>{p.designScore?.toFixed(1) || '-'}</div>
                   </div>
-                  
-                  {room.racingEnabled && (
-                    <div>
-                      <div className="font-mono" style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>RACE</div>
-                      <div className="font-mono" style={{ fontWeight: 'bold' }}>{p.raceTime ? formatRaceTime(p.raceTime) : '--'}</div>
-                    </div>
-                  )}
-
                   <div>
-                    <div className="font-mono" style={{ fontSize: '0.7rem', color: 'var(--text-primary)' }}>TOTAL</div>
-                    <div className="font-display" style={{ fontSize: '1.2rem', color: 'var(--klustor-cyan)' }}>{p.totalScore?.toFixed(1) ?? '--'}</div>
+                    <div className="font-mono" style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>TOP SPEED</div>
+                    <div className="font-display" style={{ fontSize: '1.2rem', color: 'var(--klustor-cyan)' }}>{p.topSpeed ? p.topSpeed.toFixed(0) : '0'}</div>
+                  </div>
+                  <div>
+                    <div className="font-mono" style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>RACE TIME</div>
+                    <div className="font-display" style={{ fontSize: '1.2rem' }}>{p.raceTime ? formatRaceTime(p.raceTime) : 'N/A'}</div>
                   </div>
                 </div>
               </div>

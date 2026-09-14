@@ -17,8 +17,9 @@ interface MultiplayerState {
   setReady: (isReady: boolean) => Promise<void>;
   startChallenge: () => Promise<void>;
   restartRoom: () => Promise<void>;
+  updateRoomConfig: (updates: { editingDurationSeconds?: number }) => Promise<void>;
   submitLivery: (dataUrl: string, designScore: number) => Promise<void>;
-  submitRaceResult: (raceTime: number, raceScore: number) => Promise<void>;
+  submitRaceResult: (raceTime: number, raceScore: number, topSpeed: number) => Promise<void>;
   clearError: () => void;
 }
 
@@ -149,6 +150,21 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
     });
   },
 
+  updateRoomConfig: (updates) => {
+    return new Promise((resolve, reject) => {
+      const { socket } = get();
+      if (!socket) return reject('No socket connection');
+      
+      socket.emit('update_room_config', updates, (res: any) => {
+        if (res.success) resolve();
+        else {
+          set({ error: res.error });
+          reject(res.error);
+        }
+      });
+    });
+  },
+
   submitLivery: (dataUrl, designScore) => {
     return new Promise((resolve, reject) => {
       const { socket } = get();
@@ -164,12 +180,12 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
     });
   },
 
-  submitRaceResult: (raceTime, raceScore) => {
+  submitRaceResult: (raceTime, raceScore, topSpeed) => {
     return new Promise((resolve, reject) => {
       const { socket } = get();
       if (!socket) return reject('No socket connection');
       
-      socket.emit('submit_race_result', { raceTime, raceScore }, (res: any) => {
+      socket.emit('submit_race_result', { raceTime, raceScore, topSpeed }, (res: any) => {
         if (res.success) resolve();
         else {
           set({ error: res.error });

@@ -137,6 +137,19 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('update_room_config', (updates, callback) => {
+    try {
+      if (!currentRoomId || !currentPlayerId) throw new Error('Not in a room');
+      
+      const room = roomManager.updateRoomConfig(currentRoomId, currentPlayerId, updates);
+      
+      io.to(room.id).emit('room_state_updated', roomManager.sanitizeRoom(room));
+      callback({ success: true });
+    } catch (err: any) {
+      callback({ success: false, error: err.message });
+    }
+  });
+
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
     if (currentRoomId && currentPlayerId) {

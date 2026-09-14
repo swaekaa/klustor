@@ -28,7 +28,9 @@ export interface MultiplayerPlayer {
   designScore: number | null;
   raceTime: number | null;
   raceScore: number | null;
+  topSpeed: number | null;
   totalScore: number | null;
+  wins: number;
   status: MultiplayerPlayerStatus;
 }
 
