@@ -40,11 +40,11 @@ io.on('connection', (socket) => {
 
   socket.on('join_room', (payload, callback) => {
     try {
-      const { roomCode, displayName } = payload;
+      const { roomCode, displayName, avatar } = payload;
       const roomRaw = roomManager.getRoomByCode(roomCode);
       if (!roomRaw) throw new Error('Room not found');
 
-      const room = roomManager.joinRoom(roomRaw.id, socket.id, displayName);
+      const room = roomManager.joinRoom(roomRaw.id, socket.id, displayName, avatar);
       if (!room) throw new Error('Could not join room');
 
       socket.join(room.id);
