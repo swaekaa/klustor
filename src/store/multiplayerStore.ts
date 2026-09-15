@@ -32,8 +32,9 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
   connect: () => {
     if (get().socket) return;
     
-    // Connect to the local Node.js server (assumes running concurrently)
-    const socket = io('http://localhost:4000');
+    // Connect to the local Node.js server or production server
+    const serverUrl = import.meta.env.VITE_SERVER_URL || `${window.location.protocol}//${window.location.hostname}:4000`;
+    const socket = io(serverUrl);
     
     socket.on('connect', () => {
       set({ isConnected: true, error: null });
