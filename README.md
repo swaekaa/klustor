@@ -37,6 +37,8 @@ A highly detailed, vibrant design yields a high **Design Score**, which directly
 
 ### 3. Live Multiplayer & Lobby Sync
 <img src="./public/multiplayer.png" width="600" alt="Multiplayer Room" />
+<br />
+<img src="./public/livePreview.gif" width="600" alt="Live Editing Previews" />
 
 Players can take their custom-designed rides into live, socket-driven multiplayer rooms. The architecture uses a Node.js/Socket.IO backend to synchronize lobby states, enforce strict design-phase time limits (ranging from 20 seconds to 2 minutes), and broadcast live draft previews of other players' cars in real-time as they edit in Unlayer. Players also identify themselves using a 16-car emoji avatar picker. The backend authoritative state ensures that late-joiners still see the exact synchronized countdown timer.
 
@@ -115,9 +117,14 @@ graph TD
 
 ## ✨ Feature Deep Dive
 
-### 🎨 The Livery Studio
-- Seamlessly switch between 5 different camera angles/faces.
-- Live 3D Preview: As you save a face in the 2D editor, the 3D car model rotating next to you updates instantly.
+### 🎨 The Livery Studio: The Heart of the Game
+<img src="./public/liveryStudio.gif" width="600" alt="Livery Studio Interface" />
+
+The Livery Studio is the absolute core of the KLUSTOR experience. We have deeply integrated the **Unlayer React Image Editor** so that it isn't just a cosmetic tool - it is the primary engine that dictates your car's performance. How you use Unlayer here directly decides your stats and your final race time.
+
+- **The Unlayer Integration**: We've customized Unlayer to load 5 distinct SVG templates corresponding to the physical faces of the 3D car (Front, Rear, Left, Right, Top). As you use Unlayer's drawing, text, and sticker tools, you are quite literally painting the UV map of the 3D model.
+- **Form Equals Function**: Every time you click save in Unlayer, the canvas is exported as a Base64 string. The more intricate your Unlayer design (evaluated through edge detection and color density algorithms), the higher your top speed and acceleration multipliers will be on the track. If you do a poor job editing, your car will drag. 
+- **Live 3D Preview**: Because Unlayer handles the heavy 2D canvas manipulation, our React app simply intercepts the output and projects it onto the Three.js mesh in real-time. This allows you to seamlessly switch between camera angles and see your performance-boosting decals applied instantly.
 
 ### 🏎️ The Racing Engine
 - **Vice Coast Circuit**: A fully realized 3.4km 3D track featuring sweeping turns, tight hairpins, and ocean views.
