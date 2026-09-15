@@ -18,6 +18,7 @@ interface MultiplayerState {
   startChallenge: () => Promise<void>;
   restartRoom: () => Promise<void>;
   updateRoomConfig: (updates: { editingDurationSeconds?: number }) => Promise<void>;
+  submitDraftLivery: (dataUrl: string) => Promise<void>;
   submitLivery: (dataUrl: string, designScore: number) => Promise<void>;
   submitRaceResult: (raceTime: number, raceScore: number, topSpeed: number) => Promise<void>;
   clearError: () => void;
@@ -157,9 +158,26 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
       if (!socket) return reject('No socket connection');
       
       socket.emit('update_room_config', updates, (res: any) => {
-        if (res.success) resolve();
-        else {
+        if (res.success) {
+          resolve();
+        } else {
           set({ error: res.error });
+          reject(res.error);
+        }
+      });
+    });
+  },
+
+  submitDraftLivery: (dataUrl) => {
+    return new Promise((resolve, reject) => {
+      const { socket } = get();
+      if (!socket) return reject('No socket connection');
+      
+      socket.emit('submit_draft_livery', { dataUrl }, (res: any) => {
+        if (res.success) {
+          resolve();
+        } else {
+          console.error('Failed to submit draft:', res.error);
           reject(res.error);
         }
       });

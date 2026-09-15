@@ -20,6 +20,38 @@ We built an algorithmic analyzer that reads the 2D canvas data of your custom li
 
 ---
 
+## 📸 Gameplay & Mechanics in Action
+
+### 1. The Design Phase & Unlayer Integration
+<img src="public/evidence/diff%20pov.gif" width="600" alt="Live Multi-Face Editing" />
+
+The core of KLUSTOR is powered by the **Unlayer React Image Editor**. Rather than simple color pickers, we provide 5 distinct 2D template faces (Front, Rear, Left, Right, Top) directly inside the browser. 
+As players paint, add decals, and manipulate the canvas using Unlayer's robust design tools, the base64 output of the canvas is dynamically exported. The **Live 3D Preview** updates instantly as Unlayer saves the canvas state, translating a pure 2D web-editing experience into a fully wrapped 3D vehicle texture in real-time. Unlayer handles the heavy lifting of canvas layers, grouping, and SVG injections, while our React application catches the raw pixel data outputs to bind them into the Three.js 3D space.
+
+### 2. Algorithmic Design Scoring
+<img src="public/evidence/designScore.png" width="600" alt="Design Score Analysis" />
+
+Looks aren't just for show. Every time a design is saved from the Unlayer editor, our custom `designAnalysis.ts` algorithm processes the Base64 pixel data byte-by-byte. It runs through an off-screen HTML5 Canvas context to read the raw `ImageData`.
+It calculates **Complexity** using a custom edge-detection algorithm, measures **Color Variance** by sampling unique RGB buckets, and counts **Edge Density**.
+A highly detailed, vibrant design yields a high **Design Score**, which directly dictates the 3D car's **Top Speed** and **Acceleration** multipliers. The game actively rewards artistic effort with mechanical superiority on the track. If you leave the car blank, your vehicle will be significantly slower.
+
+### 3. Live Multiplayer & Lobby Sync
+<img src="public/evidence/multiplayer.png" width="600" alt="Multiplayer Room" />
+
+Players can take their custom-designed rides into live, socket-driven multiplayer rooms. The architecture uses a Node.js/Socket.IO backend to synchronize lobby states, enforce strict design-phase time limits (ranging from 20 seconds to 2 minutes), and broadcast live draft previews of other players' cars in real-time as they edit in Unlayer. Players also identify themselves using a 16-car emoji avatar picker. The backend authoritative state ensures that late-joiners still see the exact synchronized countdown timer.
+
+### 4. High-Speed Racing & Ray-cast Physics
+<img src="public/evidence/raceEnd.gif" width="600" alt="Race Ending" />
+
+Once the design phase concludes, the game transitions into the 3D track. KLUSTOR uses **React Three Fiber** and a custom arcade-style ray-cast physics engine. It simulates suspension compression, drifting friction, and acceleration curves - all mathematically scaled based on the Unlayer Design Score. 
+
+### 5. Competitive Leaderboards & Crowns
+<img src="public/evidence/leaderboard.png" width="600" alt="Global Leaderboard" />
+
+At the end of a multiplayer race, times are submitted to the server. The live leaderboard instantly synchronizes the results, granting a "Crown" (👑) to the overall winner. Your local records are also persisted in the Garage using Zustand, allowing you to track your best laps and visually inspect the specific liveries that set them.
+
+---
+
 ## 🧩 How Unlayer Powers the Gameplay
 
 The [Unlayer React Image Editor](https://github.com/unlayer/react-image-editor) isn't just an add-on; it is the core progression engine of the game. We repurpose a powerful image editor into a **3D Texture Painting Studio**.
@@ -44,11 +76,11 @@ sequenceDiagram
 ```
 
 ### Detailed Breakdown of the Editor Integration:
-1. **Multi-Faced Projection**: The game provides 5 distinct 2D unwrapped templates (Left, Right, Top, Front, Rear).
-2. **Unlayer Initialization**: When a user selects a face, the corresponding blank template is loaded into the `<ReactImageEditor>` component as the background.
-3. **Creative Freedom**: Users utilize Unlayer's native tools—drawing, adding text, slapping on stickers, and applying filters—to create their livery.
-4. **Extraction**: On save, Unlayer exports a high-resolution base64 data URL.
-5. **3D Application**: Three.js takes this data URL, converts it into a `Texture`, and applies it to the corresponding face of the `PlayerCar` 3D mesh.
+1. **Multi-Faced Projection**: The game provides 5 distinct 2D unwrapped templates (Left, Right, Top, Front, Rear). These are SVG templates that map perfectly to the UV coordinates of our 3D model.
+2. **Unlayer Initialization**: When a user selects a face, the corresponding blank template is loaded into the `<ReactImageEditor>` component as the background layer.
+3. **Creative Freedom**: Users utilize Unlayer's native tools (drawing, adding text, slapping on stickers, and applying filters) to create their livery.
+4. **Extraction**: On save, Unlayer compiles the layers and exports a high-resolution base64 data URL.
+5. **3D Application**: Three.js takes this data URL, converts it into a `TextureLoader` object, flips the Y-axis to match WebGL coordinates, and applies it to the corresponding face of the `PlayerCar` 3D mesh.
 
 ---
 

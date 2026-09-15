@@ -10,7 +10,7 @@ import type { CarStats, TemplateView } from '../../types';
 export default function ChallengePage() {
   const { roomCode } = useParams<{ roomCode: string }>();
   const navigate = useNavigate();
-  const { room, socket, submitLivery } = useMultiplayerStore();
+  const { room, socket, submitLivery, submitDraftLivery } = useMultiplayerStore();
   const { saveLiveryFace } = useGameStore();
   
   const [selectedView, setSelectedView] = useState<TemplateView>('left');
@@ -62,12 +62,15 @@ export default function ChallengePage() {
       const computed = await analyzeAllFaces(newTextures, getCarTemplateUrl);
       setStats(computed);
       saveLiveryFace(dataUrl, selectedView, computed, 'MULTIPLAYER RIDE');
+      
+      // Broadcast live preview of this view (draft)
+      submitDraftLivery(dataUrl).catch(console.error);
     } catch (err) {
       console.error('Save failed:', err);
     } finally {
       setIsSaving(false);
     }
-  }, [selectedView, textures, saveLiveryFace]);
+  }, [selectedView, textures, saveLiveryFace, submitDraftLivery]);
 
   const handleFinalSubmit = async () => {
     if (me?.hasSubmitted) return;
@@ -194,6 +197,30 @@ export default function ChallengePage() {
             </div>
           )}
         </div>
+        
+        {/* LIVE PREVIEWS SIDEBAR */}
+        <div style={{ width: '200px', display: 'flex', flexDirection: 'column', gap: '1rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '16px', border: '1px solid var(--border-light)', overflowY: 'auto' }}>
+          <h3 className="font-mono" style={{ fontSize: '0.9rem', color: 'var(--text-muted)', margin: '0 0 1rem 0', textAlign: 'center' }}>LIVE PREVIEWS</h3>
+          {room.players.filter(p => p.id !== socket?.id).map(p => (
+            <div key={p.id} style={{ background: 'var(--bg-primary)', borderRadius: '12px', padding: '0.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', border: '1px solid var(--border-light)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontSize: '1.2rem' }}>{p.avatar || '🚗'}</span>
+                <span className="font-display" style={{ fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100px' }}>{p.displayName}</span>
+              </div>
+              <div style={{ width: '100%', height: '100px', background: p.draftLivery ? 'transparent' : '#EEEEEE', borderRadius: '8px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {p.draftLivery ? (
+                  <img src={p.draftLivery} alt={`${p.displayName} preview`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                ) : (
+                  <span className="font-mono" style={{ fontSize: '0.7rem', color: '#AAA' }}>EDITING...</span>
+                )}
+              </div>
+            </div>
+          ))}
+          {room.players.length <= 1 && (
+            <div className="font-mono" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', marginTop: '2rem' }}>Waiting for others...</div>
+          )}
+        </div>
+
       </div>
     </div>
   );

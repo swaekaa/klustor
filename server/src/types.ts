@@ -22,6 +22,7 @@ export interface MultiplayerPlayer {
   avatar: string;
   isLeader: boolean;
   isReady: boolean;
+  draftLivery?: string; // Live preview during challenge
   hasSubmitted: boolean;
   joinedAt: number;
   submittedAt: number | null;

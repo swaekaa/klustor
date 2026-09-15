@@ -84,6 +84,21 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('submit_draft_livery', (payload, callback) => {
+    try {
+      if (!currentRoomId || !currentPlayerId) throw new Error('Not in a room');
+      const { dataUrl } = payload;
+      
+      const room = roomManager.submitDraftLivery(currentRoomId, currentPlayerId, dataUrl);
+      
+      const safeRoom = roomManager.sanitizeRoom(room);
+      io.to(room.id).emit('room_state_updated', safeRoom);
+      callback({ success: true });
+    } catch (err: any) {
+      callback({ success: false, error: err.message });
+    }
+  });
+
   socket.on('submit_livery', (payload, callback) => {
     try {
       if (!currentRoomId || !currentPlayerId) throw new Error('Not in a room');

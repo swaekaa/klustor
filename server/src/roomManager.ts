@@ -132,6 +132,17 @@ export function startChallenge(roomId: string, leaderId: string) {
   return room;
 }
 
+export function submitDraftLivery(roomId: string, playerId: string, draftDataUrl: string) {
+  const room = rooms.get(roomId);
+  if (!room) throw new Error('Room not found');
+
+  const player = room.players.find(p => p.id === playerId);
+  if (!player) throw new Error('Player not in room');
+
+  player.draftLivery = draftDataUrl;
+  return room;
+}
+
 export function submitLivery(
   roomId: string,
   playerId: string,
