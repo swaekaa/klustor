@@ -24,6 +24,10 @@ We built an algorithmic analyzer that reads the 2D canvas data of your custom li
 
 ### 1. The Design Phase & Unlayer Integration
 <img src="./public/diff%20pov.gif" width="600" alt="Live Multi-Face Editing" />
+<br />
+<img src="./public/live%20edit.gif" width="600" alt="Live Editing in Action" />
+<br />
+*Players can effortlessly toggle between 5 template faces. 2D canvas strokes and stickers instantly wrap around the 3D mesh in real-time.*
 
 The core of KLUSTOR is powered by the **Unlayer React Image Editor**. Rather than simple color pickers, we provide 5 distinct 2D template faces (Front, Rear, Left, Right, Top) directly inside the browser. 
 As players paint, add decals, and manipulate the canvas using Unlayer's robust design tools, the base64 output of the canvas is dynamically exported. The **Live 3D Preview** updates instantly as Unlayer saves the canvas state, translating a pure 2D web-editing experience into a fully wrapped 3D vehicle texture in real-time. Unlayer handles the heavy lifting of canvas layers, grouping, and SVG injections, while our React application catches the raw pixel data outputs to bind them into the Three.js 3D space.
@@ -39,11 +43,45 @@ A highly detailed, vibrant design yields a high **Design Score**, which directly
 <img src="./public/multiplayer.png" width="600" alt="Multiplayer Room" />
 <br />
 <img src="./public/livePreview.gif" width="600" alt="Live Editing Previews" />
+<br />
+*The lobby actively broadcasts your opponents' live designs via websockets as they build them, fueling the competition before the race even begins.*
 
 Players can take their custom-designed rides into live, socket-driven multiplayer rooms. The architecture uses a Node.js/Socket.IO backend to synchronize lobby states, enforce strict design-phase time limits (ranging from 20 seconds to 2 minutes), and broadcast live draft previews of other players' cars in real-time as they edit in Unlayer. Players also identify themselves using a 16-car emoji avatar picker. The backend authoritative state ensures that late-joiners still see the exact synchronized countdown timer.
 
+#### Multiplayer Network Architecture
+```mermaid
+sequenceDiagram
+    participant Player1 as Client 1 (Host)
+    participant Player2 as Client 2 (Joiner)
+    participant Server as Node.js Socket Server
+    
+    Player1->>Server: Create Room (Generates Code)
+    Server-->>Player1: Room Created (State: WAITING)
+    Player2->>Server: Join Room (Code + Avatar)
+    Server-->>Player1: Player Joined (Sync Roster)
+    Server-->>Player2: Room State Synced
+    
+    Player1->>Server: Start Design Phase
+    Server-->>Player1: Countdown Started
+    Server-->>Player2: Countdown Started
+    
+    loop During Design Phase
+        Player1->>Server: Save Unlayer Face (Draft Base64)
+        Server-->>Player2: Broadcast Draft (Live Preview Sidebar)
+    end
+    
+    Server-->>Player1: Time's Up! (Force submit final Base64)
+    Server-->>Player2: Time's Up! (Force submit final Base64)
+    Server-->>Player1: Transition to 3D Track
+    Server-->>Player2: Transition to 3D Track
+```
+
 ### 4. High-Speed Racing & Ray-cast Physics
+<img src="./public/race%20start.gif" width="600" alt="Race Start" />
+<br />
 <img src="./public/raceEnd.gif" width="600" alt="Race Ending" />
+<br />
+*Transition seamlessly from the design studio directly to the starting grid, and cross the finish line to cement your time on the global leaderboard.*
 
 Once the design phase concludes, the game transitions into the 3D track. KLUSTOR uses **React Three Fiber** and a custom arcade-style ray-cast physics engine. It simulates suspension compression, drifting friction, and acceleration curves - all mathematically scaled based on the Unlayer Design Score. 
 
@@ -119,6 +157,8 @@ graph TD
 
 ### 🎨 The Livery Studio: The Heart of the Game
 <img src="./public/liveryStudio.gif" width="600" alt="Livery Studio Interface" />
+<br />
+*The Livery Studio seamlessly maps Unlayer SVG templates into Three.js textures upon every save.*
 
 The Livery Studio is the absolute core of the KLUSTOR experience. We have deeply integrated the **Unlayer React Image Editor** so that it isn't just a cosmetic tool - it is the primary engine that dictates your car's performance. How you use Unlayer here directly decides your stats and your final race time.
 
@@ -129,7 +169,11 @@ The Livery Studio is the absolute core of the KLUSTOR experience. We have deeply
 ### 🏎️ The Racing Engine
 - **Vice Coast Circuit**: A fully realized 3.4km 3D track featuring sweeping turns, tight hairpins, and ocean views.
 - **Physics**: Custom-built ray-cast suspension and arcade drifting physics (`useCarPhysics.ts`).
+  <br /><img src="./public/barrier.gif" width="400" alt="Physics and Collisions" />
+  <br />*The custom ray-cast physics engine simulates drift friction and hard collisions with track barriers.*
 - **HUD & Telemetry**: Dynamic speedometer, RPM gauge, gear shifting logic, and checkpoint split-timing.
+  <br /><img src="./public/checkpoint.gif" width="400" alt="Checkpoint Timing" />
+  <br />*Dynamic HUD elements track your split times through sectors in real-time.*
 
 ### 🏆 Persistent Garage & Leaderboards
 - Your best times, designs, and stats are saved locally using Zustand's `persist` middleware.
