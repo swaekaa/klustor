@@ -1,0 +1,35 @@
+[
+  {
+    "playerId": "anonymous",
+    "displayName": "anonymous",
+    "avatar": "🚜",
+    "bestTime": 127924,
+    "topSpeed": 66,
+    "designScore": 7.7,
+    "racesCompleted": 1,
+    "liveryThumb": "",
+    "lastUpdated": 1790335899365
+  },
+  {
+    "playerId": "FN5A-Km4jnjF0S9YAAAA",
+    "displayName": "FAS",
+    "avatar": "🚜",
+    "bestTime": 378539,
+    "topSpeed": 58.74000000000001,
+    "designScore": 3.6,
+    "racesCompleted": 1,
+    "liveryThumb": "",
+    "lastUpdated": 1790335337900
+  },
+  {
+    "playerId": "RaJW4oXIqtGY_NWQAAAB",
+    "displayName": "SS",
+    "avatar": "🚛",
+    "bestTime": 381022,
+    "topSpeed": 64.67999999999999,
+    "designScore": 5.2,
+    "racesCompleted": 1,
+    "liveryThumb": "",
+    "lastUpdated": 1790335339506
+  }
+]

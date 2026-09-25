@@ -140,8 +140,30 @@ function ResultsScreen({
     if (!claimed.current) {
       claimed.current = true;
       recordRaceResult(lapTimeMs, topSpeed, lapSplits);
+
+      // Submit to global leaderboard via REST
+      const state = useGameStore.getState();
+      const liveryThumb = state.currentLivery?.textures?.top || state.currentLivery?.textures?.left || '';
+      const driverName = state.player.driverName || 'anonymous';
+      const driverAvatar = state.player.driverAvatar || '🚗';
+
+      const SERVER_URL = import.meta.env.VITE_SERVER_URL || `${window.location.protocol}//${window.location.hostname}:4000`;
+      
+      fetch(`${SERVER_URL}/leaderboard`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          playerId: driverName,
+          displayName: driverName,
+          avatar: driverAvatar,
+          raceTime: lapTimeMs,
+          topSpeed: topSpeed,
+          designScore: designScore,
+          liveryThumb: liveryThumb.substring(0, 200),
+        })
+      }).catch(err => console.warn('[Global LB] Single-player submit failed:', err));
     }
-  }, [lapTimeMs, topSpeed, lapSplits, recordRaceResult]);
+  }, [lapTimeMs, topSpeed, lapSplits, recordRaceResult, designScore]);
 
   return (
     <motion.div

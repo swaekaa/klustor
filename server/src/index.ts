@@ -8,6 +8,47 @@ import * as raceLeaderService from './raceLeaderService';
 
 const app = express();
 app.use(cors());
+app.use(express.json({ limit: '1mb' }));
+
+// ── REST: GET /leaderboard?playerId=xxx ───────────────────────
+app.get('/leaderboard', (req, res) => {
+  const playerId = req.query.playerId as string | undefined;
+  res.json(leaderboardService.getLeaderboardResponse(playerId));
+});
+
+// ── REST: POST /leaderboard ───────────────────────────────────
+app.post('/leaderboard', (req, res) => {
+  try {
+    const { playerId, displayName, avatar, raceTime, topSpeed, designScore, liveryThumb } = req.body;
+    if (!playerId || !displayName) return res.status(400).json({ error: 'Missing required fields' });
+
+    const validation = leaderboardService.validateRaceResult(raceTime, topSpeed);
+    if (!validation.valid) return res.status(400).json({ error: validation.reason });
+
+    const { isNewBest, rank } = leaderboardService.upsertEntry({
+      playerId,
+      displayName,
+      avatar: avatar || '🚗',
+      bestTime: raceTime,
+      topSpeed,
+      designScore: designScore ?? 0,
+      racesCompleted: 1,
+      liveryThumb: liveryThumb ?? '',
+      lastUpdated: Date.now(),
+    });
+
+    const leaderboard = leaderboardService.getLeaderboardResponse(playerId);
+    // Broadcast to any connected sockets that leaderboard changed
+    if (isNewBest) {
+      io.emit('global_leaderboard_updated', leaderboard);
+    }
+
+    res.json({ success: true, isNewBest, rank, leaderboard });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
