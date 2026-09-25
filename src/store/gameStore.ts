@@ -36,6 +36,7 @@ const DEFAULT_PLAYER: Partial<GameState['player']> & { cash: number, rep: number
   bestSplits: [],
   driverName: '',
   driverAvatar: '🚗',
+  deviceId: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15),
 };
 
 export const defaultStats = (): CarStats => ({

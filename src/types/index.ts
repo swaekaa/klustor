@@ -44,6 +44,7 @@ export interface PlayerState {
   bestSplits?: number[];    // ms elapsed at each checkpoint during the best lap
   driverName: string;
   driverAvatar: string;
+  deviceId: string;
 }
 
 // ── Game State ───────────────────────────────────────────────

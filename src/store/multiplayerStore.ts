@@ -24,7 +24,7 @@ interface MultiplayerState {
   submitLivery: (data: Record<string, string>, designScore: number) => Promise<void>;
   submitRaceResult: (raceTime: number, raceScore: number, topSpeed: number) => Promise<void>;
   getGlobalLeaderboard: () => Promise<void>;
-  submitGlobalResult: (payload: { displayName: string; avatar: string; raceTime: number; topSpeed: number; designScore: number; liveryThumb?: string }) => Promise<{ isNewBest: boolean; rank: number }>;
+  submitGlobalResult: (payload: { playerId?: string; displayName: string; avatar: string; raceTime: number; topSpeed: number; designScore: number; liveryThumb?: string }) => Promise<{ isNewBest: boolean; rank: number }>;
   clearError: () => void;
 }
 
@@ -38,7 +38,7 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
     if (get().socket) return;
     
     // Connect to the local Node.js server or production server
-    const serverUrl = import.meta.env.VITE_SERVER_URL || `${window.location.protocol}//${window.location.hostname}:4000`;
+    const serverUrl = import.meta.env.VITE_SERVER_URL || (import.meta.env.PROD ? window.location.origin : `${window.location.protocol}//${window.location.hostname}:4000`);
     const socket = io(serverUrl);
     
     socket.on('connect', () => {
