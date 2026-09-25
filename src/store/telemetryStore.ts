@@ -20,7 +20,9 @@ export const useTelemetryStore = create<TelemetryState>((set) => ({
   maxSpeedSeen: 0,
   setTelemetry: (data) => set((state) => {
     let newMaxSpeed = state.maxSpeedSeen;
-    if (data.speed !== undefined) {
+    if (data.maxSpeedSeen !== undefined) {
+      newMaxSpeed = data.maxSpeedSeen;
+    } else if (data.speed !== undefined) {
       newMaxSpeed = Math.max(newMaxSpeed, Math.abs(data.speed));
     }
     return { ...state, ...data, maxSpeedSeen: newMaxSpeed };

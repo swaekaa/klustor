@@ -158,8 +158,6 @@ export default function MultiplayerRace() {
     phase, countdown, lapTimeMs, currentCheckpoint, lapSplits, latestSplitDiff,
     startCountdown, checkCheckpoint
   } = useRaceState();
-
-  const maxSpeedSeen = useTelemetryStore(s => s.maxSpeedSeen);
   useEngineSound(phase);
   const { isPlaying: isRadioPlaying } = useRadio(phase === 'racing');
 
@@ -207,7 +205,7 @@ export default function MultiplayerRace() {
 
       {phase === 'finished' && (
         <MultiplayerResultsScreen
-          lapTimeMs={lapTimeMs} topSpeed={maxSpeedSeen} designScore={stats?.designScore ?? 0}
+          lapTimeMs={lapTimeMs} topSpeed={useTelemetryStore.getState().maxSpeedSeen} designScore={stats?.designScore ?? 0}
           onGoToLeaderboard={() => navigate(`/multiplayer/results/${roomCode}`)}
         />
       )}
