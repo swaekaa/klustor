@@ -98,6 +98,14 @@ export const useGameStore = create<GameState>()(
           }
         }));
       },
+      updateDriverName: (name: string) => {
+        set(state => ({
+          player: {
+            ...state.player,
+            driverName: name
+          }
+        }));
+      },
       updateLiveryName: (name: string) => {
         set((state) => ({
           currentLivery: state.currentLivery 

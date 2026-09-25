@@ -192,7 +192,7 @@ function MultiplayerResultsScreen({ lapTimeMs, topSpeed, designScore, onGoToLead
       // 2. Submit to global leaderboard
       const liveryThumb = currentLivery?.textures?.top || currentLivery?.textures?.left || '';
       submitGlobalResult({
-        displayName: displayName || 'UNKNOWN',
+        displayName: currentLivery?.name || displayName || 'UNKNOWN',
         avatar: avatar || '🚗',
         raceTime: lapTimeMs,
         topSpeed: topSpeedMs,

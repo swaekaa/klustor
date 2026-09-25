@@ -144,6 +144,7 @@ function ResultsScreen({
       // Submit to global leaderboard via REST
       const state = useGameStore.getState();
       const liveryThumb = state.currentLivery?.textures?.top || state.currentLivery?.textures?.left || '';
+      const liveryName = state.currentLivery?.name || 'MY RIDE';
       const driverName = state.player.driverName || 'anonymous';
       const driverAvatar = state.player.driverAvatar || '🚗';
 
@@ -154,7 +155,7 @@ function ResultsScreen({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           playerId: driverName,
-          displayName: driverName,
+          displayName: liveryName,
           avatar: driverAvatar,
           raceTime: lapTimeMs,
           topSpeed: topSpeed,

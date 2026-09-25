@@ -57,6 +57,7 @@ export interface GameState {
   saveLiveryFace: (dataUrl: string, view: TemplateView, newStats: CarStats, liveryName?: string) => void;
   updateLiveryName: (name: string) => void;
   updateDriverAvatar: (avatar: string) => void;
+  updateDriverName: (name: string) => void;
   submitRaceResult: (timeMs: number, splits: number[]) => void;
   resetLivery: () => void;
   resetGame: () => void;

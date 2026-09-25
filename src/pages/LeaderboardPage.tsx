@@ -35,8 +35,8 @@ interface LeaderboardEntry {
   bestTime: number;
   topSpeed: number;
   designScore: number;
-  racesCompleted: number;
   rank: number;
+  liveryThumb?: string;
 }
 
 type Tab = 'global' | 'local';
@@ -64,14 +64,15 @@ function LeaderboardRow({ entry, index, isMe }: { entry: LeaderboardEntry; index
       <div className="font-display" style={{ width: '48px', fontSize: rank <= 3 ? '2rem' : '1.5rem', fontWeight: 900, textAlign: 'center', flexShrink: 0 }}>
         {medal || `#${rank}`}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: 0 }}>
-        <span style={{ fontSize: '1.5rem' }}>{entry.avatar}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, minWidth: 0 }}>
+        {entry.liveryThumb ? (
+          <img src={entry.liveryThumb} alt="Livery" style={{ width: '80px', height: '40px', objectFit: 'cover', borderRadius: '8px', border: '2px solid var(--text-primary)' }} />
+        ) : (
+          <span style={{ fontSize: '1.5rem', width: '80px', textAlign: 'center' }}>{entry.avatar}</span>
+        )}
         <div>
           <div className="font-display" style={{ fontSize: '1.1rem', fontWeight: 700, color: isMe ? '#333' : 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '160px' }}>
             {entry.displayName} {isMe && <span className="font-mono" style={{ fontSize: '0.7rem', color: '#555' }}>(YOU)</span>}
-          </div>
-          <div className="font-mono" style={{ fontSize: '0.7rem', color: isMe ? '#555' : 'var(--text-muted)' }}>
-            {entry.racesCompleted} RACE{entry.racesCompleted !== 1 ? 'S' : ''}
           </div>
         </div>
       </div>
@@ -157,10 +158,6 @@ function GlobalLeaderboard({ playerId }: { playerId: string }) {
               <div>
                 <div className="font-mono" style={{ fontSize: '0.7rem', color: '#555' }}>TOP SPEED</div>
                 <div className="font-display" style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#111' }}>{formatKmh(playerEntry.topSpeed)}</div>
-              </div>
-              <div>
-                <div className="font-mono" style={{ fontSize: '0.7rem', color: '#555' }}>RACES</div>
-                <div className="font-display" style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#111' }}>{playerEntry.racesCompleted}</div>
               </div>
             </div>
           </div>
@@ -297,6 +294,24 @@ export default function LeaderboardPage() {
           <button className="btn" onClick={() => navigate('/')} style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>GARAGE</button>
           <button className="btn" onClick={() => navigate('/leaderboard')} style={{ background: 'var(--klustor-pink)', border: 'none', boxShadow: 'none' }}>LEADERBOARD</button>
           <button className="btn" onClick={() => navigate('/multiplayer')} style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>MULTIPLAYER</button>
+        </div>
+      </div>
+      {/* Player Identity Edit */}
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'var(--bg-secondary)', padding: '0.5rem 1.5rem', borderRadius: '999px', border: '1px solid var(--border-light)' }}>
+          <span className="font-mono" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>RACING AS</span>
+          <input
+            type="text"
+            value={player.driverName}
+            onChange={(e) => useGameStore.getState().updateDriverName(e.target.value.toUpperCase())}
+            placeholder="ANONYMOUS"
+            maxLength={16}
+            style={{
+              background: 'transparent', border: 'none', borderBottom: '2px solid var(--text-primary)',
+              fontFamily: 'var(--font-display)', fontSize: '1.2rem', color: 'var(--text-primary)',
+              width: '150px', outline: 'none', textAlign: 'center', padding: '0.2rem'
+            }}
+          />
         </div>
       </div>
 

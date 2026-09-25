@@ -3,12 +3,24 @@
     "playerId": "anonymous",
     "displayName": "anonymous",
     "avatar": "🚜",
-    "bestTime": 127924,
-    "topSpeed": 66,
-    "designScore": 7.7,
+    "bestTime": 105107,
+    "topSpeed": 74.58,
+    "designScore": 9,
+    "racesCompleted": 2,
+    "liveryThumb": "",
+    "lastUpdated": 1790336274544
+  },
+  {
+    "playerId": "anonymous",
+    "displayName": "TEST1",
+    "avatar": "🚜",
+    "bestTime": 108555,
+    "topSpeed": 74.58,
+    "designScore": 9,
     "racesCompleted": 1,
     "liveryThumb": "",
-    "lastUpdated": 1790335899365
+    "lastUpdated": 1790336882346,
+    "entryId": "anonymous-1790336882346-rsve7"
   },
   {
     "playerId": "FN5A-Km4jnjF0S9YAAAA",

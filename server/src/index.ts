@@ -25,7 +25,7 @@ app.post('/leaderboard', (req, res) => {
     const validation = leaderboardService.validateRaceResult(raceTime, topSpeed);
     if (!validation.valid) return res.status(400).json({ error: validation.reason });
 
-    const { isNewBest, rank } = leaderboardService.upsertEntry({
+    const { isNewBest, rank } = leaderboardService.addEntry({
       playerId,
       displayName,
       avatar: avatar || '🚗',
@@ -331,7 +331,7 @@ io.on('connection', (socket) => {
       
       globalResultSubmitted.add(socket.id);
       
-      const { isNewBest, rank } = leaderboardService.upsertEntry({
+      const { isNewBest, rank } = leaderboardService.addEntry({
         playerId: socket.id,
         displayName: displayName || socketDisplayNameMap.get(socket.id) || 'UNKNOWN',
         avatar: avatar || '🚗',

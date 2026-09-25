@@ -7,8 +7,9 @@ import * as path from 'path';
 // ============================================================
 
 export interface LeaderboardEntry {
-  playerId: string;      // Socket display name (stable identifier)
-  displayName: string;
+  entryId: string;       // Unique run ID
+  playerId: string;      // Socket/driver identifier
+  displayName: string;   // Now holds Livery Name
   avatar: string;
   bestTime: number;      // ms
   topSpeed: number;      // m/s (raw physics units)
@@ -80,39 +81,23 @@ export function validateRaceResult(raceTime: number, topSpeed: number): { valid:
 // ── Public API ────────────────────────────────────────────────
 
 /**
- * Upsert a player's leaderboard entry.
- * Returns true if a personal best was set (or first entry).
+ * Add a new race entry.
  */
-export function upsertEntry(entry: Omit<LeaderboardEntry, 'rank'>): { isNewBest: boolean; rank: number } {
-  const existing = _entries.find(e => e.playerId === entry.playerId);
-  
-  let isNewBest = false;
+export function addEntry(entry: Omit<LeaderboardEntry, 'rank' | 'entryId'>): { isNewBest: boolean; rank: number } {
+  // Check if this specific player has a better time already
+  const personalBest = _entries.find(e => e.playerId === entry.playerId)?.bestTime ?? Infinity;
+  const isNewBest = entry.bestTime < personalBest;
 
-  if (!existing) {
-    _entries.push({ ...entry });
-    isNewBest = true;
-  } else {
-    // Only update if this is a personal best
-    if (entry.bestTime < existing.bestTime) {
-      existing.bestTime = entry.bestTime;
-      existing.topSpeed = entry.topSpeed;
-      existing.designScore = entry.designScore;
-      existing.liveryThumb = entry.liveryThumb;
-      existing.displayName = entry.displayName; // name may have changed
-      existing.avatar = entry.avatar;
-      existing.lastUpdated = entry.lastUpdated;
-      isNewBest = true;
-    }
-    existing.racesCompleted += 1;
-    if (!isNewBest) {
-      existing.lastUpdated = entry.lastUpdated;
-    }
-  }
+  const newEntry: LeaderboardEntry = {
+    ...entry,
+    entryId: `${entry.playerId}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+  };
 
+  _entries.push(newEntry);
   _entries = sortEntries(_entries);
   saveToDisk(_entries);
 
-  const rank = _entries.findIndex(e => e.playerId === entry.playerId) + 1;
+  const rank = _entries.findIndex(e => e.entryId === newEntry.entryId) + 1;
   return { isNewBest, rank };
 }
 
@@ -124,9 +109,10 @@ export function getTop20(): (LeaderboardEntry & { rank: number })[] {
 }
 
 /**
- * Get a specific player's rank and entry.
+ * Get a specific player's BEST entry and rank.
  */
 export function getPlayerEntry(playerId: string): { entry: LeaderboardEntry; rank: number } | null {
+  // Since we don't deduplicate, we find their highest ranked entry
   const idx = _entries.findIndex(e => e.playerId === playerId);
   if (idx < 0) return null;
   return { entry: { ..._entries[idx], rank: idx + 1 }, rank: idx + 1 };

@@ -10,6 +10,7 @@ export default function JoinRoom() {
   const { joinRoom, connect, error, clearError } = useMultiplayerStore();
   const player = useGameStore(s => s.player);
   const updateDriverAvatar = useGameStore(s => s.updateDriverAvatar);
+  const updateDriverName = useGameStore(s => s.updateDriverName);
 
   const [roomCode, setRoomCode] = useState('');
   const [displayName, setDisplayName] = useState(player.driverName === 'KLUSTOR_07' ? '' : player.driverName);
@@ -27,6 +28,7 @@ export default function JoinRoom() {
     if (!displayName.trim()) { setError('Please enter a DISPLAY NAME.'); return; }
     setIsJoining(true);
     updateDriverAvatar(avatar);
+    updateDriverName(displayName);
     try {
       const room = await joinRoom(roomCode.toUpperCase(), displayName.toUpperCase(), avatar);
       navigate(`/multiplayer/room/${room.code}`);
