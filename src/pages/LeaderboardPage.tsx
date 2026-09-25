@@ -56,8 +56,8 @@ function LeaderboardRow({ entry, index, isMe }: { entry: LeaderboardEntry; index
         display: 'flex', alignItems: 'center', padding: '1rem 1.5rem',
         background: isMe ? 'var(--klustor-yellow)' : rank <= 3 ? 'var(--bg-secondary)' : 'var(--bg-primary)',
         borderRadius: '16px',
-        border: isMe ? '2px solid var(--text-primary)' : rank <= 3 ? '2px solid var(--border-light)' : '1px solid var(--border-light)',
-        boxShadow: isMe ? '4px 4px 0px var(--text-primary)' : rank <= 3 ? '0 4px 16px rgba(0,0,0,0.06)' : 'none',
+        border: '2px solid var(--text-primary)',
+        boxShadow: '4px 4px 0px var(--text-primary)',
         gap: '1.5rem',
       }}
     >
@@ -239,8 +239,8 @@ function LocalLeaderboard() {
             style={{
               display: 'flex', alignItems: 'center', padding: '1rem 2rem',
               background: isMe ? 'var(--klustor-yellow)' : 'var(--bg-secondary)',
-              borderRadius: '16px', border: '2px solid var(--border-light)',
-              boxShadow: i === 0 ? '4px 4px 0px var(--text-primary)' : '0 2px 8px rgba(0,0,0,0.04)',
+              borderRadius: '16px', border: '2px solid var(--text-primary)',
+              boxShadow: '4px 4px 0px var(--text-primary)',
               gap: '1.5rem',
             }}
           >
