@@ -207,6 +207,9 @@ export const useGameStore = create<GameState>()(
           try {
             const data = JSON.parse(str);
             if (data?.state) {
+              if (data.state.player && !data.state.player.deviceId) {
+                data.state.player.deviceId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
+              }
               if (data.state.currentLivery?.stats) {
                 data.state.currentLivery.stats = sanitizeStats(data.state.currentLivery.stats);
               }
