@@ -24,7 +24,7 @@ interface MultiplayerState {
   submitLivery: (data: Record<string, string>, designScore: number) => Promise<void>;
   submitRaceResult: (raceTime: number, raceScore: number, topSpeed: number) => Promise<void>;
   getGlobalLeaderboard: () => Promise<void>;
-  submitGlobalResult: (payload: { displayName: string; avatar: string; raceTime: number; topSpeed: number; designScore: number; liveryThumb?: string }) => Promise<{ isNewBest: boolean; rank: number }>;
+  submitGlobalResult: (payload: { playerId?: string; displayName: string; avatar: string; raceTime: number; topSpeed: number; designScore: number; liveryThumb?: string }) => Promise<{ isNewBest: boolean; rank: number }>;
   clearError: () => void;
 }
 

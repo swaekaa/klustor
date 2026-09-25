@@ -134,9 +134,19 @@ function GlobalLeaderboard({ playerId }: { playerId: string }) {
       <div>
         <div className="font-display" style={{ fontSize: '1rem', color: 'var(--text-muted)', letterSpacing: '0.15em', marginBottom: '1rem' }}>YOUR BEST</div>
         {!playerEntry ? (
-          <div style={{ background: 'var(--bg-secondary)', padding: '2rem', borderRadius: '24px', border: '2px dashed var(--border-light)', textAlign: 'center' }}>
-            <div className="font-display" style={{ fontSize: '1.2rem', color: 'var(--text-muted)' }}>NO GLOBAL RACES YET</div>
-            <div className="font-mono" style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Complete a race to appear on the global leaderboard</div>
+          <div style={{
+            background: 'var(--bg-secondary)',
+            padding: '2rem 2.5rem', borderRadius: '24px',
+            border: '3px solid var(--text-muted)', boxShadow: '6px 6px 0px var(--text-muted)',
+            display: 'flex', alignItems: 'center', gap: '2rem', flexWrap: 'wrap'
+          }}>
+            <div>
+              <div className="font-display" style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>YOUR GLOBAL RANK</div>
+              <div className="font-display" style={{ fontSize: '4rem', fontWeight: 900, lineHeight: 1, color: 'var(--text-muted)' }}>—</div>
+              <div className="font-display" style={{ fontSize: '1.2rem', fontWeight: 700, marginTop: '0.5rem', color: 'var(--text-muted)' }}>UNRANKED</div>
+            </div>
+            <div style={{ flex: 1 }} />
+            <div className="font-mono" style={{ fontSize: '0.9rem', color: 'var(--text-muted)', textAlign: 'right' }}>Complete a race to appear<br/>on the global leaderboard.</div>
           </div>
         ) : (
           <div style={{
@@ -229,7 +239,7 @@ function LocalLeaderboard() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
       {sorted.map((record, i) => {
-        const isMe = record.driverName === player.driverName && !record.isNPC;
+        const isMe = !record.isNPC;
         return (
           <motion.div
             key={record.id}
@@ -280,8 +290,8 @@ export default function LeaderboardPage() {
   const [activeTab, setActiveTab] = useState<Tab>('global');
   const { player } = useGameStore();
 
-  // Use a stable playerId from the player's stored name (single-player identity)
-  const playerId = player.driverName || 'anonymous';
+  // Use the unique device ID so we can highlight 'isMe' properly across sessions
+  const playerId = player.deviceId;
 
   return (
     <div className="page" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', height: '100vh' }}>

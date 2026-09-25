@@ -194,6 +194,7 @@ function MultiplayerResultsScreen({ lapTimeMs, topSpeed, designScore, onGoToLead
       
       generateThumbnail(liveryThumbFull).then((thumb) => {
         submitGlobalResult({
+          playerId: useGameStore.getState().player.deviceId,
           displayName: currentLivery?.name || displayName || 'UNKNOWN',
           avatar: avatar || '🚗',
           raceTime: lapTimeMs,

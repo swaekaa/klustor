@@ -321,7 +321,8 @@ io.on('connection', (socket) => {
       if (!currentRoomId || !currentPlayerId) throw new Error('Must be in a room to submit result');
       if (globalResultSubmitted.has(socket.id)) throw new Error('Already submitted result for this session');
       
-      const { displayName, avatar, raceTime, topSpeed, designScore, liveryThumb } = payload;
+      const { playerId, displayName, avatar, raceTime, topSpeed, designScore, liveryThumb } = payload;
+      const finalPlayerId = playerId || socket.id;
       
       // Server-side validation
       const validation = leaderboardService.validateRaceResult(raceTime, topSpeed);
@@ -332,7 +333,7 @@ io.on('connection', (socket) => {
       globalResultSubmitted.add(socket.id);
       
       const { isNewBest, rank } = leaderboardService.addEntry({
-        playerId: socket.id,
+        playerId: finalPlayerId,
         displayName: displayName || socketDisplayNameMap.get(socket.id) || 'UNKNOWN',
         avatar: avatar || '🚗',
         bestTime: raceTime,
@@ -343,7 +344,7 @@ io.on('connection', (socket) => {
         lastUpdated: Date.now(),
       });
       
-      const leaderboardData = leaderboardService.getLeaderboardResponse(socket.id);
+      const leaderboardData = leaderboardService.getLeaderboardResponse(finalPlayerId);
       
       // Broadcast updated leaderboard to everyone (not just the room)
       if (isNewBest) {

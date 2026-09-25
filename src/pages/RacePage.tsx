@@ -145,7 +145,7 @@ function ResultsScreen({
       const state = useGameStore.getState();
       const liveryThumbFull = state.currentLivery?.textures?.top || state.currentLivery?.textures?.left || '';
       const liveryName = state.currentLivery?.name || 'MY RIDE';
-      const driverName = state.player.driverName || 'anonymous';
+      const deviceId = state.player.deviceId;
       const driverAvatar = state.player.driverAvatar || '🚗';
 
       const SERVER_URL = import.meta.env.VITE_SERVER_URL || (import.meta.env.PROD ? window.location.origin : `${window.location.protocol}//${window.location.hostname}:4000`);
@@ -157,7 +157,7 @@ function ResultsScreen({
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              playerId: driverName,
+              playerId: deviceId,
               displayName: liveryName,
               avatar: driverAvatar,
               raceTime: lapTimeMs,
