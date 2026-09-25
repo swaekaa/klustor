@@ -22,11 +22,11 @@ export interface MultiplayerPlayer {
   avatar: string;
   isLeader: boolean;
   isReady: boolean;
-  draftLivery?: string; // Live preview during challenge
+  liveScore?: number; // Live score preview during editing
   hasSubmitted: boolean;
   joinedAt: number;
   submittedAt: number | null;
-  liveryDataUrl: string | null; // For MVP only
+  liveryDataUrl: Record<string, string> | null; // For MVP only
   designScore: number | null;
   raceTime: number | null;
   raceScore: number | null;

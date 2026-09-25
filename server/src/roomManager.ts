@@ -132,21 +132,21 @@ export function startChallenge(roomId: string, leaderId: string) {
   return room;
 }
 
-export function submitDraftLivery(roomId: string, playerId: string, draftDataUrl: string) {
+export function updateLiveScore(roomId: string, playerId: string, score: number) {
   const room = rooms.get(roomId);
   if (!room) throw new Error('Room not found');
 
   const player = room.players.find(p => p.id === playerId);
   if (!player) throw new Error('Player not in room');
 
-  player.draftLivery = draftDataUrl;
+  player.liveScore = score;
   return room;
 }
 
 export function submitLivery(
   roomId: string,
   playerId: string,
-  dataUrl: string,
+  data: Record<string, string>,
   designScore: number
 ) {
   const room = rooms.get(roomId);
@@ -162,7 +162,7 @@ export function submitLivery(
 
   player.hasSubmitted = true;
   player.submittedAt = Date.now();
-  player.liveryDataUrl = dataUrl;
+  player.liveryDataUrl = data;
   player.designScore = designScore;
   player.status = 'submitted';
   
@@ -240,12 +240,12 @@ export function sanitizeRoom(room: ChallengeRoom): ChallengeRoom {
     ...room,
     players: room.players.map(p => ({
       ...p,
-      liveryDataUrl: p.liveryDataUrl ? 'uploaded' : null
+      liveryDataUrl: p.liveryDataUrl ? { uploaded: 'true' } : null
     }))
   };
 }
 
-export function getFullPlayerLivery(roomId: string, playerId: string): string | null {
+export function getFullPlayerLivery(roomId: string, playerId: string): Record<string, string> | null {
   const room = rooms.get(roomId);
   if (!room) return null;
   const player = room.players.find(p => p.id === playerId);
@@ -296,6 +296,7 @@ export function restartRoom(roomId: string, leaderId: string) {
     p.submittedAt = null;
     p.liveryDataUrl = null;
     p.designScore = null;
+    p.liveScore = undefined;
     p.raceTime = null;
     p.raceScore = null;
     p.topSpeed = null;

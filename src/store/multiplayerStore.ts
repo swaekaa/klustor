@@ -18,8 +18,9 @@ interface MultiplayerState {
   startChallenge: () => Promise<void>;
   restartRoom: () => Promise<void>;
   updateRoomConfig: (updates: { editingDurationSeconds?: number }) => Promise<void>;
-  submitDraftLivery: (dataUrl: string) => Promise<void>;
-  submitLivery: (dataUrl: string, designScore: number) => Promise<void>;
+  fetchPlayerLivery: (playerId: string) => Promise<Record<string, string>>;
+  updateLiveScore: (score: number) => Promise<void>;
+  submitLivery: (data: Record<string, string>, designScore: number) => Promise<void>;
   submitRaceResult: (raceTime: number, raceScore: number, topSpeed: number) => Promise<void>;
   clearError: () => void;
 }
@@ -168,28 +169,40 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
     });
   },
 
-  submitDraftLivery: (dataUrl) => {
+  fetchPlayerLivery: (playerId) => {
     return new Promise((resolve, reject) => {
       const { socket } = get();
       if (!socket) return reject('No socket connection');
       
-      socket.emit('submit_draft_livery', { dataUrl }, (res: any) => {
+      socket.emit('get_player_livery', { playerId }, (res: any) => {
         if (res.success) {
-          resolve();
+          resolve(res.data);
         } else {
-          console.error('Failed to submit draft:', res.error);
+          console.error('Failed to fetch player livery:', res.error);
           reject(res.error);
         }
       });
     });
   },
 
-  submitLivery: (dataUrl, designScore) => {
+  updateLiveScore: (score) => {
     return new Promise((resolve, reject) => {
       const { socket } = get();
       if (!socket) return reject('No socket connection');
       
-      socket.emit('submit_livery', { dataUrl, designScore }, (res: any) => {
+      socket.emit('update_live_score', { score }, (res: any) => {
+        if (res.success) resolve();
+        else reject(res.error);
+      });
+    });
+  },
+
+  submitLivery: (data, designScore) => {
+    return new Promise((resolve, reject) => {
+      const { socket } = get();
+      if (!socket) return reject('No socket connection');
+      
+      socket.emit('submit_livery', { data, designScore }, (res: any) => {
         if (res.success) resolve();
         else {
           set({ error: res.error });

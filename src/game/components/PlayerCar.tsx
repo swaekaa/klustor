@@ -28,7 +28,9 @@ const WHEEL_POSITIONS: [number, number, number][] = [
 ];
 
 export default function PlayerCar({ groupRef, textures, speed = 0, steering = 0, position = [0, 0, 0], color = '#C8D8E8' }: PlayerCarProps) {
-  const [loadedTextures, setLoadedTextures] = useState<Partial<Record<TemplateView, THREE.Texture>>>({});
+  const loadedTexturesRef = useRef<Partial<Record<TemplateView, THREE.Texture>>>({});
+  const currentUrlsRef = useRef<Partial<Record<TemplateView, string>>>({});
+  const [trigger, setTrigger] = useState(0);
   const wheelRef0 = useRef<THREE.Mesh>(null!);
   const wheelRef1 = useRef<THREE.Mesh>(null!);
   const wheelRef2 = useRef<THREE.Mesh>(null!);
@@ -38,37 +40,70 @@ export default function PlayerCar({ groupRef, textures, speed = 0, steering = 0,
   const fallbackGroupRef = useRef<THREE.Group>(null!);
   const actualGroupRef = groupRef || fallbackGroupRef;
 
-  // Load livery textures
   useEffect(() => {
     let disposed = false;
-    const loaded: Partial<Record<TemplateView, THREE.Texture>> = {};
     
-    async function loadAll() {
+    async function loadChanged() {
       if (!textures) {
-        if (!disposed) setLoadedTextures({});
+        let cleared = false;
+        Object.values(loadedTexturesRef.current).forEach(t => t?.dispose());
+        if (Object.keys(loadedTexturesRef.current).length > 0) cleared = true;
+        loadedTexturesRef.current = {};
+        currentUrlsRef.current = {};
+        if (!disposed && cleared) setTrigger(t => t + 1);
         return;
       }
       
       const views = ['left', 'right', 'top', 'front', 'rear'] as TemplateView[];
+      let changed = false;
+
       for (const view of views) {
-        if (textures[view]) {
-          try {
-             const tex = await buildLiveryTexture(textures[view]!);
-             loaded[view] = tex;
-          } catch {
-             loaded[view] = createFallbackTexture();
+        const url = textures[view];
+        if (!url) {
+          if (loadedTexturesRef.current[view]) {
+            loadedTexturesRef.current[view]!.dispose();
+            delete loadedTexturesRef.current[view];
+            delete currentUrlsRef.current[view];
+            changed = true;
           }
+        } else if (url !== currentUrlsRef.current[view]) {
+          let tex: THREE.Texture;
+          try {
+             tex = await buildLiveryTexture(url);
+          } catch {
+             tex = createFallbackTexture();
+          }
+          
+          if (disposed) {
+            tex.dispose();
+            continue;
+          }
+
+          if (loadedTexturesRef.current[view]) {
+            loadedTexturesRef.current[view]!.dispose();
+          }
+          loadedTexturesRef.current[view] = tex;
+          currentUrlsRef.current[view] = url;
+          changed = true;
         }
       }
-      if (!disposed) setLoadedTextures({ ...loaded });
+      
+      if (!disposed && changed) {
+        setTrigger(t => t + 1);
+      }
     }
-    loadAll();
+    loadChanged();
 
     return () => {
       disposed = true;
-      Object.values(loaded).forEach(t => t?.dispose());
     };
   }, [textures]);
+
+  useEffect(() => {
+    return () => {
+      Object.values(loadedTexturesRef.current).forEach(t => t?.dispose());
+    };
+  }, []);
 
   // Memoize static materials
   const bodyMat = useMemo(() => new THREE.MeshPhysicalMaterial({ color, roughness: 0.2, metalness: 0.1, clearcoat: 1.0, clearcoatRoughness: 0.1 }), [color]);
@@ -85,11 +120,11 @@ export default function PlayerCar({ groupRef, textures, speed = 0, steering = 0,
   // Memoize dynamic livery materials
   const defaultLiveryMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#FFFFFF', transparent: true, opacity: 0.0, side: THREE.FrontSide }), []);
   
-  const matLeft = useMemo(() => loadedTextures.left ? new THREE.MeshStandardMaterial({ map: loadedTextures.left, transparent: true, side: THREE.FrontSide, roughness: 0.4 }) : defaultLiveryMat, [loadedTextures.left, defaultLiveryMat]);
-  const matRight = useMemo(() => loadedTextures.right ? new THREE.MeshStandardMaterial({ map: loadedTextures.right, transparent: true, side: THREE.FrontSide, roughness: 0.4 }) : defaultLiveryMat, [loadedTextures.right, defaultLiveryMat]);
-  const matTop = useMemo(() => loadedTextures.top ? new THREE.MeshStandardMaterial({ map: loadedTextures.top, transparent: true, side: THREE.FrontSide, roughness: 0.4 }) : defaultLiveryMat, [loadedTextures.top, defaultLiveryMat]);
-  const matFront = useMemo(() => loadedTextures.front ? new THREE.MeshStandardMaterial({ map: loadedTextures.front, transparent: true, side: THREE.FrontSide, roughness: 0.4 }) : defaultLiveryMat, [loadedTextures.front, defaultLiveryMat]);
-  const matRear = useMemo(() => loadedTextures.rear ? new THREE.MeshStandardMaterial({ map: loadedTextures.rear, transparent: true, side: THREE.FrontSide, roughness: 0.4 }) : defaultLiveryMat, [loadedTextures.rear, defaultLiveryMat]);
+  const matLeft = useMemo(() => loadedTexturesRef.current.left ? new THREE.MeshStandardMaterial({ map: loadedTexturesRef.current.left, transparent: true, side: THREE.FrontSide, roughness: 0.4 }) : defaultLiveryMat, [loadedTexturesRef.current.left, defaultLiveryMat, trigger]);
+  const matRight = useMemo(() => loadedTexturesRef.current.right ? new THREE.MeshStandardMaterial({ map: loadedTexturesRef.current.right, transparent: true, side: THREE.FrontSide, roughness: 0.4 }) : defaultLiveryMat, [loadedTexturesRef.current.right, defaultLiveryMat, trigger]);
+  const matTop = useMemo(() => loadedTexturesRef.current.top ? new THREE.MeshStandardMaterial({ map: loadedTexturesRef.current.top, transparent: true, side: THREE.FrontSide, roughness: 0.4 }) : defaultLiveryMat, [loadedTexturesRef.current.top, defaultLiveryMat, trigger]);
+  const matFront = useMemo(() => loadedTexturesRef.current.front ? new THREE.MeshStandardMaterial({ map: loadedTexturesRef.current.front, transparent: true, side: THREE.FrontSide, roughness: 0.4 }) : defaultLiveryMat, [loadedTexturesRef.current.front, defaultLiveryMat, trigger]);
+  const matRear = useMemo(() => loadedTexturesRef.current.rear ? new THREE.MeshStandardMaterial({ map: loadedTexturesRef.current.rear, transparent: true, side: THREE.FrontSide, roughness: 0.4 }) : defaultLiveryMat, [loadedTexturesRef.current.rear, defaultLiveryMat, trigger]);
 
   // Animate wheels each frame
   useFrame((_, delta) => {

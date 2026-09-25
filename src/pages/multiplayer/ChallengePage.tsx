@@ -6,11 +6,71 @@ import { analyzeAllFaces, defaultStats } from '../../game/utils/designAnalysis';
 import { getCarTemplateUrl } from '../../game/utils/carTemplateUrl';
 import LiveryEditor from '../../components/editor/LiveryEditor';
 import type { CarStats, TemplateView } from '../../types';
+import { Suspense } from 'react';
+import { Canvas, useThree } from '@react-three/fiber';
+import PlayerCar from '../../game/components/PlayerCar';
+
+function DragToRotate() {
+  const { gl, camera } = useThree();
+  
+  useEffect(() => {
+    let isDragging = false;
+    let prevX = 0;
+    let prevY = 0;
+    
+    camera.lookAt(0, 0.3, 0);
+
+    const onDown = (e: PointerEvent) => {
+      isDragging = true;
+      prevX = e.clientX;
+      prevY = e.clientY;
+    };
+    
+    const onUp = () => {
+      isDragging = false;
+    };
+    
+    const onMove = (e: PointerEvent) => {
+      if (!isDragging) return;
+      const deltaX = (e.clientX - prevX) * 0.01;
+      const deltaY = (e.clientY - prevY) * 0.01;
+      
+      const x = camera.position.x;
+      const y = camera.position.y;
+      const z = camera.position.z;
+      
+      // Horizontal rotation
+      camera.position.x = x * Math.cos(deltaX) - z * Math.sin(deltaX);
+      camera.position.z = x * Math.sin(deltaX) + z * Math.cos(deltaX);
+      
+      // Very limited vertical rotation
+      const newY = Math.max(0.5, Math.min(4.0, y + deltaY));
+      camera.position.y = newY;
+      
+      camera.lookAt(0, 0.3, 0);
+      
+      prevX = e.clientX;
+      prevY = e.clientY;
+    };
+    
+    gl.domElement.addEventListener('pointerdown', onDown);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointermove', onMove);
+    
+    return () => {
+      gl.domElement.removeEventListener('pointerdown', onDown);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointermove', onMove);
+    };
+  }, [gl, camera]);
+  
+  return null;
+}
 
 export default function ChallengePage() {
   const { roomCode } = useParams<{ roomCode: string }>();
   const navigate = useNavigate();
-  const { room, socket, submitLivery, submitDraftLivery } = useMultiplayerStore();
+  const { room, socket, submitLivery, updateLiveScore } = useMultiplayerStore();
   const { saveLiveryFace } = useGameStore();
   
   const [selectedView, setSelectedView] = useState<TemplateView>('left');
@@ -45,8 +105,7 @@ export default function ChallengePage() {
       
       // Auto-submit if time runs out and haven't submitted yet
       if (remaining === 0 && !me?.hasSubmitted) {
-        // Find best existing texture or just empty
-        submitLivery(textures['left'] || '', stats.designScore).catch(console.error);
+        submitLivery(textures, stats.designScore).catch(console.error);
       }
     }, 1000);
     
@@ -62,22 +121,19 @@ export default function ChallengePage() {
       const computed = await analyzeAllFaces(newTextures, getCarTemplateUrl);
       setStats(computed);
       saveLiveryFace(dataUrl, selectedView, computed, 'MULTIPLAYER RIDE');
+      updateLiveScore(computed.designScore).catch(console.error);
       
-      // Broadcast live preview of this view (draft)
-      submitDraftLivery(dataUrl).catch(console.error);
     } catch (err) {
       console.error('Save failed:', err);
     } finally {
       setIsSaving(false);
     }
-  }, [selectedView, textures, saveLiveryFace, submitDraftLivery]);
+  }, [selectedView, textures, saveLiveryFace]);
 
   const handleFinalSubmit = async () => {
     if (me?.hasSubmitted) return;
     try {
-      // Need at least one face saved to submit properly. If none, grab default template.
-      const payload = textures['left'] || templateUrl; 
-      await submitLivery(payload, stats.designScore);
+      await submitLivery(textures, stats.designScore);
     } catch (err) {
       console.error(err);
     }
@@ -198,20 +254,37 @@ export default function ChallengePage() {
           )}
         </div>
         
-        {/* LIVE PREVIEWS SIDEBAR */}
-        <div style={{ width: '200px', display: 'flex', flexDirection: 'column', gap: '1rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '16px', border: '1px solid var(--border-light)', overflowY: 'auto' }}>
-          <h3 className="font-mono" style={{ fontSize: '0.9rem', color: 'var(--text-muted)', margin: '0 0 1rem 0', textAlign: 'center' }}>LIVE PREVIEWS</h3>
+        {/* LOCAL 3D PREVIEW */}
+        <div style={{ flex: 1, background: 'var(--bg-secondary)', borderRadius: '16px', overflow: 'hidden', position: 'relative', border: '1px solid var(--border-light)' }}>
+          <Canvas camera={{ position: [0, 2, 6], fov: 45 }} gl={{ antialias: true }}>
+            <ambientLight intensity={1.2} />
+            <directionalLight position={[10, 10, 10]} intensity={1.5} />
+            <Suspense fallback={null}>
+              <PlayerCar groupRef={{ current: null } as any} textures={textures} speed={0} steering={0} />
+            </Suspense>
+            <DragToRotate />
+          </Canvas>
+          <div style={{ position: 'absolute', bottom: '1rem', left: 0, right: 0, textAlign: 'center', pointerEvents: 'none' }}>
+             <span className="font-mono" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>MOVE MOUSE TO ROTATE</span>
+          </div>
+        </div>
+
+        {/* LIVE STATS SIDEBAR */}
+        <div style={{ width: '250px', display: 'flex', flexDirection: 'column', gap: '1rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '16px', border: '1px solid var(--border-light)', overflowY: 'auto' }}>
+          <h3 className="font-mono" style={{ fontSize: '0.9rem', color: 'var(--text-muted)', margin: '0 0 1rem 0', textAlign: 'center' }}>LIVE SCORES</h3>
           {room.players.filter(p => p.id !== socket?.id).map(p => (
-            <div key={p.id} style={{ background: 'var(--bg-primary)', borderRadius: '12px', padding: '0.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', border: '1px solid var(--border-light)' }}>
+            <div key={p.id} style={{ background: 'var(--bg-primary)', borderRadius: '12px', padding: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', border: '1px solid var(--border-light)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontSize: '1.2rem' }}>{p.avatar || '🚗'}</span>
-                <span className="font-display" style={{ fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100px' }}>{p.displayName}</span>
+                <span style={{ fontSize: '1.2rem' }}>{(p as any).avatar || '🚗'}</span>
+                <span className="font-display" style={{ fontSize: '1rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '120px' }}>{p.displayName}</span>
               </div>
-              <div style={{ width: '100%', height: '100px', background: p.draftLivery ? 'transparent' : '#EEEEEE', borderRadius: '8px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {p.draftLivery ? (
-                  <img src={p.draftLivery} alt={`${p.displayName} preview`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                ) : (
-                  <span className="font-mono" style={{ fontSize: '0.7rem', color: '#AAA' }}>EDITING...</span>
+              <div style={{ textAlign: 'center' }}>
+                <div className="font-mono" style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>DESIGN SCORE</div>
+                <div className="font-display" style={{ fontSize: '2rem', color: p.hasSubmitted ? 'var(--klustor-green)' : 'var(--text-primary)' }}>
+                  {(p as any).liveScore !== undefined ? (p as any).liveScore.toFixed(1) : '0.0'}
+                </div>
+                {p.hasSubmitted && (
+                  <div className="font-mono" style={{ fontSize: '0.7rem', color: 'var(--klustor-green)', marginTop: '0.25rem' }}>SUBMITTED</div>
                 )}
               </div>
             </div>

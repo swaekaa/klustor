@@ -84,12 +84,12 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('submit_draft_livery', (payload, callback) => {
+  socket.on('update_live_score', (payload, callback) => {
     try {
       if (!currentRoomId || !currentPlayerId) throw new Error('Not in a room');
-      const { dataUrl } = payload;
+      const { score } = payload;
       
-      const room = roomManager.submitDraftLivery(currentRoomId, currentPlayerId, dataUrl);
+      const room = roomManager.updateLiveScore(currentRoomId, currentPlayerId, score);
       
       const safeRoom = roomManager.sanitizeRoom(room);
       io.to(room.id).emit('room_state_updated', safeRoom);
@@ -99,13 +99,15 @@ io.on('connection', (socket) => {
     }
   });
 
+
+
   socket.on('submit_livery', (payload, callback) => {
     try {
       if (!currentRoomId || !currentPlayerId) throw new Error('Not in a room');
-      const { dataUrl, designScore } = payload;
+      const { data, designScore } = payload;
       
       // We store the full dataUrl, but broadcast sanitized room state
-      const room = roomManager.submitLivery(currentRoomId, currentPlayerId, dataUrl, designScore);
+      const room = roomManager.submitLivery(currentRoomId, currentPlayerId, data, designScore);
       
       io.to(room.id).emit('player_submitted', roomManager.sanitizeRoom(room));
       callback({ success: true });
@@ -118,8 +120,8 @@ io.on('connection', (socket) => {
     try {
       if (!currentRoomId) throw new Error('Not in a room');
       const { playerId } = payload;
-      const dataUrl = roomManager.getFullPlayerLivery(currentRoomId, playerId);
-      callback({ success: true, dataUrl });
+      const data = roomManager.getFullPlayerLivery(currentRoomId, playerId);
+      callback({ success: true, data });
     } catch (err: any) {
       callback({ success: false, error: err.message });
     }
