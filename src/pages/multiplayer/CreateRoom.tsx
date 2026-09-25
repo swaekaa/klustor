@@ -10,6 +10,7 @@ export default function CreateRoom() {
   const { createRoom, connect, error, clearError } = useMultiplayerStore();
   const player = useGameStore(s => s.player);
   const updateDriverAvatar = useGameStore(s => s.updateDriverAvatar);
+  const updateDriverName = useGameStore(s => s.updateDriverName);
 
   const [leaderName, setLeaderName] = useState(player.driverName === 'KLUSTOR_07' ? '' : player.driverName);
   const [avatar, setAvatar] = useState(player.driverAvatar || '🚗');
@@ -31,6 +32,7 @@ export default function CreateRoom() {
     if (!name.trim()) { setError('Please enter a ROOM NAME.'); return; }
     setIsSubmitting(true);
     updateDriverAvatar(avatar);
+    updateDriverName(leaderName);
     try {
       const room = await createRoom(leaderName, avatar, {
         name,

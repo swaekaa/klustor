@@ -64,6 +64,29 @@ body {
 }
 
 /* ============================================================
+   Custom Scrollbar
+   ============================================================ */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+  border-radius: var(--radius-pill);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: var(--radius-pill);
+  border: 3px solid var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* ============================================================
    Typography
    ============================================================ */
 h1, h2, h3, h4, h5, h6 {

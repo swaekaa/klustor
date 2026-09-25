@@ -3,7 +3,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
-import { useGameStore } from '../store/gameStore';
+import { useGameStore, generateThumbnail } from '../store/gameStore';
 import { useTelemetryStore } from '../store/telemetryStore';
 import { RACE_REWARDS } from '../game/data/viceCoastCircuit';
 import { formatRaceTime, useRaceState } from '../game/hooks/useRaceState';
@@ -140,8 +140,38 @@ function ResultsScreen({
     if (!claimed.current) {
       claimed.current = true;
       recordRaceResult(lapTimeMs, topSpeed, lapSplits);
+
+      // Submit to global leaderboard via REST
+      const state = useGameStore.getState();
+      const liveryThumbFull = state.currentLivery?.textures?.top || state.currentLivery?.textures?.left || '';
+      const liveryName = state.currentLivery?.name || 'MY RIDE';
+      const driverName = state.player.driverName || 'anonymous';
+      const driverAvatar = state.player.driverAvatar || '🚗';
+
+      const SERVER_URL = import.meta.env.VITE_SERVER_URL || `${window.location.protocol}//${window.location.hostname}:4000`;
+      
+      (async () => {
+        try {
+          const thumb = await generateThumbnail(liveryThumbFull);
+          await fetch(`${SERVER_URL}/leaderboard`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              playerId: driverName,
+              displayName: liveryName,
+              avatar: driverAvatar,
+              raceTime: lapTimeMs,
+              topSpeed: topSpeed,
+              designScore: designScore,
+              liveryThumb: thumb,
+            })
+          });
+        } catch (err) {
+          console.warn('[Global LB] Single-player submit failed:', err);
+        }
+      })();
     }
-  }, [lapTimeMs, topSpeed, lapSplits, recordRaceResult]);
+  }, [lapTimeMs, topSpeed, lapSplits, recordRaceResult, designScore]);
 
   return (
     <motion.div

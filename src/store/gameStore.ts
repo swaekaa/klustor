@@ -2,6 +2,28 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { GameState, LiveryData, CarStats, TemplateView } from '../types';
 
+export async function generateThumbnail(base64Str: string): Promise<string> {
+  if (!base64Str || !base64Str.startsWith('data:image')) return '';
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      // Scale down to max 160px width
+      const scale = 160 / Math.max(img.width, 1);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return resolve('');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      // Export as heavily compressed JPEG
+      resolve(canvas.toDataURL('image/jpeg', 0.6));
+    };
+    img.onerror = () => resolve('');
+    img.src = base64Str;
+  });
+}
+
 // ============================================================
 // KLUSTOR // VICE COAST RACING — Zustand Game Store
 // ============================================================
@@ -95,6 +117,14 @@ export const useGameStore = create<GameState>()(
           player: {
             ...state.player,
             driverAvatar: avatar
+          }
+        }));
+      },
+      updateDriverName: (name: string) => {
+        set(state => ({
+          player: {
+            ...state.player,
+            driverName: name
           }
         }));
       },
