@@ -182,6 +182,10 @@ function ResultsScreen({
             <div className="font-display" style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{Math.round(topSpeed * 3.6)} KM/H</div>
           </div>
           <div>
+            <div className="font-mono" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>AVG SPEED</div>
+            <div className="font-display" style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--klustor-cyan)' }}>{Math.round((getTrackData().curve.getLength() / (lapTimeMs / 1000)) * 3.6)} KM/H</div>
+          </div>
+          <div>
             <div className="font-mono" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>CASH EARNED</div>
             <div className="font-display" style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--klustor-green)' }}>
               +${isPersonalBest ? RACE_REWARDS.baseCash + RACE_REWARDS.personalBestBonus : RACE_REWARDS.baseCash}
