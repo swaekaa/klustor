@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { io, Socket } from 'socket.io-client';
 import type { ChallengeRoom, MultiplayerPlayer } from '../../server/src/types'; // Share types for simplicity
+import { useGlobalLeaderboardStore } from './globalLeaderboardStore';
 
 interface MultiplayerState {
   socket: Socket | null;
@@ -22,6 +23,8 @@ interface MultiplayerState {
   updateLiveScore: (score: number) => Promise<void>;
   submitLivery: (data: Record<string, string>, designScore: number) => Promise<void>;
   submitRaceResult: (raceTime: number, raceScore: number, topSpeed: number) => Promise<void>;
+  getGlobalLeaderboard: () => Promise<void>;
+  submitGlobalResult: (payload: { displayName: string; avatar: string; raceTime: number; topSpeed: number; designScore: number; liveryThumb?: string }) => Promise<{ isNewBest: boolean; rank: number }>;
   clearError: () => void;
 }
 
@@ -53,6 +56,16 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
     socket.on('player_submitted', (room: ChallengeRoom) => set({ room }));
     socket.on('leaderboard_updated', (room: ChallengeRoom) => set({ room }));
     socket.on('challenge_finished', (room: ChallengeRoom) => set({ room }));
+
+    // Global leaderboard live updates
+    socket.on('global_leaderboard_updated', (data: any) => {
+      useGlobalLeaderboardStore.getState().setLeaderboardData(data);
+    });
+
+    // Race positions (for HUD)
+    socket.on('race_positions_updated', (positions: any[]) => {
+      useGlobalLeaderboardStore.getState().setRacePositions(positions);
+    });
 
     set({ socket });
   },
@@ -221,6 +234,43 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => ({
         if (res.success) resolve();
         else {
           set({ error: res.error });
+          reject(res.error);
+        }
+      });
+    });
+  },
+
+  getGlobalLeaderboard: () => {
+    return new Promise((resolve, reject) => {
+      const { socket } = get();
+      if (!socket) return reject('No socket connection');
+      useGlobalLeaderboardStore.getState().setLoading(true);
+      socket.emit('get_global_leaderboard', {}, (res: any) => {
+        if (res.success) {
+          useGlobalLeaderboardStore.getState().setLeaderboardData({
+            top20: res.top20,
+            totalPlayers: res.totalPlayers,
+            playerEntry: res.playerEntry,
+            playerRank: res.playerRank,
+          });
+          resolve();
+        } else {
+          useGlobalLeaderboardStore.getState().setLoading(false);
+          reject(res.error);
+        }
+      });
+    });
+  },
+
+  submitGlobalResult: (payload) => {
+    return new Promise((resolve, reject) => {
+      const { socket } = get();
+      if (!socket) return reject('No socket connection');
+      socket.emit('submit_global_result', payload, (res: any) => {
+        if (res.success) {
+          useGlobalLeaderboardStore.getState().setLeaderboardData(res.leaderboard);
+          resolve({ isNewBest: res.isNewBest, rank: res.rank });
+        } else {
           reject(res.error);
         }
       });
