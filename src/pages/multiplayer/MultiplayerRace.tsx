@@ -152,6 +152,7 @@ export default function MultiplayerRace() {
   const carRef = useRef<THREE.Group>(null!);
   const [webglError, setWebglError] = useState(false);
   const [raceStarted, setRaceStarted] = useState(false);
+  const [showQuitPrompt, setShowQuitPrompt] = useState(false);
 
   const {
     phase, countdown, lapTimeMs, currentCheckpoint, lapSplits, latestSplitDiff,
@@ -169,6 +170,16 @@ export default function MultiplayerRace() {
       startCountdown();
     }
   }, [raceStarted, phase, startCountdown]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowQuitPrompt(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   if (webglError) {
     return (
@@ -199,6 +210,33 @@ export default function MultiplayerRace() {
           lapTimeMs={lapTimeMs} topSpeed={maxSpeedSeen} designScore={stats?.designScore ?? 0}
           onGoToLeaderboard={() => navigate(`/multiplayer/results/${roomCode}`)}
         />
+      )}
+
+      {showQuitPrompt && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          style={{
+            position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(4px)', zIndex: 200
+          }}
+        >
+          <div style={{ textAlign: 'center', minWidth: '400px', background: 'var(--bg-secondary)', padding: '3rem', borderRadius: '24px', border: '1px solid var(--border-light)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+            <h2 className="font-display" style={{ fontSize: '2.5rem', marginBottom: '1rem', color: 'var(--text-primary)' }}>QUIT RACE?</h2>
+            <p className="font-mono" style={{ fontSize: '1rem', color: 'var(--text-muted)', marginBottom: '2.5rem' }}>
+              Your current progress will be lost.
+            </p>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+              <button className="btn" onClick={() => setShowQuitPrompt(false)} style={{ padding: '1rem 2rem', background: 'transparent', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}>
+                RESUME
+              </button>
+              <button className="btn" onClick={() => navigate('/multiplayer')} style={{ padding: '1rem 2rem', background: '#FF4D4D', border: 'none', color: '#FFF' }}>
+                QUIT RACE
+              </button>
+            </div>
+          </div>
+        </motion.div>
       )}
     </div>
   );
