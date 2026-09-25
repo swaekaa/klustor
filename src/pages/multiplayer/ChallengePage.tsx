@@ -67,6 +67,57 @@ function DragToRotate() {
   return null;
 }
 
+function MiamiPalmTree({ position, scale = 1 }: { position: [number, number, number], scale?: number }) {
+  return (
+    <group position={position} scale={scale}>
+      {/* Trunk */}
+      <mesh position={[0, 3, 0]}>
+        <cylinderGeometry args={[0.2, 0.3, 6, 6]} />
+        <meshStandardMaterial color="#3D2A1D" roughness={0.9} />
+      </mesh>
+      {/* Crown */}
+      <mesh position={[0, 6.5, 0]}>
+        <sphereGeometry args={[1.8, 6, 4]} />
+        <meshStandardMaterial color="#1E5C4A" roughness={0.8} />
+      </mesh>
+      <mesh position={[1.2, 6.2, 0.4]} rotation={[0.3, 0, 0.6]}>
+        <sphereGeometry args={[1.0, 5, 3]} />
+        <meshStandardMaterial color="#144A3A" roughness={0.8} />
+      </mesh>
+      <mesh position={[-1.0, 6.0, 0.6]} rotation={[-0.2, 0, -0.5]}>
+        <sphereGeometry args={[0.9, 5, 3]} />
+        <meshStandardMaterial color="#267359" roughness={0.8} />
+      </mesh>
+    </group>
+  );
+}
+
+function SynthwaveSun() {
+  return (
+    <mesh position={[0, 12, -80]}>
+      <circleGeometry args={[20, 64]} />
+      <meshBasicMaterial color="#FF3366" fog={false} />
+    </mesh>
+  );
+}
+
+function SynthwaveGrid() {
+  return (
+    <group position={[0, -0.4, 0]}>
+      {/* Solid dark floor */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
+        <planeGeometry args={[200, 200]} />
+        <meshStandardMaterial color="#050510" roughness={1} metalness={0} />
+      </mesh>
+      {/* Glowing neon grid on top */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
+        <planeGeometry args={[200, 200, 100, 100]} />
+        <meshBasicMaterial color="#00FFFF" wireframe={true} transparent opacity={0.3} />
+      </mesh>
+    </group>
+  );
+}
+
 export default function ChallengePage() {
   const { roomCode } = useParams<{ roomCode: string }>();
   const navigate = useNavigate();
@@ -256,9 +307,25 @@ export default function ChallengePage() {
         
         {/* LOCAL 3D PREVIEW */}
         <div style={{ flex: 1, background: 'var(--bg-secondary)', borderRadius: '16px', overflow: 'hidden', position: 'relative', border: '1px solid var(--border-light)' }}>
-          <Canvas camera={{ position: [0, 2, 6], fov: 45 }} gl={{ antialias: true }}>
-            <ambientLight intensity={1.2} />
-            <directionalLight position={[10, 10, 10]} intensity={1.5} />
+          <Canvas camera={{ position: [0, 2, 6], fov: 45 }} gl={{ antialias: true, toneMapping: 1, toneMappingExposure: 1.2 }}>
+            <color attach="background" args={['#1A0B2E']} />
+            <fog attach="fog" args={['#1A0B2E', 10, 60]} />
+            
+            <ambientLight intensity={1.0} color="#FFFFFF" />
+            <directionalLight position={[5, 10, 5]} intensity={1.5} color="#FFFFFF" castShadow />
+            <hemisphereLight color="#87CEEB" groundColor="#222222" intensity={0.6} />
+            
+            {/* Neon rim lights for aesthetic without breaking car colors */}
+            <pointLight position={[-5, 2, -5]} color="#FF007F" intensity={50} distance={20} />
+            <pointLight position={[5, 2, 5]} color="#00FFFF" intensity={50} distance={20} />
+
+            <SynthwaveGrid />
+            <SynthwaveSun />
+
+            <MiamiPalmTree position={[-8, -0.4, -12]} scale={1.2} />
+            <MiamiPalmTree position={[8, -0.4, -15]} scale={1.5} />
+            <MiamiPalmTree position={[10, -0.4, 2]} scale={1.0} />
+            <MiamiPalmTree position={[-12, -0.4, 0]} scale={1.4} />
             <Suspense fallback={null}>
               <PlayerCar groupRef={{ current: null } as any} textures={textures} speed={0} steering={0} />
             </Suspense>
