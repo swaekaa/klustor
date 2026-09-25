@@ -40,9 +40,7 @@ function loadFromDisk(): LeaderboardEntry[] {
 function saveToDisk(entries: LeaderboardEntry[]) {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    // Don't save livery thumbs to disk (too large) — re-fetch from room on restart
-    const stripped = entries.map(e => ({ ...e, liveryThumb: '' }));
-    fs.writeFileSync(DATA_FILE, JSON.stringify(stripped, null, 2), 'utf-8');
+    fs.writeFileSync(DATA_FILE, JSON.stringify(entries, null, 2), 'utf-8');
   } catch (err) {
     console.error('[Leaderboard] Failed to save to disk:', err);
   }

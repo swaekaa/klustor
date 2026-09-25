@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { useMultiplayerStore } from '../../store/multiplayerStore';
-import { useGameStore } from '../../store/gameStore';
+import { useGameStore, generateThumbnail } from '../../store/gameStore';
 import { useTelemetryStore } from '../../store/telemetryStore';
 import { useGlobalLeaderboardStore } from '../../store/globalLeaderboardStore';
 import { useRaceState, formatRaceTime } from '../../game/hooks/useRaceState';
@@ -190,21 +190,24 @@ function MultiplayerResultsScreen({ lapTimeMs, topSpeed, designScore, onGoToLead
       submitRaceResult(lapTimeMs, rScore, topSpeedMs).catch(console.error);
 
       // 2. Submit to global leaderboard
-      const liveryThumb = currentLivery?.textures?.top || currentLivery?.textures?.left || '';
-      submitGlobalResult({
-        displayName: currentLivery?.name || displayName || 'UNKNOWN',
-        avatar: avatar || '🚗',
-        raceTime: lapTimeMs,
-        topSpeed: topSpeedMs,
-        designScore: designScore ?? 0,
-        liveryThumb: liveryThumb.substring(0, 200), // Truncate for transport
-      }).then((result) => {
-        setGlobalRank(result.rank);
-        setIsNewBest(result.isNewBest);
-        setIsSubmitting(false);
-      }).catch((err) => {
-        console.warn('[Global LB] Submit failed:', err);
-        setIsSubmitting(false);
+      const liveryThumbFull = currentLivery?.textures?.top || currentLivery?.textures?.left || '';
+      
+      generateThumbnail(liveryThumbFull).then((thumb) => {
+        submitGlobalResult({
+          displayName: currentLivery?.name || displayName || 'UNKNOWN',
+          avatar: avatar || '🚗',
+          raceTime: lapTimeMs,
+          topSpeed: topSpeedMs,
+          designScore: designScore ?? 0,
+          liveryThumb: thumb,
+        }).then((result) => {
+          setGlobalRank(result.rank);
+          setIsNewBest(result.isNewBest);
+          setIsSubmitting(false);
+        }).catch((err) => {
+          console.warn('[Global LB] Submit failed:', err);
+          setIsSubmitting(false);
+        });
       });
     }
   }, [lapTimeMs, submitRaceResult, submitGlobalResult, displayName, avatar, designScore, currentLivery]);
