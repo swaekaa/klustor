@@ -114,7 +114,7 @@ function RacePositionHUD({ localPlayerId }: { localPlayerId: string | null }) {
 
   return (
     <div style={{
-      position: 'absolute', top: '2rem', right: '14rem',
+      position: 'absolute', bottom: '2rem', left: '2rem',
       display: 'flex', flexDirection: 'column', gap: '0.5rem',
       zIndex: 20,
     }}>
