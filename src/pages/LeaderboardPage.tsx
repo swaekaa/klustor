@@ -296,24 +296,6 @@ export default function LeaderboardPage() {
           <button className="btn" onClick={() => navigate('/multiplayer')} style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>MULTIPLAYER</button>
         </div>
       </div>
-      {/* Player Identity Edit */}
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'var(--bg-secondary)', padding: '0.5rem 1.5rem', borderRadius: '999px', border: '1px solid var(--border-light)' }}>
-          <span className="font-mono" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>RACING AS</span>
-          <input
-            type="text"
-            value={player.driverName}
-            onChange={(e) => useGameStore.getState().updateDriverName(e.target.value.toUpperCase())}
-            placeholder="ANONYMOUS"
-            maxLength={16}
-            style={{
-              background: 'transparent', border: 'none', borderBottom: '2px solid var(--text-primary)',
-              fontFamily: 'var(--font-display)', fontSize: '1.2rem', color: 'var(--text-primary)',
-              width: '150px', outline: 'none', textAlign: 'center', padding: '0.2rem'
-            }}
-          />
-        </div>
-      </div>
 
       {/* Tab switcher */}
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem', flexShrink: 0 }}>
