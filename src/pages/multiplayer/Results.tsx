@@ -102,7 +102,7 @@ export default function Results() {
               </div>
               <div>
                 <div className="font-mono" style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>TOP SPEED</div>
-                <div className="font-display" style={{ fontSize: '2.5rem', color: 'var(--klustor-cyan)' }}>{winner.topSpeed ? winner.topSpeed.toFixed(0) : '0'} MPH</div>
+                <div className="font-display" style={{ fontSize: '2.5rem', color: 'var(--klustor-cyan)' }}>{winner.topSpeed ? Math.round(winner.topSpeed * 3.6) : '0'} KM/H</div>
               </div>
               <div>
                 <div className="font-mono" style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>DESIGN SCORE</div>
@@ -139,8 +139,8 @@ export default function Results() {
                     <div className="font-display" style={{ fontSize: '1.2rem' }}>{p.designScore?.toFixed(1) || '-'}</div>
                   </div>
                   <div>
-                    <div className="font-mono" style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>TOP SPEED</div>
-                    <div className="font-display" style={{ fontSize: '1.2rem', color: 'var(--klustor-cyan)' }}>{p.topSpeed ? p.topSpeed.toFixed(0) : '0'}</div>
+                    <div className="font-mono" style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>TOP SPEED (KM/H)</div>
+                    <div className="font-display" style={{ fontSize: '1.2rem', color: 'var(--klustor-cyan)' }}>{p.topSpeed ? Math.round(p.topSpeed * 3.6) : '0'}</div>
                   </div>
                   <div>
                     <div className="font-mono" style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>RACE TIME</div>

@@ -224,7 +224,6 @@ export default function RacePage() {
 
   const isRacing = phase === 'racing';
   const frozenBestTime = useRef(player.bestTime);
-  const maxSpeedSeen = useTelemetryStore(s => s.maxSpeedSeen);
 
   // Start engine audio
   useEngineSound(phase);
@@ -358,7 +357,7 @@ export default function RacePage() {
       {phase === 'finished' && (
         <ResultsScreen
           lapTimeMs={lapTimeMs}
-          topSpeed={maxSpeedSeen}
+          topSpeed={useTelemetryStore.getState().maxSpeedSeen}
           designScore={stats?.designScore ?? 0}
           lapSplits={lapSplits}
           isPersonalBest={prevBestTime === null || lapTimeMs < prevBestTime}
