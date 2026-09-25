@@ -108,9 +108,9 @@ export default function LeaderGhost({ localPlayerId }: LeaderGhostProps) {
   const [loadedTextures, setLoadedTextures] = useState<Partial<Record<TemplateView, THREE.Texture>>>({});
   const prevLiveryKeyRef = useRef<string | null>(null);
 
-  // Determine visibility
+  // Determine visibility: show ghost if there's a leader and it's not us
   const isLocalPlayerLeader = !!localPlayerId && liveLeader.leaderId === localPlayerId;
-  const shouldShow = liveLeader.leaderId !== null && !isLocalPlayerLeader && liveLeader.position !== null;
+  const shouldShow = liveLeader.leaderId !== null && !isLocalPlayerLeader;
   visibleRef.current = shouldShow;
 
   // ── Interpolate position/rotation each frame ───────────────

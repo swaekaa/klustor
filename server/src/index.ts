@@ -349,8 +349,11 @@ io.on('connection', (socket) => {
 
 // ── Ghost car broadcast tick (10Hz) ──────────────────────────────────────────
 setInterval(() => {
-  // For each active room with a race leader, broadcast the leader's current position
-  for (const [roomId] of socketRoomMap.entries()) {
+  // socketRoomMap is socketId → roomId, so iterate values for unique rooms
+  const seenRooms = new Set<string>();
+  for (const roomId of socketRoomMap.values()) {
+    if (seenRooms.has(roomId)) continue;
+    seenRooms.add(roomId);
     const snapshot = raceLeaderService.getLeaderSnapshot(roomId);
     if (snapshot) {
       broadcastLeaderUpdate(roomId);
