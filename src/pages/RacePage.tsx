@@ -148,7 +148,7 @@ function ResultsScreen({
       const driverName = state.player.driverName || 'anonymous';
       const driverAvatar = state.player.driverAvatar || '🚗';
 
-      const SERVER_URL = import.meta.env.VITE_SERVER_URL || `${window.location.protocol}//${window.location.hostname}:4000`;
+      const SERVER_URL = import.meta.env.VITE_SERVER_URL || (import.meta.env.PROD ? window.location.origin : `${window.location.protocol}//${window.location.hostname}:4000`);
       
       (async () => {
         try {

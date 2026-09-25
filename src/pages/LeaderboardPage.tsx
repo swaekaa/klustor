@@ -16,7 +16,7 @@ function formatKmh(ms: number): string {
   return `${Math.round(ms * 3.6)} KM/H`;
 }
 
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || `${window.location.protocol}//${window.location.hostname}:4000`;
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || (import.meta.env.PROD ? window.location.origin : `${window.location.protocol}//${window.location.hostname}:4000`);
 
 async function fetchGlobalLeaderboard(playerId?: string) {
   const url = playerId
@@ -117,7 +117,7 @@ function GlobalLeaderboard({ playerId }: { playerId: string }) {
       setPlayerRank(data.playerRank ?? null);
       setTotalPlayers(data.totalPlayers ?? 0);
     } catch {
-      setError('Could not reach server. Make sure the KLUSTOR server is running on port 4000.');
+      setError('Could not reach server. If deployed, check VITE_SERVER_URL.');
     } finally {
       setIsLoading(false);
     }
