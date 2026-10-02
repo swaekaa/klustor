@@ -11,13 +11,17 @@ app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 
 // ── REST: GET /leaderboard?playerId=xxx ───────────────────────
-app.get('/leaderboard', (req, res) => {
-  const playerId = req.query.playerId as string | undefined;
-  res.json(leaderboardService.getLeaderboardResponse(playerId));
+app.get('/leaderboard', async (req, res) => {
+  try {
+    const playerId = req.query.playerId as string | undefined;
+    res.json(await leaderboardService.getLeaderboardResponse(playerId));
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ── REST: POST /leaderboard ───────────────────────────────────
-app.post('/leaderboard', (req, res) => {
+app.post('/leaderboard', async (req, res) => {
   try {
     const { playerId, displayName, avatar, raceTime, topSpeed, designScore, liveryThumb } = req.body;
     if (!playerId || !displayName) return res.status(400).json({ error: 'Missing required fields' });
@@ -25,7 +29,7 @@ app.post('/leaderboard', (req, res) => {
     const validation = leaderboardService.validateRaceResult(raceTime, topSpeed);
     if (!validation.valid) return res.status(400).json({ error: validation.reason });
 
-    const { isNewBest, rank } = leaderboardService.addEntry({
+    const { isNewBest, rank } = await leaderboardService.addEntry({
       playerId,
       displayName,
       avatar: avatar || '🚗',
@@ -37,7 +41,7 @@ app.post('/leaderboard', (req, res) => {
       lastUpdated: Date.now(),
     });
 
-    const leaderboard = leaderboardService.getLeaderboardResponse(playerId);
+    const leaderboard = await leaderboardService.getLeaderboardResponse(playerId);
     // Broadcast to any connected sockets that leaderboard changed
     if (isNewBest) {
       io.emit('global_leaderboard_updated', leaderboard);
@@ -307,16 +311,16 @@ io.on('connection', (socket) => {
 
   // ── GLOBAL LEADERBOARD ────────────────────────────────────────────────────
 
-  socket.on('get_global_leaderboard', (_, callback) => {
+  socket.on('get_global_leaderboard', async (_, callback) => {
     try {
-      const response = leaderboardService.getLeaderboardResponse(socket.id);
+      const response = await leaderboardService.getLeaderboardResponse(socket.id);
       callback({ success: true, ...response });
     } catch (err: any) {
       callback({ success: false, error: err.message });
     }
   });
 
-  socket.on('submit_global_result', (payload, callback) => {
+  socket.on('submit_global_result', async (payload, callback) => {
     try {
       if (!currentRoomId || !currentPlayerId) throw new Error('Must be in a room to submit result');
       if (globalResultSubmitted.has(socket.id)) throw new Error('Already submitted result for this session');
@@ -332,7 +336,7 @@ io.on('connection', (socket) => {
       
       globalResultSubmitted.add(socket.id);
       
-      const { isNewBest, rank } = leaderboardService.addEntry({
+      const { isNewBest, rank } = await leaderboardService.addEntry({
         playerId: finalPlayerId,
         displayName: displayName || socketDisplayNameMap.get(socket.id) || 'UNKNOWN',
         avatar: avatar || '🚗',
@@ -344,7 +348,7 @@ io.on('connection', (socket) => {
         lastUpdated: Date.now(),
       });
       
-      const leaderboardData = leaderboardService.getLeaderboardResponse(finalPlayerId);
+      const leaderboardData = await leaderboardService.getLeaderboardResponse(finalPlayerId);
       
       // Broadcast updated leaderboard to everyone (not just the room)
       if (isNewBest) {
