@@ -142,7 +142,7 @@ export async function getLeaderboardResponse(playerId?: string) {
        ORDER BY best_time ASC, top_speed DESC, last_updated ASC 
        LIMIT 20`
     );
-    const top20 = top20Result.rows.map((r, i) => ({
+    const top20 = top20Result.rows.map((r: any, i: number) => ({
       entryId: r.entry_id,
       playerId: r.player_id,
       displayName: r.display_name,
