@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/react';
 import LandingPage from './pages/LandingPage';
 import DesignPage from './pages/DesignPage';
 import RacePage from './pages/RacePage';
+import ReplayPage from './pages/ReplayPage';
 import LeaderboardPage from './pages/LeaderboardPage';
 import MultiplayerMenu from './pages/multiplayer/MultiplayerMenu';
 import CreateRoom from './pages/multiplayer/CreateRoom';
@@ -21,6 +22,7 @@ function AppRoutes() {
       <Route path="/" element={<DesignPage />} />
       <Route path="/design" element={<Navigate to="/" replace />} />
       <Route path="/race" element={<RacePage />} />
+      <Route path="/replay" element={<ReplayPage />} />
       <Route path="/leaderboard" element={<LeaderboardPage />} />
       <Route path="/garage" element={<Navigate to="/" replace />} />
       

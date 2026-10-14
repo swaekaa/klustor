@@ -13,6 +13,9 @@ interface RaceHUDProps {
   latestSplitDiff?: number | null;
   lapSplits?: number[];
   isRadioPlaying?: boolean;
+  showRacingLine?: boolean;
+  onToggleRacingLine?: () => void;
+  onOpenReplay?: () => void;
 }
 
 function BoostGauge() {
@@ -345,6 +348,8 @@ function ControlsLegend() {
         { key: 'A D / ← →', action: 'STEER' },
         { key: 'SHIFT', action: 'NOS BOOST' },
         { key: 'TAB', action: 'VIEW SPLITS' },
+        { key: 'L', action: 'RACING LINE' },
+        { key: 'P', action: 'REPLAY STUDIO' },
         { key: 'M', action: 'MAP' },
         { key: 'B', action: 'RADIO' },
         { key: 'V', action: 'CAMERA VIEW' },
@@ -369,7 +374,8 @@ function ControlsLegend() {
 }
 
 export default function RaceHUD({ 
-  phase, countdown, lapTimeMs, currentCheckpoint, latestSplitDiff, lapSplits, isRadioPlaying
+  phase, countdown, lapTimeMs, currentCheckpoint, latestSplitDiff, lapSplits, isRadioPlaying,
+  showRacingLine = true, onToggleRacingLine, onOpenReplay
 }: RaceHUDProps) {
   const trackData = useMemo(() => getTrackData(), []);
 
@@ -490,6 +496,71 @@ export default function RaceHUD({
             </div>
           )}
         </div>
+
+        {/* KRPO Racing Line Status & Toggle */}
+        <div 
+          onClick={onToggleRacingLine}
+          style={{
+            cursor: 'pointer',
+            background: 'var(--bg-secondary)',
+            backdropFilter: 'blur(8px)',
+            padding: '0.6rem 1.4rem',
+            borderRadius: '20px',
+            border: `2px solid ${showRacingLine ? 'var(--klustor-cyan)' : 'var(--border-light)'}`,
+            boxShadow: '0 4px 16px rgba(0,0,0,0.05)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.8rem',
+            userSelect: 'none',
+            transition: 'all 0.2s ease',
+          }}
+          title="Press 'L' or click to toggle KRPO Racing Line"
+        >
+          <div style={{
+            width: '10px',
+            height: '10px',
+            borderRadius: '50%',
+            background: showRacingLine ? 'var(--klustor-cyan)' : 'var(--text-muted)',
+            boxShadow: showRacingLine ? '0 0 8px var(--klustor-cyan)' : 'none',
+          }} />
+          <div className="font-display" style={{
+            fontSize: '0.85rem',
+            fontWeight: '900',
+            color: showRacingLine ? 'var(--text-primary)' : 'var(--text-muted)',
+            letterSpacing: '0.08em',
+          }}>
+            KRPO RACING LINE: <span style={{ color: showRacingLine ? 'var(--klustor-cyan)' : 'var(--text-muted)' }}>{showRacingLine ? 'ACTIVE' : 'OFF'}</span>
+          </div>
+          <div className="font-mono" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', background: 'var(--bg-primary)', padding: '2px 6px', borderRadius: '4px' }}>
+            [L]
+          </div>
+        </div>
+
+        {/* KRPO Replay Studio Launcher */}
+        {onOpenReplay && (
+          <button
+            onClick={onOpenReplay}
+            style={{
+              cursor: 'pointer',
+              background: 'var(--bg-secondary)',
+              backdropFilter: 'blur(8px)',
+              padding: '0.6rem 1.4rem',
+              borderRadius: '20px',
+              border: '2px solid var(--klustor-pink)',
+              boxShadow: '0 4px 16px rgba(232, 54, 93, 0.25)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.6rem',
+              color: 'var(--text-primary)',
+              fontWeight: 900,
+              fontSize: '0.85rem',
+              transition: 'all 0.2s ease',
+            }}
+            title="Press 'P' or click to view autonomous simulation replays"
+          >
+            <span>🎬</span> KRPO REPLAY STUDIO →
+          </button>
+        )}
       </div>
 
       <SplitsOverlay lapSplits={lapSplits} />

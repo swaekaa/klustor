@@ -6,13 +6,14 @@ import { motion } from 'framer-motion';
 import { useGameStore, generateThumbnail } from '../store/gameStore';
 import { useTelemetryStore } from '../store/telemetryStore';
 import { RACE_REWARDS } from '../game/data/viceCoastCircuit';
-import { formatRaceTime, useRaceState } from '../game/hooks/useRaceState';
+import { formatRaceTime, useRaceState, type RacePhase } from '../game/hooks/useRaceState';
 import { useCarPhysics, type CarPhysicsState } from '../game/hooks/useCarPhysics';
 import { useEngineSound } from '../game/hooks/useEngineSound';
 import { useRadio } from '../game/hooks/useRadio';
 import PlayerCar from '../game/components/PlayerCar';
 import Track from '../game/components/Track';
 import ViceCoastEnvironment from '../game/components/ViceCoastEnvironment';
+import RacingLineOverlay from '../game/components/RacingLineOverlay';
 import { getTrackData } from '../game/data/viceCoastCircuit';
 import RaceCamera from '../game/components/RaceCamera';
 import RaceHUD from '../game/components/RaceHUD';
@@ -42,6 +43,7 @@ interface RaceSceneProps {
   phase: RacePhase;
   carRef: RefObject<THREE.Group>;
   checkCheckpoint: (pos: THREE.Vector3) => void;
+  showRacingLine: boolean;
 }
 
 function FollowSun({ carRef }: { carRef: RefObject<THREE.Group> }) {
@@ -76,7 +78,7 @@ function FollowSun({ carRef }: { carRef: RefObject<THREE.Group> }) {
   );
 }
 
-function RaceScene({ textures, stats, phase, carRef, checkCheckpoint }: RaceSceneProps) {
+function RaceScene({ textures, stats, phase, carRef, checkCheckpoint, showRacingLine }: RaceSceneProps) {
   const isRacing = phase === 'racing';
   const { speedRef, steeringRef, resetToStart } = useCarPhysics(carRef, isRacing, stats);
 
@@ -111,6 +113,7 @@ function RaceScene({ textures, stats, phase, carRef, checkCheckpoint }: RaceScen
 
       <Track />
       <ViceCoastEnvironment />
+      <RacingLineOverlay visible={showRacingLine} />
 
       {/* Player Car — initial position matches resetToStart() */}
       <PlayerCar
@@ -128,10 +131,10 @@ function RaceScene({ textures, stats, phase, carRef, checkCheckpoint }: RaceScen
 
 // ── Results Screen ────────────────────────────────────────────
 function ResultsScreen({
-  lapTimeMs, topSpeed, designScore, lapSplits, onRaceAgain, onRedesign, onGoToLeaderboard, isPersonalBest, prevBestTime
+  lapTimeMs, topSpeed, designScore, lapSplits, onRaceAgain, onRedesign, onGoToLeaderboard, onGoToReplay, isPersonalBest, prevBestTime
 }: {
   lapTimeMs: number; topSpeed: number; designScore: number; lapSplits: number[];
-  onRaceAgain: () => void; onRedesign: () => void; onGoToLeaderboard: () => void; isPersonalBest: boolean; prevBestTime: number | null;
+  onRaceAgain: () => void; onRedesign: () => void; onGoToLeaderboard: () => void; onGoToReplay: () => void; isPersonalBest: boolean; prevBestTime: number | null;
 }) {
   const { recordRaceResult } = useGameStore();
   const claimed = useRef(false);
@@ -223,12 +226,15 @@ function ResultsScreen({
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '1rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '1rem', flexWrap: 'wrap' }}>
           <button className="btn" onClick={onRedesign} style={{ padding: '1rem 2rem', background: 'transparent', border: '1px solid var(--border-light)', boxShadow: 'none' }}>
             REDESIGN
           </button>
           <button className="btn" onClick={onGoToLeaderboard} style={{ padding: '1rem 2rem', background: 'transparent', border: '1px solid var(--border-light)', boxShadow: 'none' }}>
             LEADERBOARD
+          </button>
+          <button className="btn" onClick={onGoToReplay} style={{ padding: '1rem 2rem', background: 'transparent', border: '2px solid var(--klustor-cyan)', color: 'var(--klustor-cyan)', boxShadow: 'none' }}>
+            🎬 KRPO REPLAY
           </button>
           <button className="btn" onClick={onRaceAgain} style={{ padding: '1rem 2rem', background: 'var(--klustor-pink)', border: 'none', boxShadow: 'none' }}>
             RACE AGAIN →
@@ -250,6 +256,7 @@ export default function RacePage() {
   const carRef = useRef<THREE.Group>(null!);
   const [webglError, setWebglError] = useState(false);
   const [raceStarted, setRaceStarted] = useState(false);
+  const [showRacingLine, setShowRacingLine] = useState(true);
 
   const {
     phase, countdown, lapTimeMs, currentCheckpoint, lapSplits, latestSplitDiff,
@@ -284,12 +291,16 @@ export default function RacePage() {
 
   const prevBestTime = frozenBestTime.current;
 
-  // Handle Escape key to pause
+  // Handle Keyboard shortcuts: Escape to pause, L to toggle KRPO racing line
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (phase === 'racing' || phase === 'countdown') pauseRace();
         else if (phase === 'paused') resumeRace();
+      } else if (e.key.toLowerCase() === 'l') {
+        setShowRacingLine(prev => !prev);
+      } else if (e.key.toLowerCase() === 'p') {
+        navigate('/replay');
       }
     };
     window.addEventListener('keydown', onKeyDown);
@@ -332,6 +343,7 @@ export default function RacePage() {
             phase={phase}
             carRef={carRef}
             checkCheckpoint={checkCheckpoint}
+            showRacingLine={showRacingLine}
           />
         </Canvas>
 
@@ -384,6 +396,9 @@ export default function RacePage() {
           latestSplitDiff={latestSplitDiff}
           lapSplits={lapSplits}
           isRadioPlaying={isRadioPlaying}
+          showRacingLine={showRacingLine}
+          onToggleRacingLine={() => setShowRacingLine(prev => !prev)}
+          onOpenReplay={() => navigate('/replay')}
         />
       )}
 
@@ -399,6 +414,7 @@ export default function RacePage() {
           onRaceAgain={handleRestart}
           onRedesign={() => navigate('/case')}
           onGoToLeaderboard={() => navigate('/leaderboard')}
+          onGoToReplay={() => navigate('/replay')}
         />
       )}
     </div>

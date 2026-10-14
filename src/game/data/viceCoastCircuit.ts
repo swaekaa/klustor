@@ -20,6 +20,8 @@ export interface TrackPointData {
   normal:    THREE.Vector3;    // Right-pointing normal on XZ plane
   leftEdge:  THREE.Vector3;   // Left boundary (negative normal direction)
   rightEdge: THREE.Vector3;   // Right boundary (positive normal direction)
+  curvature?: number;
+  arcLength?: number;
 }
 
 export interface CheckpointData {
@@ -112,10 +114,13 @@ export function getTrackData(): TrackData {
   // 2. Sample densely; drop duplicate last point (closed loop)
   const rawPoints = curve.getPoints(TRACK_SAMPLES);
   const samples: TrackPointData[] = [];
+  const n = rawPoints.length - 1;
+  let accumulatedDist = 0;
 
-  for (let i = 0; i < rawPoints.length - 1; i++) {
+  for (let i = 0; i < n; i++) {
     const p     = rawPoints[i];
     const nextP = rawPoints[i + 1];
+    const prevP = rawPoints[(i - 1 + n) % n];
 
     const tangent = new THREE.Vector3().subVectors(nextP, p).normalize();
 
@@ -125,7 +130,15 @@ export function getTrackData(): TrackData {
     const rightEdge = p.clone().addScaledVector(normal,  ROAD_WIDTH / 2);
     const leftEdge  = p.clone().addScaledVector(normal, -ROAD_WIDTH / 2);
 
-    samples.push({ position: p.clone(), tangent, normal, leftEdge, rightEdge });
+    const tPrev = new THREE.Vector3().subVectors(p, prevP).normalize();
+    const crossY = tPrev.x * tangent.z - tPrev.z * tangent.x;
+    const dot = Math.max(-1, Math.min(1, tPrev.dot(tangent)));
+    const angleDelta = Math.atan2(crossY, dot);
+    const ds = (p.distanceTo(prevP) + p.distanceTo(nextP)) * 0.5;
+    const curvature = ds > 1e-4 ? angleDelta / ds : 0;
+    accumulatedDist += p.distanceTo(nextP);
+
+    samples.push({ position: p.clone(), tangent, normal, leftEdge, rightEdge, curvature, arcLength: accumulatedDist });
   }
 
   // 3. Generate 10 checkpoints (evenly spaced across the full loop)
